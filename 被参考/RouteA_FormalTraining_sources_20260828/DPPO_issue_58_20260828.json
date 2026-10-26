@@ -1,0 +1,82 @@
+{
+  "url": "https://api.github.com/repos/irom-princeton/dppo/issues/58",
+  "repository_url": "https://api.github.com/repos/irom-princeton/dppo",
+  "labels_url": "https://api.github.com/repos/irom-princeton/dppo/issues/58/labels{/name}",
+  "comments_url": "https://api.github.com/repos/irom-princeton/dppo/issues/58/comments",
+  "events_url": "https://api.github.com/repos/irom-princeton/dppo/issues/58/events",
+  "html_url": "https://github.com/irom-princeton/dppo/issues/58",
+  "id": 3519771004,
+  "node_id": "I_kwDOMse-lc7Ry3F8",
+  "number": 58,
+  "title": "Irreproducible result",
+  "user": {
+    "login": "hongsukchoi",
+    "id": 31090011,
+    "node_id": "MDQ6VXNlcjMxMDkwMDEx",
+    "avatar_url": "https://avatars.githubusercontent.com/u/31090011?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/hongsukchoi",
+    "html_url": "https://github.com/hongsukchoi",
+    "followers_url": "https://api.github.com/users/hongsukchoi/followers",
+    "following_url": "https://api.github.com/users/hongsukchoi/following{/other_user}",
+    "gists_url": "https://api.github.com/users/hongsukchoi/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/hongsukchoi/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/hongsukchoi/subscriptions",
+    "organizations_url": "https://api.github.com/users/hongsukchoi/orgs",
+    "repos_url": "https://api.github.com/users/hongsukchoi/repos",
+    "events_url": "https://api.github.com/users/hongsukchoi/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/hongsukchoi/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "labels": [
+
+  ],
+  "state": "open",
+  "locked": false,
+  "assignees": [
+
+  ],
+  "milestone": null,
+  "comments": 5,
+  "created_at": "2025-10-15T22:34:59Z",
+  "updated_at": "2026-03-28T03:25:43Z",
+  "closed_at": null,
+  "assignee": null,
+  "author_association": "NONE",
+  "issue_field_values": [
+
+  ],
+  "type": null,
+  "active_lock_reason": null,
+  "sub_issues_summary": {
+    "total": 0,
+    "completed": 0,
+    "percent_completed": 0
+  },
+  "issue_dependencies_summary": {
+    "blocked_by": 0,
+    "total_blocked_by": 0,
+    "blocking": 0,
+    "total_blocking": 0
+  },
+  "body": "Great work! I also enjoyed talking to the last author in CoRL 2025. There are some issues I want to resolve. I want to reproduce the figure below.\n\n<img width=\"458\" height=\"240\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/f610541b-de27-4d3f-a7cf-d46036f178f0\" />\n\nThe pixel-based policy code seems off in many way. \n\n1) The pretrained base policies achieve **0%** success rates for Robomimic's tasks; lift, square, can\n2) The finetuning doesn't improve at all, which makese sense, because the base policy has 0% success rate. \n3) The image observation used seems off. Look below:\n\n<img width=\"96\" height=\"96\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/10b6d351-2986-45ee-8a75-ea178fa7a659\" />\n\n4) The policy here is using only wrist camera image as image observation, but is this mistake? I think people use multi-view images in this kind of manipulation setting, which often includes frontal view images.\n\n5) The state-observation policy's \"square\" task checkpoint has mismatch problem with the model config, and after I fix it by doing \n```\n  time_dim: 16\n  mlp_dims: [512, 512, 512]\n  # cond_mlp_dims: [512, 64]` \n```\n\nin `cfg/robomimic/eval/square/eval_diffusion_mlp.yaml`, I can finally run evaluation but  I get 0% success rate.\n\n\nOverall, I think the robomimic tasks and pixel-based policy release are not ready. There were many minor bugs too. \n\n- rgb observation shape issue after resetting\n- Wrong class name\n`Error locating target 'model.diffusion.diffusion_eval_ft.DiffusionEval', set env var HYDRA_FULL_ERROR=1 to see chained exception.`\n\nLooking forward to hearing clarification!",
+  "closed_by": null,
+  "reactions": {
+    "url": "https://api.github.com/repos/irom-princeton/dppo/issues/58/reactions",
+    "total_count": 4,
+    "+1": 4,
+    "-1": 0,
+    "laugh": 0,
+    "hooray": 0,
+    "confused": 0,
+    "heart": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "timeline_url": "https://api.github.com/repos/irom-princeton/dppo/issues/58/timeline",
+  "performed_via_github_app": null,
+  "state_reason": null,
+  "pinned_comment": null
+}

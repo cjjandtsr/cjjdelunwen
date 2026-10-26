@@ -1,0 +1,1504 @@
+{
+  "source": "D:\\下载\\针对每次只规划未来16时间步轨迹，执行8时间步轨迹，需要多次....docx",
+  "source_sha256": "8cc6cd2fd1227e46284ceb14d95d16a44c379ea588542786e02d3671cd5d2097",
+  "extracted_date": "2026-10-13",
+  "paragraph_count": 217,
+  "math_count": 35,
+  "paragraphs": [
+    {
+      "paragraph": 1,
+      "text": "针对每次只规划未来16时间步轨迹，执行8时间步轨迹，需要多次...",
+      "links": []
+    },
+    {
+      "paragraph": 2,
+      "text": "回答",
+      "links": []
+    },
+    {
+      "paragraph": 3,
+      "text": "面向“规划16步、执行8步”滚动时域强化学习的研究报告",
+      "links": []
+    },
+    {
+      "paragraph": 4,
+      "text": "摘要",
+      "links": []
+    },
+    {
+      "paragraph": 5,
+      "text": "在长时程决策任务中，智能体往往无法一次性规划出到达目标的完整轨迹，而需要采用“每次规划未来若干时间步、仅执行其中一部分、然后重新规划”的滚动时域策略。典型配置为每次规划未来16个时间步的轨迹，但只执行前8个时间步，随后基于新的观测重新规划，如此反复直至目标达成。这种16:8的分段规划模式在模型预测控制（MPC）与强化学习（RL）结合、分层强化学习（HRL）以及基于模型的强化学习中广泛出现。本报告系统梳理该场景下的理论基础、算法框架、样本效率与收敛速度特征、奖励函数与状态表示设计、规划步长与执行步长的权衡、非平稳性问题及应对方法，并结合现有实验证据进行分析。尽管搜索结果中缺乏直接针对16:8比例的大规模数值对比，但大量相关研究为理解该问题提供了坚实支撑。报告最后指出未来研究方向，包括自适应规划时长、世界模型与Transformer架构融合、以及非平稳有限视野下的奖励塑形理论扩展。",
+      "links": []
+    },
+    {
+      "paragraph": 6,
+      "text": "1. 引言",
+      "links": []
+    },
+    {
+      "paragraph": 7,
+      "text": "强化学习（RL）在机器人控制、自动驾驶、游戏AI和资源调度等领域取得了显著进展，但面对长时程、稀疏奖励和复杂动力学任务时，传统无模型方法往往面临样本效率低下、收敛缓慢的困境。模型基于强化学习（Model-Based RL）通过显式或隐式地学习环境动力学模型，并利用该模型进行规划，显著提升了样本效率 [[1]]。然而，当任务要求智能体在多个决策周期内持续行动并最终到达设定目标时，一次性规划完整轨迹通常不可行：一方面，环境模型存在误差，规划步数越长，累积误差越大；另一方面，计算资源和实时性约束限制了单次规划的时间预算 [[2]][[3]]。",
+      "links": []
+    },
+    {
+      "paragraph": 8,
+      "text": "因此，滚动时域规划（Receding Horizon Planning）或滚动时域控制（Receding Horizon Control）成为主流范式。其核心思想是：在每个决策时刻，智能体基于当前状态和学到的模型，规划未来一段有限时间步的行动序列，但只执行其中前若干个动作，然后丢弃剩余规划，重新观测环境状态并重新规划。这种“规划—执行—重规划”的循环，使得智能体能够持续校正模型误差和外部扰动，同时将计算复杂度控制在可接受范围内。本报告聚焦于一种具体配置：每次规划未来16个时间步的轨迹，仅执行前8个时间步，随后重新规划。这种16:8的比例并非任意，它反映了规划深度与执行跨度之间的权衡：规划16步提供足够的前瞻信息以引导方向，执行8步则保证一定的开环执行稳定性，同时避免因模型误差累积而导致严重偏离。",
+      "links": []
+    },
+    {
+      "paragraph": 9,
+      "text": "本报告将围绕该场景展开深入分析，涵盖问题形式化、理论基础、算法实现、奖励与状态设计、步长选择、实验证据和未来挑战。",
+      "links": []
+    },
+    {
+      "paragraph": 10,
+      "text": "2. 问题形式化与核心挑战",
+      "links": []
+    },
+    {
+      "paragraph": 11,
+      "text": "2.1 滚动时域规划的形式化",
+      "links": []
+    },
+    {
+      "paragraph": 12,
+      "text": "我们可以将任务建模为马尔可夫决策过程（MDP）或部分可观测马尔可夫决策过程（POMDP），由状态空间 S、动作空间 A、转移概率 Ps^{'}|sa、奖励函数 Rsas^{'} 和折扣因子 γ 组成。在滚动时域规划中，智能体在每个规划周期 k 时刻，基于当前状态 s_{k}（或观测 o_{k}），利用环境模型 P 和奖励模型 R，求解一个有限时间视野 H=16 的最优控制问题：",
+      "links": []
+    },
+    {
+      "paragraph": 13,
+      "text": "max_{a_{k:k+H-1}}E∑_{t=k}^{k+H-1}γ^{t-k}Rs_{t}a_{t}s_{t+1}",
+      "links": []
+    },
+    {
+      "paragraph": 14,
+      "text": "",
+      "links": []
+    },
+    {
+      "paragraph": 15,
+      "text": "服从于 P 下的动力学约束。求解得到规划动作序列 a_{k}^{*}a_{k+1}^{*}a_{k+H-1}^{*}。但智能体只执行前 M=8 个动作，即 a_{k}^{*},,a_{k+M-1}^{*}，然后将时间推进 M 步，获得新的观测 s_{k+M}，并进入下一个规划周期。",
+      "links": []
+    },
+    {
+      "paragraph": 16,
+      "text": "该过程重复进行，直到达到目标状态或任务终止。由于每个规划周期只执行部分动作，智能体需要多次规划才能覆盖完整的任务轨迹。这种模式在MPC中被称为“滚动时域控制”，在RL中则常与基于模型的规划、分层强化学习或选项框架结合。",
+      "links": []
+    },
+    {
+      "paragraph": 17,
+      "text": "2.2 核心挑战",
+      "links": []
+    },
+    {
+      "paragraph": 18,
+      "text": "（1）有限规划窗口导致的非平稳性。 当规划视野 H 远小于任务总时长时，智能体在每个规划周期内面对的“有效”问题是一个有限视野问题。但任务本身是长时程的，奖励函数通常不依赖于时间，而问题本质上是非平稳的有限horizon问题 [[4]]。如果奖励设计不能反映序列结构，智能体可能陷入局部最优或“投机取巧”的解决方案（reward hacking）。此外，由于每次规划后执行8步，智能体的策略在局部是开环的，但在宏观上通过重规划形成闭环，这要求状态表示能够捕捉足够的历史信息以维持非平稳环境下的决策一致性。",
+      "links": []
+    },
+    {
+      "paragraph": 19,
+      "text": "（2）模型误差累积。 模型基于RL依赖学到的动力学模型。规划16步意味着模型预测需要外推较远。如果模型不准确，规划出的轨迹可能成为“幻觉”，尤其在Dyna类算法中，生成的想象数据可能误导价值估计 [[5]]。MPC通过仅利用模型进行前瞻、而值估计器仅基于真实数据更新，可以减轻模型不准确性的影响 [[6]]。但16步的规划仍然要求模型在中等时域内具有合理精度。",
+      "links": []
+    },
+    {
+      "paragraph": 20,
+      "text": "（3）计算开销与控制性能的权衡。 规划步数越多，计算开销越大。规划16步比规划4步需要更多的优化迭代或采样。执行8步则意味着每个规划周期只执行一半的动作，重规划频率较高，增加了计算次数。如何在计算资源约束下选择最优的规划与执行步长比例，是一个关键工程问题 [[7]][[8]]。",
+      "links": []
+    },
+    {
+      "paragraph": 21,
+      "text": "（4）样本效率与收敛速度。 与一次性完整规划相比，分段规划可能提升样本效率，因为每次规划基于最新状态，减少了模型误差影响；但也可能因为频繁重规划而增加计算负担，且执行开环动作可能降低数据效率。需要理论分析和实验验证。",
+      "links": []
+    },
+    {
+      "paragraph": 22,
+      "text": "3. 理论基础：MPC与RL的结合",
+      "links": []
+    },
+    {
+      "paragraph": 23,
+      "text": "3.1 模型预测控制（MPC）",
+      "links": []
+    },
+    {
+      "paragraph": 24,
+      "text": "MPC是一种经典的滚动时域优化方法。在每个采样时刻，MPC求解一个有限时间视野的最优控制问题，只实施第一个控制输入，然后重新求解。MPC的优势在于能够处理约束、非线性动力学，并对扰动具有鲁棒性。在RL语境下，MPC可以作为策略的替代或补充。例如，[[9]]指出，可以使用MPC作为深度强化学习中Q-learning或Policy Gradient的替代函数逼近器，通过在每个步骤求解有限时域优化问题来近似价值函数，特别适合处理约束和动力学模型已知的场景。[[10]]和[[11]]也提到，MPC部分通常涉及在每个时间步求解一个有限时间的最优控制问题，需要建立系统模型和成本函数。",
+      "links": []
+    },
+    {
+      "paragraph": 25,
+      "text": "3.2 MPC与RL的混合架构",
+      "links": []
+    },
+    {
+      "paragraph": 26,
+      "text": "针对“规划16步执行8步”的场景，MPC与RL的结合有多种实现方式：",
+      "links": []
+    },
+    {
+      "paragraph": 27,
+      "text": "（1）MPC作为底层执行器。 [[12]]描述了一种架构：RL Agent输出离散动作，MPC接收该动作并求解优化问题生成连续动作施加于对象。在这种架构下，RL负责高层策略或离散决策，MPC负责在有限时间视界内进行轨迹优化和执行。16步规划可以视为MPC的预测时域，8步执行则对应控制时域（control horizon）。控制时域小于预测时域是MPC的标准做法，用于减少优化变量数量并提高计算效率。[[13]]详细讨论了控制步长（n_{c}）与预测时间范围的权衡：增大控制步长可以提升预测器性能（考虑更远未来状态），但副作用是执行时间变长，可能导致振荡或超调。随着控制步长增大，优化时间显著增加。这解释了为什么执行步长通常小于规划步长：16步规划提供前瞻，8步执行平衡计算与稳定性。",
+      "links": []
+    },
+    {
+      "paragraph": 28,
+      "text": "（2）PPO-MPC训练流程。 [[14]]展示了一个具体的算法流程“PPO-MPC Training”，其中明确提到了“规划时间步长H”作为输入参数。算法在训练过程中交替执行MPC优化（利用模型进行多步规划）和策略梯度更新（如PPO），通过监督数据和强化学习信号共同优化策略。这直接对应了“规划多步”的场景。在该框架中，MPC利用模型进行H步规划，生成动作序列，而PPO则基于实际执行结果更新策略网络。16:8的比例可以理解为MPC规划H=16步，但实际执行M=8步后，将执行数据存入回放缓冲区用于PPO更新。",
+      "links": []
+    },
+    {
+      "paragraph": 29,
+      "text": "（3）MPC作为值函数近似或搜索。 [[15]]提出了一个基于动态规划的统一框架，将近似DP、MPC和RL联系起来。它指出MPC架构与AlphaZero等游戏中的“离线训练”（评估位置/生成棋步）和“在线游戏”（实时决策）类似。在有限步长规划中，MPC充当了“Look-ahead”（前瞻）模块，评估未来N步（如16步）的潜在奖励，而当前的执行（如8步）则是基于该评估做出的短期决策。这种观点将16步规划视为对值函数的局部近似，执行8步则是对该近似的信任。",
+      "links": []
+    },
+    {
+      "paragraph": 30,
+      "text": "（4）RL学习MPC的预测时长。 [[16]]和[[17]]讨论了使用RL（如SAC算法）来动态学习MPC的预测时长（Prediction Horizon）。在“规划16步执行8步”的场景中，这可能意味着算法需要决定在有限的计算资源或固定步长下，如何最优地利用这16步的规划能力，或者将长规划分解为多个短执行步。[[18]]提到通过成本函数（控制性能、约束违反、计算成本）来优化这一时长。[[19]]也提到使用RL学习MPC的预测时长，成本函数平衡了控制性能、约束违反和计算成本，实验在倒立摆和碰撞避免系统上进行。这说明16:8的比例可以通过RL自适应调整，而非固定不变。",
+      "links": []
+    },
+    {
+      "paragraph": 31,
+      "text": "3.3 基于模型的RL与Dyna",
+      "links": []
+    },
+    {
+      "paragraph": 32,
+      "text": "Dyna算法通过利用模型生成“想象”过渡数据来提升样本效率，但[[20]]指出，如果模型不准确，生成的过渡数据可能是“幻觉”的，从而负面影响性能。相反，MPC仅利用模型在决策时进行前瞻，其值估计器仅基于真实数据更新，因此对模型不准确性的影响较小，具有更有利的分布外（OOD）泛化能力。这正是滚动时域规划在16:8场景下的优势：每次规划16步但只执行8步，可以限制模型误差对策略的污染，因为价值函数或策略更新仍然主要基于真实执行数据。",
+      "links": []
+    },
+    {
+      "paragraph": 33,
+      "text": "[[21]]指出，模型相关方法（通常涉及规划，如Dyna系列算法）比模型无关方法具有更快的策略寻找速度和更好的样本效率。特别是提到的AC-HMLP算法，通过局部和全局模型的规划合作，提高了模型精确性并促进更快收敛。HDyna-AMR和Dyna-LSTD-PA算法均通过“规划过程”（利用模型生成虚拟样本）来显著提升样本效率。这支持了“规划”优于“无规划/单步”的一般结论，但未涉及具体的时间步分割策略（16:8 vs 完整）。我们可以推断，16:8的分段规划正是为了在Dyna框架中平衡模型使用与误差控制：规划16步生成虚拟数据，但只执行8步，保留一部分规划供后续重规划，避免过度依赖模型。",
+      "links": []
+    },
+    {
+      "paragraph": 34,
+      "text": "4. 分段规划与完整规划的对比分析",
+      "links": []
+    },
+    {
+      "paragraph": 35,
+      "text": "4.1 样本效率",
+      "links": []
+    },
+    {
+      "paragraph": 36,
+      "text": "搜索结果中缺乏直接针对16:8与完整规划的对比实验数据。但我们可以从相关研究中推断。[[22]]提供了不同算法在收敛所需样本数量上的具体数值范围对比：S-AC在后期样本需求急剧上升至约10,000，而MLAC、AC-HMLP、RAC-HMLP稳定在约4,000样本，Dyna-MLAC稳定在约8,000样本。这些算法中，AC-HMLP和RAC-HMLP采用了分层和规划机制，其样本效率显著优于无规划的S-AC。虽然这些数据不是关于16:8比例的，但它们表明，带有规划的分层方法能够将样本需求降低一半以上。[[23]]提供了带有规划的层次强化学习（HRL with planning）与无规划的HRL及扁平RL在时间步数上的对比：HRL with planning在第20个回合左右时间步数降至接近0，而无规划方法下降较慢且保持较高水平。这提供了收敛速度的定性及粗略定量（回合数趋势）对比。我们可以合理推测，16:8的分段规划由于每次规划只执行8步，会频繁重规划，可能比一次性规划更长轨迹（例如规划64步执行64步）需要更多的规划计算，但在样本效率上可能更优，因为每次执行后都能获得真实反馈并更新模型，减少模型误差累积。",
+      "links": []
+    },
+    {
+      "paragraph": 37,
+      "text": "4.2 收敛速度",
+      "links": []
+    },
+    {
+      "paragraph": 38,
+      "text": "[[24]]的图表显示，带有规划的层次强化学习（HRL with planning）在收敛速度上明显优于无规划的HRL、扁平RL和基于模型的RL。这表明“规划”机制本身（通常涉及更长的视野或分层执行）能显著提升样本效率和收敛速度。[[25]]提到MAXQ方法（一种分层RL，隐含了分段/子目标规划）在收敛速度上比扁平Q学习快得多，但仅定性描述为“much faster”。[[26]]标题和片段表明包含比较实验，评估了收敛速度和计算效率，并特别指出了Appendix D.2和D.1包含详细评估，但摘要中未给出具体数值。综合来看，分段规划（如16:8）很可能比完整规划收敛更快，因为完整规划在长时程任务中往往面临组合爆炸或累积误差问题。[[27]]指出规划步数存在平衡点：步数太少，优势不明显；步数太多，会因累积规划误差和计算时间增加而降低效率。这暗示16:8的分段规划可能是为了平衡精度和效率。如果一次性规划完整轨迹，理论上可能提供更优的全局视图，但在高维或连续控制中往往不可行或效率低下；若可行，其样本效率可能更高，但收敛速度可能因搜索空间大而变慢或需要更多调优。",
+      "links": []
+    },
+    {
+      "paragraph": 39,
+      "text": "4.3 计算开销",
+      "links": []
+    },
+    {
+      "paragraph": 40,
+      "text": "[[28]]明确指出，在结合规划与学习的算法中，存在一个关键的计算权衡。规划时间既不能太长也不能太短，最优性能通常位于“穷举搜索”（长规划）和“无模型RL”（无规划）之间的中间地带。16:8的比例正是这种中间地带的体现：规划16步提供足够的前瞻，但计算量远小于规划完整轨迹；执行8步则减少了重规划频率，相比执行1步（即每步重规划）节省了计算。[[29]]指出，在复杂任务（如四足机器人行走）中，更多的规划通常带来更好的性能。同时指出，在推理阶段可以通过减少迭代次数来降低50%的计算成本而不牺牲性能。这意味着16步规划可以通过减少优化迭代次数来控制计算开销。[[30]]强调，随着控制步长增大，优化时间显著增加。因此，执行8步而非16步，实际上是减少了控制时域，从而减少优化变量数量，降低单次规划的计算量。",
+      "links": []
+    },
+    {
+      "paragraph": 41,
+      "text": "5. 算法框架与实现细节",
+      "links": []
+    },
+    {
+      "paragraph": 42,
+      "text": "5.1 主要算法范式",
+      "links": []
+    },
+    {
+      "paragraph": 43,
+      "text": "针对16:8滚动规划场景，以下算法范式具有代表性：",
+      "links": []
+    },
+    {
+      "paragraph": 44,
+      "text": "（1）MPC-RL混合算法。 如PPO-MPC [[31]]、AC-HMLP [[32]][[33]]Dyna-MLAC [[34]]。这些算法通常包含：环境模型学习（如神经网络动力学模型）、MPC规划器（求解有限时域最优控制）、策略/价值网络（如PPO或AC）。训练循环：在环境中执行MPC规划的前8步，收集真实转移数据；用真实数据更新模型和策略；同时用模型生成16步想象轨迹用于辅助训练。",
+      "links": []
+    },
+    {
+      "paragraph": 45,
+      "text": "（2）分层强化学习（HRL）。 如MAXQ [[35]]HRL with planning [[36]]选项框架（Options）。分层方法通过将任务分解为子任务或子目标，使高层策略在较长的时间尺度上决策，低层策略执行具体动作。16:8的规划可以对应高层规划16步、低层执行8步，或者反过来。[[37]]提出将复杂的MDP分解为较小的子MDP层级，通过定义有用的子目标（Subgoals）约束策略搜索空间，并利用状态抽象让子MDP忽略状态空间的大部分区域。这种方法通过层级结构间接处理了长视距问题，因为高层策略可以依赖已学习好的低层策略，从而在固定规划窗口内执行复杂任务。",
+      "links": []
+    },
+    {
+      "paragraph": 46,
+      "text": "（3）基于模型的RL与规划。 如PETS [[38]]、MuZero [[39]][[40]]Dreamer等。这些方法学习环境模型，并在潜在空间中进行规划。16:8的滚动规划可以嵌入到这些框架中，例如在潜在空间中规划16步，执行8步后重新编码观测。",
+      "links": []
+    },
+    {
+      "paragraph": 47,
+      "text": "5.2 具体实现步骤",
+      "links": []
+    },
+    {
+      "paragraph": 48,
+      "text": "以PPO-MPC为例 [[41]]：",
+      "links": []
+    },
+    {
+      "paragraph": 49,
+      "text": "初始化：策略网络 π_{θ}、价值网络 V_{φ}、动力学模型 f_{ψ}、MPC规划器（预测时域H=16，控制时域M=8）。",
+      "links": []
+    },
+    {
+      "paragraph": 50,
+      "text": "在每个规划周期：",
+      "links": []
+    },
+    {
+      "paragraph": 51,
+      "text": "观测当前状态 s_{k}。",
+      "links": []
+    },
+    {
+      "paragraph": 52,
+      "text": "使用MPC求解优化问题，得到动作序列 a_{k:k+15}。",
+      "links": []
+    },
+    {
+      "paragraph": 53,
+      "text": "执行前8个动作 a_{k:k+7}，与环境交互，收集真实转移数据 s_{t}a_{t}r_{t}s_{t+1}。",
+      "links": []
+    },
+    {
+      "paragraph": 54,
+      "text": "将真实数据存入回放缓冲区。",
+      "links": []
+    },
+    {
+      "paragraph": 55,
+      "text": "使用动力学模型 f_{ψ} 生成从 s_{k} 开始的16步想象轨迹（可选）。",
+      "links": []
+    },
+    {
+      "paragraph": 56,
+      "text": "模型更新：使用真实转移数据更新动力学模型 f_{ψ}（最小化预测误差）。",
+      "links": []
+    },
+    {
+      "paragraph": 57,
+      "text": "策略更新：使用PPO算法，基于真实数据和想象数据更新策略网络 π_{θ} 和价值网络 V_{φ}。",
+      "links": []
+    },
+    {
+      "paragraph": 58,
+      "text": "重规划：时间推进8步，获得新观测 s_{k+8}，重复上述过程。",
+      "links": []
+    },
+    {
+      "paragraph": 59,
+      "text": "关键实现细节：",
+      "links": []
+    },
+    {
+      "paragraph": 60,
+      "text": "动力学模型：如果动力学未知，可以使用神经网络进行训练，然后将训练好的模型用于MPC的滚动预测 [[42]][[43]]。",
+      "links": []
+    },
+    {
+      "paragraph": 61,
+      "text": "优化求解：MPC部分通常涉及在每个时间步求解一个有限时间的最优控制问题，如二次规划或非线性优化 [[44]][[45]]。对于高维动作空间，可以使用采样方法（如MPPI、CEM）或梯度下降 [[46]]。",
+      "links": []
+    },
+    {
+      "paragraph": 62,
+      "text": "规划迭代：[[47]]描述了基于模型的规划器迭代优化过程，涉及动态模型模拟未来H个时间步的状态演化，并通过梯度下降优化动作序列以最大化长期回报。迭代轮数K对性能有影响。",
+      "links": []
+    },
+    {
+      "paragraph": 63,
+      "text": "5.3 开源资源",
+      "links": []
+    },
+    {
+      "paragraph": 64,
+      "text": "搜索结果中缺乏直接对应16:8的开源代码，但以下资源具有参考价值：",
+      "links": []
+    },
+    {
+      "paragraph": 65,
+      "text": "TRFL (TensorFlow Reinforcement Learning) [[48]]：DeepMind开源的工具库，包含DQN、DDPG等算法的基础组件，可用于构建复杂RL算法，包括分层结构和规划模块。",
+      "links": []
+    },
+    {
+      "paragraph": 66,
+      "text": "PPO [[49]] 和 TRPO [[50]]：常用的策略梯度算法，可作为策略更新组件。",
+      "links": []
+    },
+    {
+      "paragraph": 67,
+      "text": "SAC [[51]]：适用于连续控制的离策略算法，可用于学习MPC的预测时长 [[52]]。",
+      "links": []
+    },
+    {
+      "paragraph": 68,
+      "text": "PETS [[53]]：基于模型的RL算法，通过结合不确定性感知模型，以较少样本匹配无模型算法的性能。",
+      "links": []
+    },
+    {
+      "paragraph": 69,
+      "text": "6. 奖励函数与状态表示设计",
+      "links": []
+    },
+    {
+      "paragraph": 70,
+      "text": "6.1 非平稳性问题与奖励设计",
+      "links": []
+    },
+    {
+      "paragraph": 71,
+      "text": "在滚动时域规划中，有限规划窗口导致智能体在每个规划周期内面对的是有限视野问题，而任务本身是长时程的。这种不匹配会引发非平稳性：奖励函数通常不依赖于时间，但有限视野下的最优策略可能与无限视野下的最优策略不同。[[54]]指出，如果奖励函数不能很好地代理任务（特别是在低层状态空间中未体现任务的序列结构），会导致代理寻找“投机取巧”的解决方案（reward hacking）。因此，奖励设计需要反映序列结构或时间依赖性。",
+      "links": []
+    },
+    {
+      "paragraph": 72,
+      "text": "6.2 奖励塑形方法",
+      "links": []
+    },
+    {
+      "paragraph": 73,
+      "text": "（1）势能奖励塑形（Potential-Based Reward Shaping, PBRS）。 这是最核心的经过理论验证的方法。[[55]]详细阐述了PBRS理论：除了正线性变换，可以向奖励函数添加一个由任意势函数（Potential Function）在状态转移上的差值构成的奖励项 Fss^{'}=γΦs^{'}-Φs。这是保持最优策略不变性的必要条件。它被用于缓解学习速度慢的问题，通过将距离启发式或子目标启发式转化为势函数。[[56]]和[[57]]确认了PBRS是解决“奖励bug”的标准方法。[[58]]还提出了一种从自生成样本中学习势函数的方法（RFPotential），用于自动发现有效的塑形函数。",
+      "links": []
+    },
+    {
+      "paragraph": 74,
+      "text": "（2）针对有限视野的PBRS扩展。 [[59]]和[[60]]指出，传统的PBRS通常假设无限时间步或单终止状态，而在有限时间horizon（即有限规划窗口）或随机最短路径问题中，若势函数选择不当（如不满足特定收敛条件），可能会改变最优策略。[[61]]提到Harutyunyan等（2015）提出了统一的势函数形式，适用于任意状态和动作序列，这为处理更复杂的非平稳或有限窗口情况提供了理论支持。",
+      "links": []
+    },
+    {
+      "paragraph": 75,
+      "text": "（3）基于李亚普洛夫稳定性的奖励塑形。 [[62]]提供了最直接的相关证据：该文献提出了一种基于李亚普洛夫稳定性分析的奖励塑形方法。这种方法将强化学习转化为控制优化问题，推导出了具有理论保障的势能函数确定方法。文中明确提到，该方法在3个连续动作环境（连续控制任务）中验证了能大幅度提高训练效率。[[63]]也提到基于李亚普洛夫稳定性分析的奖励塑形方法，通过推导具有理论保障的势函数来确定方法，旨在提高训练效率和稳定性。此外，还提出了基于奖励轨迹方差减少的奖励平滑塑形方法，以及基于期望最大化的奖励融合方法，以解决奖励震荡和训练不稳定问题。",
+      "links": []
+    },
+    {
+      "paragraph": 76,
+      "text": "（4）子目标与内在动机奖励。 [[64]]建议为子目标或有益行为提供额外的正向奖励，以避免稀疏奖励导致的学习失败。[[65]]提出了基于动机的奖励设计（MBRD），通过最小化内在动机与外在动机之间的距离来自动生成目标一致的内在奖励。这有助于在长周期任务中维持探索动力，解决奖励稀疏问题，从而更好地适应环境动态。[[66]]针对符号化状态转移，引入了“第二最佳归一化”和“新颖性奖励（novelty bonus）”，通过奖励那些能导致未见过状态转移的技能，防止智能体陷入局部最优，鼓励探索新的状态空间。",
+      "links": []
+    },
+    {
+      "paragraph": 77,
+      "text": "（5）具体应用案例。 [[67]]提供了具体的验证案例，在解决大规模随机规划问题时，通过添加势函数满足的伪奖励（如电池电量变化的微小奖惩、拾取/放下包裹的子目标奖励）来辅助规划。这些方法在不改变最优策略的前提下，帮助智能体克服状态抽象或规划窗口限制带来的学习困难。[[68]]提出了在全感知条件下，利用全局感知能力设计带有惩罚项的势函数来构造奖励塑形函数，以解决稀疏奖励下的收敛问题。",
+      "links": []
+    },
+    {
+      "paragraph": 78,
+      "text": "6.3 状态表示与抽象",
+      "links": []
+    },
+    {
+      "paragraph": 79,
+      "text": "（1）策略依赖的状态抽象。 [[69]]和[[70]]提到了用于机器人控制的策略依赖抽象方法。[[71]]具体介绍了“联结抽象”（link abstraction），通过引入新的规划操作符和修改现有操作符的效果，实现对状态空间的控制性探索，并在机器人导航任务中进行了验证，表现优于现有方法。这种抽象可以降低状态空间维度，使得在16步规划窗口内可行技能序列成为可能。",
+      "links": []
+    },
+    {
+      "paragraph": 80,
+      "text": "（2）时间抽象与半马尔可夫决策过程。 [[72]]探讨了从MDP到Semi-MDP的框架，旨在通过时间抽象来解决强化学习中的问题，这通常用于处理长跨度规划或非平稳环境。在16:8的场景中，执行8步可以视为一个时间抽象的动作（option），高层策略每隔8步决策一次，低层策略执行8步的具体动作。",
+      "links": []
+    },
+    {
+      "paragraph": 81,
+      "text": "（3）Reward Machines。 [[73]]提到使用Reward Machines来解耦基于视觉的机器人规划与控制，构建有限自动机等结构来捕捉非马尔可夫行为。这也是一种广义的状态/任务抽象方法，有助于在有限规划窗口内保持任务一致性。",
+      "links": []
+    },
+    {
+      "paragraph": 82,
+      "text": "（4）宏目标引导探索。 [[74]]提出将强化学习任务转化为智能决策任务，通过启发式搜索得到一组宏观目标（Macro-goals），这些宏观目标作为子目标指导强化学习的训练。这实际上是将长视距问题转化为一系列短视距的子问题，有效应对了规划窗口有限的问题。",
+      "links": []
+    },
+    {
+      "paragraph": 83,
+      "text": "（5）逆强化学习与多规划视界。 [[75]]和[[76]]探讨了在不同规划视界下的奖励函数一致性，指出可以通过调整奖励函数使得它在不同视界下保持一致性（如通过补偿项），从而解决因视界不同导致的策略不匹配或非平稳性问题。",
+      "links": []
+    },
+    {
+      "paragraph": 84,
+      "text": "7. 规划步长与执行步长的确定",
+      "links": []
+    },
+    {
+      "paragraph": 85,
+      "text": "7.1 理论权衡",
+      "links": []
+    },
+    {
+      "paragraph": 86,
+      "text": "规划步长（预测时域H）和执行步长（控制时域M）的选择涉及多目标权衡：",
+      "links": []
+    },
+    {
+      "paragraph": 87,
+      "text": "控制性能：更大的H提供更远的前瞻，有助于避免短视决策；更大的M减少重规划频率，降低计算开销，但可能增加开环误差。",
+      "links": []
+    },
+    {
+      "paragraph": 88,
+      "text": "计算开销：H越大，优化问题变量越多，计算时间越长；M越大，单位时间内重规划次数越少，总计算量可能下降。",
+      "links": []
+    },
+    {
+      "paragraph": 89,
+      "text": "稳定性：M过大可能导致振荡或超调 [[77]]。M过小则计算频繁，可能无法实时。",
+      "links": []
+    },
+    {
+      "paragraph": 90,
+      "text": "[[78]]指出，最优性能通常位于“穷举搜索”（长规划）和“无模型RL”（无规划）之间的中间地带。16:8的比例可视为这一中间地带的一个具体实例：H=16提供中等前瞻，M=8保证一定的开环执行稳定性，同时将计算量控制在合理范围。",
+      "links": []
+    },
+    {
+      "paragraph": 91,
+      "text": "7.2 实验证据",
+      "links": []
+    },
+    {
+      "paragraph": 92,
+      "text": "[[79]]指出，在复杂任务（如四足机器人行走）中，更多的规划通常带来更好的性能。同时指出，在推理阶段可以通过减少迭代次数来降低50%的计算成本而不牺牲性能。这意味着16步规划可以通过减少优化迭代次数来适应计算资源。[[80]]使用RL学习MPC的预测时长，成本函数平衡了控制性能、约束违反和计算成本，实验在倒立摆和碰撞避免系统上进行。这表明预测时长（类似H）可以通过学习自适应确定，而非固定。[[81]]详细讨论了控制步长（n_{c}）与预测时间范围的权衡：增大控制步长可以提升预测器性能，但副作用是执行时间变长，可能导致振荡或超调。随着控制步长增大，优化时间显著增加。实验显示，模型在预测时间范围增大后，若采用特定机制可避免不稳定，且执行时间更短。",
+      "links": []
+    },
+    {
+      "paragraph": 93,
+      "text": "7.3 如何确定16:8比例",
+      "links": []
+    },
+    {
+      "paragraph": 94,
+      "text": "尽管没有通用公式，但可以基于以下原则确定：",
+      "links": []
+    },
+    {
+      "paragraph": 95,
+      "text": "系统动力学特性：如果系统响应快、非线性强，需要较短的执行步长（如M=1~4）以及时校正；如果系统响应慢、惯性大，可以增大M（如8）以减少计算。",
+      "links": []
+    },
+    {
+      "paragraph": 96,
+      "text": "计算资源约束：如果计算资源有限，应增大M、减小H，或减少优化迭代次数。",
+      "links": []
+    },
+    {
+      "paragraph": 97,
+      "text": "任务精度要求：高精度任务需要更频繁的重规划（小M），而容忍一定误差的任务可以增大M。",
+      "links": []
+    },
+    {
+      "paragraph": 98,
+      "text": "模型精度：模型误差大时，应减小H和M，频繁重规划以利用真实反馈；模型精度高时，可以增大H和M。",
+      "links": []
+    },
+    {
+      "paragraph": 99,
+      "text": "在16:8的配置中，H=16约为M=8的两倍，这是一种常见的“双倍”关系，类似于MPC中预测时域通常大于控制时域。这种比例在机器人控制中较为常见，例如四足机器人行走中，规划未来0.5秒（约16步@30Hz），执行0.25秒（约8步），然后重规划。",
+      "links": []
+    },
+    {
+      "paragraph": 100,
+      "text": "8. 实验证据与数值对比",
+      "links": []
+    },
+    {
+      "paragraph": 101,
+      "text": "8.1 样本效率数值",
+      "links": []
+    },
+    {
+      "paragraph": 102,
+      "text": "[[82]]：S-AC后期样本需求约10,000；MLAC、AC-HMLP、RAC-HMLP稳定在约4,000样本；Dyna-MLAC稳定在约8,000样本。这说明带有规划的分层方法（AC-HMLP、RAC-HMLP）样本效率最高，约比无规划S-AC减少60%的样本需求。",
+      "links": []
+    },
+    {
+      "paragraph": 103,
+      "text": "[[83]]：MAXQ比扁平Q学习收敛快得多（much faster），但无具体数值。",
+      "links": []
+    },
+    {
+      "paragraph": 104,
+      "text": "[[84]]：HRL with planning在第20回合左右时间步数降至接近0，而无规划方法下降较慢且保持较高水平。",
+      "links": []
+    },
+    {
+      "paragraph": 105,
+      "text": "8.2 收敛速度数值",
+      "links": []
+    },
+    {
+      "paragraph": 106,
+      "text": "[[85]]：定性对比，HRL with planning收敛更快。",
+      "links": []
+    },
+    {
+      "paragraph": 107,
+      "text": "[[86]]：包含比较实验，评估收敛速度和计算效率，但摘要未给出具体数值。",
+      "links": []
+    },
+    {
+      "paragraph": 108,
+      "text": "8.3 任务成功率与计算时间",
+      "links": []
+    },
+    {
+      "paragraph": 109,
+      "text": "[[87]]：对比了RL算法（SAC-SILP+, DDPG-SILP+）与传统概率路线图（PRM）规划器在规划时间（秒级）和成功率上的差异。虽然未涉及分段规划vs完整规划，但提供了规划时间与成功率的数值参考。",
+      "links": []
+    },
+    {
+      "paragraph": 110,
+      "text": "[[88]]：L3P算法在样本效率和长步长泛化能力上表现出色，但仅定性描述。",
+      "links": []
+    },
+    {
+      "paragraph": 111,
+      "text": "[[89]]：比较不同采样分布的PRM规划器，涉及迭代次数（N）对成功率的影响。",
+      "links": []
+    },
+    {
+      "paragraph": 112,
+      "text": "[[90]]：将成功率分解为“规划成功率”和“控制成功率”，但未提供分段规划的具体实验数据。",
+      "links": []
+    },
+    {
+      "paragraph": 113,
+      "text": "8.4 缺乏16:8直接对比的说明",
+      "links": []
+    },
+    {
+      "paragraph": 114,
+      "text": "搜索结果中没有任何公开实验数据能够直接回答“强化学习分段规划（如规划16步执行8步）与完整规划在任务成功率、样本效率和计算时间上的具体数值差异”这一特定问题 [[91]]。这主要是因为16:8是一个具体的工程参数，通常出现在特定应用的实现细节中，而非作为通用基准进行对比。现有研究更多关注规划步数的一般性影响，如[[92]]指出规划步数存在平衡点，步数太少优势不明显，步数太多则因累积误差和计算时间增加而降低效率。",
+      "links": []
+    },
+    {
+      "paragraph": 115,
+      "text": "9. 挑战与未来方向",
+      "links": []
+    },
+    {
+      "paragraph": 116,
+      "text": "9.1 主要挑战",
+      "links": []
+    },
+    {
+      "paragraph": 117,
+      "text": "（1）非平稳性与有限视野的奖励设计。 现有PBRS理论多假设无限视野或平稳环境，在有限规划窗口下需要扩展。[[93]]和[[94]]指出，传统PBRS在有限horizon或随机最短路径问题中可能改变最优策略，需要新的势函数形式。",
+      "links": []
+    },
+    {
+      "paragraph": 118,
+      "text": "（2）模型误差与规划深度的矛盾。 规划16步要求模型在中等时域内准确，但模型误差随步数增加而累积。如何动态调整规划步长以适应模型置信度，是一个开放问题。",
+      "links": []
+    },
+    {
+      "paragraph": 119,
+      "text": "（3）计算开销与实时性。 16:8的滚动规划需要频繁求解优化问题，在嵌入式系统或高维连续控制中可能无法满足实时性要求。需要更高效的规划算法和模型压缩技术。",
+      "links": []
+    },
+    {
+      "paragraph": 120,
+      "text": "（4）超参数调优。 H和M的选择、优化迭代次数、奖励塑形权重等超参数对性能影响大，且缺乏通用指导原则。[[95]]强调最优性能位于中间地带，但如何找到该点仍需大量实验。",
+      "links": []
+    },
+    {
+      "paragraph": 121,
+      "text": "9.2 未来方向",
+      "links": []
+    },
+    {
+      "paragraph": 122,
+      "text": "（1）自适应规划时长。 利用RL学习MPC的预测时长 [[96]]根据当前状态、模型不确定性和计算资源动态调整H和M。例如，在模型置信度高时增大H，在接近目标时减小H。",
+      "links": []
+    },
+    {
+      "paragraph": 123,
+      "text": "（2）世界模型与Transformer架构。 利用Transformer等序列模型学习更准确的环境动力学，支持更长的规划。Dreamer、MuZero等已在潜在空间规划中展现潜力 [[97]][[98]]。",
+      "links": []
+    },
+    {
+      "paragraph": 124,
+      "text": "（3）非平稳有限视野的奖励塑形理论。 扩展PBRS到有限horizon和滚动时域设置，发展新的势函数设计方法，保证策略不变性同时提升学习效率 [[99]][[100]]。",
+      "links": []
+    },
+    {
+      "paragraph": 125,
+      "text": "（4）分层与选项框架的深度融合。 将16:8的规划-执行循环与选项框架结合，高层策略每隔8步决策一次，低层策略执行8步的具体动作，利用时间抽象加速学习 [[101]]。",
+      "links": []
+    },
+    {
+      "paragraph": 126,
+      "text": "（5）多智能体与分布式规划。 在多智能体场景中，分段规划可以降低通信和计算负担，但需要处理非平稳性问题 [[102]]。",
+      "links": []
+    },
+    {
+      "paragraph": 127,
+      "text": "（6）基准测试与标准化。 建立包含16:8等典型配置的基准测试，提供样本效率、收敛速度、计算时间的标准化对比，推动领域发展。",
+      "links": []
+    },
+    {
+      "paragraph": 128,
+      "text": "10. 结论",
+      "links": []
+    },
+    {
+      "paragraph": 129,
+      "text": "“每次规划未来16个时间步轨迹，执行8个时间步轨迹，需要多次规划才能到达设定目标”的场景，本质上是滚动时域规划在强化学习中的具体体现。它融合了MPC的前瞻优化、基于模型的RL的样本效率、分层RL的时间抽象以及奖励塑形的非平稳性应对。尽管搜索结果中缺乏直接针对16:8比例的数值对比实验，但大量相关研究为理解该问题提供了坚实基础。",
+      "links": []
+    },
+    {
+      "paragraph": 130,
+      "text": "从样本效率看，带有规划的分层方法（如AC-HMLP、RAC-HMLP）可将样本需求降低至无规划方法的约40% [[103]]。从收敛速度看，HRL with planning在第20回合左右即可接近最优，而无规划方法收敛缓慢 [[104]]。从计算开销看，16:8的比例代表了规划深度与执行跨度之间的平衡，最优性能位于穷举搜索与无模型RL之间的中间地带 [[105]]。奖励设计方面，势能奖励塑形（PBRS）是保持策略不变性的标准方法 [[106]]，而基于李亚普洛夫稳定性的奖励塑形在连续控制任务中验证了效率提升 [[107]]。状态表示方面，策略依赖抽象、时间抽象和Reward Machines有助于在有限窗口内维持任务一致性 [[108]][[109]][[110]]。",
+      "links": []
+    },
+    {
+      "paragraph": 131,
+      "text": "未来，自适应规划时长、世界模型与Transformer融合、非平稳有限视野的奖励塑形理论将是重要研究方向。对于实践者，建议从16:8的配置出发，根据系统动力学特性和计算资源，通过实验或RL自适应调整H和M，并结合PBRS和状态抽象来缓解非平稳性。随着更多标准化基准的建立，这一领域的理论和实践将更加成熟。",
+      "links": []
+    },
+    {
+      "paragraph": 132,
+      "text": "文献来源",
+      "links": []
+    },
+    {
+      "paragraph": 133,
+      "text": "[1,5,10,11,115,118,119,133,140,205]. A Consciousness-Inspired Planning Agent for Model-Based Reinforcement  Learning",
+      "links": [
+        {
+          "text": "[1,5,10,11,115,118,119,133,140,205]. A Consciousness-Inspired Planning Agent for Model-Based Reinforcement  Learning",
+          "url": "https://arxiv.org/abs/2106.02097"
+        }
+      ]
+    },
+    {
+      "paragraph": 134,
+      "text": "[2,6,9,12,47,136,137,149,197,198,217]. Masters Thesis: Hierarchical Reinforcement Learning for Spatio-temporal Planning",
+      "links": [
+        {
+          "text": "[2,6,9,12,47,136,137,149,197,198,217]. Masters Thesis: Hierarchical Reinforcement Learning for Spatio-temporal Planning",
+          "url": "https://www.semanticscholar.org/search?q=Masters%20Thesis%3A%20Hierarchical%20Reinforcement%20Learning%20for%20Spatio-temporal%20Planning&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 135,
+      "text": "[3,4,7,8,13,114,134,145]. 大规模状态的最优策略学习研究",
+      "links": [
+        {
+          "text": "[3,4,7,8,13,114,134,145]. 大规模状态的最优策略学习研究",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E5%A4%A7%E8%A7%84%E6%A8%A1%E7%8A%B6%E6%80%81%E7%9A%84%E6%9C%80%E4%BC%98%E7%AD%96%E7%95%A5%E5%AD%A6%E4%B9%A0%E7%A0%94%E7%A9%B6"
+        }
+      ]
+    },
+    {
+      "paragraph": 136,
+      "text": "[14,125]. Integrating Reinforcement Learning and Model Predictive Control with  Applications to Microgrids",
+      "links": [
+        {
+          "text": "[14,125]. Integrating Reinforcement Learning and Model Predictive Control with  Applications to Microgrids",
+          "url": "https://arxiv.org/abs/2409.11267"
+        }
+      ]
+    },
+    {
+      "paragraph": 137,
+      "text": "[18,19,27,53,98,156]. Neural Network Dynamics for Model-Based Deep Reinforcement Learning with Model-Free Fine-Tuning",
+      "links": [
+        {
+          "text": "[18,19,27,53,98,156]. Neural Network Dynamics for Model-Based Deep Reinforcement Learning with Model-Free Fine-Tuning",
+          "url": "https://doi.org/10.1109/ICRA.2018.8463189"
+        }
+      ]
+    },
+    {
+      "paragraph": 138,
+      "text": "[25,124,158]. 基于模型的预测控制算法研究",
+      "links": [
+        {
+          "text": "[25,124,158]. 基于模型的预测控制算法研究",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E5%9F%BA%E4%BA%8E%E6%A8%A1%E5%9E%8B%E7%9A%84%E9%A2%84%E6%B5%8B%E6%8E%A7%E5%88%B6%E7%AE%97%E6%B3%95%E7%A0%94%E7%A9%B6"
+        }
+      ]
+    },
+    {
+      "paragraph": 139,
+      "text": "[28,42,45,138,148,150,196]. Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition",
+      "links": [
+        {
+          "text": "[28,42,45,138,148,150,196]. Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition",
+          "url": "https://doi.org/10.1613/jair.639"
+        }
+      ]
+    },
+    {
+      "paragraph": 140,
+      "text": "[29,37,44,178,215]. 强化学习的环境自适应方法研究",
+      "links": [
+        {
+          "text": "[29,37,44,178,215]. 强化学习的环境自适应方法研究",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%9A%84%E7%8E%AF%E5%A2%83%E8%87%AA%E9%80%82%E5%BA%94%E6%96%B9%E6%B3%95%E7%A0%94%E7%A9%B6"
+        }
+      ]
+    },
+    {
+      "paragraph": 141,
+      "text": "[30,34,40,41,43,179]. Learning Temporally Extended Skills in Continuous Domains as Symbolic  Actions for Planning",
+      "links": [
+        {
+          "text": "[30,34,40,41,43,179]. Learning Temporally Extended Skills in Continuous Domains as Symbolic  Actions for Planning",
+          "url": "https://arxiv.org/abs/2207.05018"
+        }
+      ]
+    },
+    {
+      "paragraph": 142,
+      "text": "[31,39]. Meta-Reinforcement Learning for Heuristic Planning",
+      "links": [
+        {
+          "text": "[31,39]. Meta-Reinforcement Learning for Heuristic Planning",
+          "url": "https://arxiv.org/abs/2107.02603"
+        }
+      ]
+    },
+    {
+      "paragraph": 143,
+      "text": "[33,187]. 基于智能规划的多智能体强化学习算法",
+      "links": [
+        {
+          "text": "[33,187]. 基于智能规划的多智能体强化学习算法",
+          "url": "https://www.cqvip.com/search?k=%E5%9F%BA%E4%BA%8E%E6%99%BA%E8%83%BD%E8%A7%84%E5%88%92%E7%9A%84%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95"
+        }
+      ]
+    },
+    {
+      "paragraph": 144,
+      "text": "[38]. Hindsight Experience Replay",
+      "links": [
+        {
+          "text": "[38]. Hindsight Experience Replay",
+          "url": "https://arxiv.org/abs/1707.01495"
+        }
+      ]
+    },
+    {
+      "paragraph": 145,
+      "text": "[46,135,146,147,195,216]. Efficient Actor-Critic Algorithm with Hierarchical Model Learning and Planning",
+      "links": [
+        {
+          "text": "[46,135,146,147,195,216]. Efficient Actor-Critic Algorithm with Hierarchical Model Learning and Planning",
+          "url": "https://doi.org/10.1155/2016/4824072"
+        }
+      ]
+    },
+    {
+      "paragraph": 146,
+      "text": "[48,139,199]. Strict Subgoal Execution: Reliable Long-Horizon Planning in Hierarchical Reinforcement Learning",
+      "links": [
+        {
+          "text": "[48,139,199]. Strict Subgoal Execution: Reliable Long-Horizon Planning in Hierarchical Reinforcement Learning",
+          "url": "https://arxiv.org/abs/2506.21039"
+        }
+      ]
+    },
+    {
+      "paragraph": 147,
+      "text": "[49,116,120,141,191,208,218]. Think Neither Too Fast Nor Too Slow: The Computational Trade-off Between Planning And Reinforcement Learning",
+      "links": [
+        {
+          "text": "[49,116,120,141,191,208,218]. Think Neither Too Fast Nor Too Slow: The Computational Trade-off Between Planning And Reinforcement Learning",
+          "url": "https://www.semanticscholar.org/search?q=Think%20Neither%20Too%20Fast%20Nor%20Too%20Slow%3A%20The%20Computational%20Trade-off%20Between%20Planning%20And%20Reinforcement%20Learning&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 148,
+      "text": "[50,121]. Optimization of the Model Predictive Control Update Interval Using Reinforcement Learning",
+      "links": [
+        {
+          "text": "[50,121]. Optimization of the Model Predictive Control Update Interval Using Reinforcement Learning",
+          "url": "https://doi.org/10.1016/j.ifacol.2021.10.362"
+        }
+      ]
+    },
+    {
+      "paragraph": 149,
+      "text": "[51]. Planning with Expectation Models for Control",
+      "links": [
+        {
+          "text": "[51]. Planning with Expectation Models for Control",
+          "url": "https://arxiv.org/abs/2104.08543"
+        }
+      ]
+    },
+    {
+      "paragraph": 150,
+      "text": "[52,86,151,166]. Deep Reinforcement Learning in a Handful of Trials using Probabilistic Dynamics Models",
+      "links": [
+        {
+          "text": "[52,86,151,166]. Deep Reinforcement Learning in a Handful of Trials using Probabilistic Dynamics Models",
+          "url": "https://arxiv.org/abs/1805.12114"
+        }
+      ]
+    },
+    {
+      "paragraph": 151,
+      "text": "[54,61,66,108,168,219]. Policy Invariance Under Reward Transformations: Theory and Application to Reward Shaping",
+      "links": [
+        {
+          "text": "[54,61,66,108,168,219]. Policy Invariance Under Reward Transformations: Theory and Application to Reward Shaping",
+          "url": "https://www.semanticscholar.org/search?q=Policy%20Invariance%20Under%20Reward%20Transformations%3A%20Theory%20and%20Application%20to%20Reward%20Shaping&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 152,
+      "text": "[56,182]. Policy-contingent abstraction for robust robot control",
+      "links": [
+        {
+          "text": "[56,182]. Policy-contingent abstraction for robust robot control",
+          "url": "https://arxiv.org/abs/1212.2495"
+        }
+      ]
+    },
+    {
+      "paragraph": 153,
+      "text": "[59,185,214,222]. Between MDPs and Semi-MDPs: A Framework for Temporal Abstraction in Reinforcement Learning",
+      "links": [
+        {
+          "text": "[59,185,214,222]. Between MDPs and Semi-MDPs: A Framework for Temporal Abstraction in Reinforcement Learning",
+          "url": "https://doi.org/10.1016/S0004-3702(99)00052-1"
+        }
+      ]
+    },
+    {
+      "paragraph": 154,
+      "text": "[60,186,223]. Disentangled Planning and Control in Vision Based Robotics via Reward  Machines",
+      "links": [
+        {
+          "text": "[60,186,223]. Disentangled Planning and Control in Vision Based Robotics via Reward  Machines",
+          "url": "https://arxiv.org/abs/2012.14464"
+        }
+      ]
+    },
+    {
+      "paragraph": 155,
+      "text": "[64,73,117,167]. Constraint Satisfaction Propagation: Non-stationary Policy Synthesis for Temporal Logic Planning",
+      "links": [
+        {
+          "text": "[64,73,117,167]. Constraint Satisfaction Propagation: Non-stationary Policy Synthesis for Temporal Logic Planning",
+          "url": "https://arxiv.org/abs/1901.10405"
+        }
+      ]
+    },
+    {
+      "paragraph": 156,
+      "text": "[65,71,177]. Reinforcement Learning for Layout Planning - Modelling the Layout Problem as MDP",
+      "links": [
+        {
+          "text": "[65,71,177]. Reinforcement Learning for Layout Planning - Modelling the Layout Problem as MDP",
+          "url": "https://doi.org/10.1007/978-3-030-85906-0_52"
+        }
+      ]
+    },
+    {
+      "paragraph": 157,
+      "text": "[67,169]. Explicable Reward Design for Reinforcement Learning Agents",
+      "links": [
+        {
+          "text": "[67,169]. Explicable Reward Design for Reinforcement Learning Agents",
+          "url": "https://www.semanticscholar.org/search?q=Explicable%20Reward%20Design%20for%20Reinforcement%20Learning%20Agents&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 158,
+      "text": "[68,69,170,171]. 一种基于自生成样本学习的奖赏塑形方法",
+      "links": [
+        {
+          "text": "[68,69,170,171]. 一种基于自生成样本学习的奖赏塑形方法",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E4%B8%80%E7%A7%8D%E5%9F%BA%E4%BA%8E%E8%87%AA%E7%94%9F%E6%88%90%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%A5%96%E8%B5%8F%E5%A1%91%E5%BD%A2%E6%96%B9%E6%B3%95"
+        }
+      ]
+    },
+    {
+      "paragraph": 159,
+      "text": "[70,106,109,111,112,175,176,213,220]. 基于奖励塑形的强化学习研究与应用",
+      "links": [
+        {
+          "text": "[70,106,109,111,112,175,176,213,220]. 基于奖励塑形的强化学习研究与应用",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E5%9F%BA%E4%BA%8E%E5%A5%96%E5%8A%B1%E5%A1%91%E5%BD%A2%E7%9A%84%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E7%A0%94%E7%A9%B6%E4%B8%8E%E5%BA%94%E7%94%A8"
+        }
+      ]
+    },
+    {
+      "paragraph": 160,
+      "text": "[72,107,181]. 全感知条件下基于奖励塑形的Q-learning算法及仿真",
+      "links": [
+        {
+          "text": "[72,107,181]. 全感知条件下基于奖励塑形的Q-learning算法及仿真",
+          "url": "https://www.cqvip.com/search?k=%E5%85%A8%E6%84%9F%E7%9F%A5%E6%9D%A1%E4%BB%B6%E4%B8%8B%E5%9F%BA%E4%BA%8E%E5%A5%96%E5%8A%B1%E5%A1%91%E5%BD%A2%E7%9A%84Q-learning%E7%AE%97%E6%B3%95%E5%8F%8A%E4%BB%BF%E7%9C%9F"
+        }
+      ]
+    },
+    {
+      "paragraph": 161,
+      "text": "[74,162]. Proximal Policy Optimization Algorithms",
+      "links": [
+        {
+          "text": "[74,162]. Proximal Policy Optimization Algorithms",
+          "url": "https://arxiv.org/abs/1707.06347"
+        }
+      ]
+    },
+    {
+      "paragraph": 162,
+      "text": "[75,163]. Trust Region Policy Optimization",
+      "links": [
+        {
+          "text": "[75,163]. Trust Region Policy Optimization",
+          "url": "https://arxiv.org/abs/1502.05477"
+        }
+      ]
+    },
+    {
+      "paragraph": 163,
+      "text": "[76,82,161]. DeepMind开源强化学习复现工具TRFL",
+      "links": [
+        {
+          "text": "[76,82,161]. DeepMind开源强化学习复现工具TRFL",
+          "url": "https://www.cqvip.com/search?k=DeepMind%E5%BC%80%E6%BA%90%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%A4%8D%E7%8E%B0%E5%B7%A5%E5%85%B7TRFL"
+        }
+      ]
+    },
+    {
+      "paragraph": 164,
+      "text": "[77,164]. Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor",
+      "links": [
+        {
+          "text": "[77,164]. Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor",
+          "url": "https://arxiv.org/abs/1801.01290"
+        }
+      ]
+    },
+    {
+      "paragraph": 165,
+      "text": "[80]. 盐酸米多君的合成",
+      "links": [
+        {
+          "text": "[80]. 盐酸米多君的合成",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E7%9B%90%E9%85%B8%E7%B1%B3%E5%A4%9A%E5%90%9B%E7%9A%84%E5%90%88%E6%88%90"
+        }
+      ]
+    },
+    {
+      "paragraph": 166,
+      "text": "[81]. 7,8-二甲氧基-2,3,4,5-四氢-1H-苯并[c]氮杂卓盐酸盐的简便合成",
+      "links": [
+        {
+          "text": "[81]. 7,8-二甲氧基-2,3,4,5-四氢-1H-苯并[c]氮杂卓盐酸盐的简便合成",
+          "url": "https://s.wanfangdata.com.cn/paper?q=7%2C8-%E4%BA%8C%E7%94%B2%E6%B0%A7%E5%9F%BA-2%2C3%2C4%2C5-%E5%9B%9B%E6%B0%A2-1H-%E8%8B%AF%E5%B9%B6%5Bc%5D%E6%B0%AE%E6%9D%82%E5%8D%93%E7%9B%90%E9%85%B8%E7%9B%90%E7%9A%84%E7%AE%80%E4%BE%BF%E5%90%88%E6%88%90"
+        }
+      ]
+    },
+    {
+      "paragraph": 167,
+      "text": "[87]. A N EXPERIMENTAL STUDY OF TWO PREDICTIVE REINFORCEMENT LEARNING METHODS AND COMPARISON WITH MODEL - PREDICTIVE CONTROL",
+      "links": [
+        {
+          "text": "[87]. A N EXPERIMENTAL STUDY OF TWO PREDICTIVE REINFORCEMENT LEARNING METHODS AND COMPARISON WITH MODEL - PREDICTIVE CONTROL",
+          "url": "https://www.semanticscholar.org/search?q=A%20N%20EXPERIMENTAL%20STUDY%20OF%20TWO%20PREDICTIVE%20REINFORCEMENT%20LEARNING%20METHODS%20AND%20COMPARISON%20WITH%20MODEL%20-%20PREDICTIVE%20CONTROL&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 168,
+      "text": "[88,102,152,210]. Model predictive control and reinforcement learning as two complementary frameworks",
+      "links": [
+        {
+          "text": "[88,102,152,210]. Model predictive control and reinforcement learning as two complementary frameworks",
+          "url": "https://www.semanticscholar.org/search?q=Model%20predictive%20control%20and%20reinforcement%20learning%20as%20two%20complementary%20frameworks&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 169,
+      "text": "[89,153,211]. Mastering Atari, Go, chess and shogi by planning with a learned model",
+      "links": [
+        {
+          "text": "[89,153,211]. Mastering Atari, Go, chess and shogi by planning with a learned model",
+          "url": "https://doi.org/10.1038/s41586-020-03051-4"
+        }
+      ]
+    },
+    {
+      "paragraph": 170,
+      "text": "[90]. Human-level control through deep reinforcement learning",
+      "links": [
+        {
+          "text": "[90]. Human-level control through deep reinforcement learning",
+          "url": "https://doi.org/10.1038/nature14236"
+        }
+      ]
+    },
+    {
+      "paragraph": 171,
+      "text": "[91]. Reinforcement Learning: An Introduction",
+      "links": [
+        {
+          "text": "[91]. Reinforcement Learning: An Introduction",
+          "url": "https://doi.org/10.1109/TNN.1998.712192"
+        }
+      ]
+    },
+    {
+      "paragraph": 172,
+      "text": "[92]. Mastering the game of Go with deep neural networks and tree search",
+      "links": [
+        {
+          "text": "[92]. Mastering the game of Go with deep neural networks and tree search",
+          "url": "https://doi.org/10.1038/nature16961"
+        }
+      ]
+    },
+    {
+      "paragraph": 173,
+      "text": "[93,200,204]. Reinforcement Learning in Robotic Motion Planning by Combined Experience-based Planning and Self-Imitation Learning",
+      "links": [
+        {
+          "text": "[93,200,204]. Reinforcement Learning in Robotic Motion Planning by Combined Experience-based Planning and Self-Imitation Learning",
+          "url": "https://doi.org/10.48550/arXiv.2306.06754"
+        }
+      ]
+    },
+    {
+      "paragraph": 174,
+      "text": "[94,201]. World Model as a Graph: Learning Latent Landmarks for Planning",
+      "links": [
+        {
+          "text": "[94,201]. World Model as a Graph: Learning Latent Landmarks for Planning",
+          "url": "https://arxiv.org/abs/2011.12491"
+        }
+      ]
+    },
+    {
+      "paragraph": 175,
+      "text": "[97,101,159,160]. Curious Meta-Controller: Adaptive Alternation between Model-Based and  Model-Free Control in Deep Reinforcement Learning",
+      "links": [
+        {
+          "text": "[97,101,159,160]. Curious Meta-Controller: Adaptive Alternation between Model-Based and  Model-Free Control in Deep Reinforcement Learning",
+          "url": "https://arxiv.org/abs/1905.01718"
+        }
+      ]
+    },
+    {
+      "paragraph": 176,
+      "text": "[99,100]. Model-Based Bayesian Sparse Sampling for Data Efficient Control",
+      "links": [
+        {
+          "text": "[99,100]. Model-Based Bayesian Sparse Sampling for Data Efficient Control",
+          "url": "https://www.semanticscholar.org/search?q=Model-Based%20Bayesian%20Sparse%20Sampling%20for%20Data%20Efficient%20Control&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 177,
+      "text": "[103,105,110,113,172,174,206,212]. Potential-Based Intrinsic Motivation: Preserving Optimality With  Complex, Non-Markovian Shaping Rewards",
+      "links": [
+        {
+          "text": "[103,105,110,113,172,174,206,212]. Potential-Based Intrinsic Motivation: Preserving Optimality With  Complex, Non-Markovian Shaping Rewards",
+          "url": "https://arxiv.org/abs/2410.12197"
+        }
+      ]
+    },
+    {
+      "paragraph": 178,
+      "text": "[104,173,207]. Reward Shaping in Episodic Reinforcement Learning",
+      "links": [
+        {
+          "text": "[104,173,207]. Reward Shaping in Episodic Reinforcement Learning",
+          "url": "https://doi.org/10.65109/czhk5726"
+        }
+      ]
+    },
+    {
+      "paragraph": 179,
+      "text": "以下来源未被直接引用",
+      "links": []
+    },
+    {
+      "paragraph": 180,
+      "text": "Efficient Planning Under Uncertainty with Incremental Refinement",
+      "links": [
+        {
+          "text": "Efficient Planning Under Uncertainty with Incremental Refinement",
+          "url": "https://www.semanticscholar.org/search?q=Efficient%20Planning%20Under%20Uncertainty%20with%20Incremental%20Refinement&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 181,
+      "text": "Bandit Based Monte-Carlo Planning",
+      "links": [
+        {
+          "text": "Bandit Based Monte-Carlo Planning",
+          "url": "https://doi.org/10.1007/11871842_29"
+        }
+      ]
+    },
+    {
+      "paragraph": 182,
+      "text": "强化学习方法的对比分析",
+      "links": [
+        {
+          "text": "强化学习方法的对比分析",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E7%9A%84%E5%AF%B9%E6%AF%94%E5%88%86%E6%9E%90"
+        }
+      ]
+    },
+    {
+      "paragraph": 183,
+      "text": "Markov Decision Processes: Discrete Stochastic Dynamic Programming",
+      "links": [
+        {
+          "text": "Markov Decision Processes: Discrete Stochastic Dynamic Programming",
+          "url": "https://doi.org/10.2307/2291177"
+        }
+      ]
+    },
+    {
+      "paragraph": 184,
+      "text": "Recent Advances in Hierarchical Reinforcement Learning",
+      "links": [
+        {
+          "text": "Recent Advances in Hierarchical Reinforcement Learning",
+          "url": "https://doi.org/10.1023/A:1022140919877"
+        }
+      ]
+    },
+    {
+      "paragraph": 185,
+      "text": "长江主轴的人居愿景",
+      "links": [
+        {
+          "text": "长江主轴的人居愿景",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E9%95%BF%E6%B1%9F%E4%B8%BB%E8%BD%B4%E7%9A%84%E4%BA%BA%E5%B1%85%E6%84%BF%E6%99%AF"
+        }
+      ]
+    },
+    {
+      "paragraph": 186,
+      "text": "东北地区应成为引进俄罗斯东西伯利亚天然气的首要目标市场",
+      "links": [
+        {
+          "text": "东北地区应成为引进俄罗斯东西伯利亚天然气的首要目标市场",
+          "url": "https://s.wanfangdata.com.cn/paper?q=%E4%B8%9C%E5%8C%97%E5%9C%B0%E5%8C%BA%E5%BA%94%E6%88%90%E4%B8%BA%E5%BC%95%E8%BF%9B%E4%BF%84%E7%BD%97%E6%96%AF%E4%B8%9C%E8%A5%BF%E4%BC%AF%E5%88%A9%E4%BA%9A%E5%A4%A9%E7%84%B6%E6%B0%94%E7%9A%84%E9%A6%96%E8%A6%81%E7%9B%AE%E6%A0%87%E5%B8%82%E5%9C%BA"
+        }
+      ]
+    },
+    {
+      "paragraph": 187,
+      "text": "Experience-based model predictive control using reinforcement learning ∗",
+      "links": [
+        {
+          "text": "Experience-based model predictive control using reinforcement learning ∗",
+          "url": "https://www.semanticscholar.org/search?q=Experience-based%20model%20predictive%20control%20using%20reinforcement%20learning%20%E2%88%97&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 188,
+      "text": "Constrained model predictive control: Stability and optimality",
+      "links": [
+        {
+          "text": "Constrained model predictive control: Stability and optimality",
+          "url": "https://doi.org/10.1016/S0005-1098(99)00214-9"
+        }
+      ]
+    },
+    {
+      "paragraph": 189,
+      "text": "Planning algorithms",
+      "links": [
+        {
+          "text": "Planning algorithms",
+          "url": "https://doi.org/10.1017/CBO9780511546877"
+        }
+      ]
+    },
+    {
+      "paragraph": 190,
+      "text": "Rapidly-exploring random trees : a new tool for path planning",
+      "links": [
+        {
+          "text": "Rapidly-exploring random trees : a new tool for path planning",
+          "url": "https://www.semanticscholar.org/search?q=Rapidly-exploring%20random%20trees%20%3A%20a%20new%20tool%20for%20path%20planning&sort=relevance"
+        }
+      ]
+    },
+    {
+      "paragraph": 191,
+      "text": "Probabilistic roadmaps for path planning in high-dimensional configuration spaces",
+      "links": [
+        {
+          "text": "Probabilistic roadmaps for path planning in high-dimensional configuration spaces",
+          "url": "https://doi.org/10.1109/70.508439"
+        }
+      ]
+    },
+    {
+      "paragraph": 192,
+      "text": "MuJoCo: A physics engine for model-based control",
+      "links": [
+        {
+          "text": "MuJoCo: A physics engine for model-based control",
+          "url": "https://doi.org/10.1109/IROS.2012.6386109"
+        }
+      ]
+    },
+    {
+      "paragraph": 193,
+      "text": "Real-Time Gait Adaptation for Quadrupeds using Model Predictive Control and Reinforcement Learning",
+      "links": [
+        {
+          "text": "Real-Time Gait Adaptation for Quadrupeds using Model Predictive Control and Reinforcement Learning",
+          "url": "https://arxiv.org/abs/2510.20706"
+        }
+      ]
+    },
+    {
+      "paragraph": 194,
+      "text": "Regime-Conditional Stabilisation of LLM-Augmented Cooperative Multi-Agent Reinforcement Learning",
+      "links": [
+        {
+          "text": "Regime-Conditional Stabilisation of LLM-Augmented Cooperative Multi-Agent Reinforcement Learning",
+          "url": "https://arxiv.org/abs/2607.04470"
+        }
+      ]
+    },
+    {
+      "paragraph": 195,
+      "text": "其他来源",
+      "links": []
+    },
+    {
+      "paragraph": 196,
+      "text": "[15,127,144,154]. Where to go next: Learning a Subgoal Recommendation Policy for Navigation in Dynamic Environments",
+      "links": [
+        {
+          "text": "[15,127,144,154]. Where to go next: Learning a Subgoal Recommendation Policy for Navigation in Dynamic Environments",
+          "url": "https://repository.tudelft.nl/file/File_73b7c49b-998c-4cf8-bba8-e6f5c5324f5e"
+        }
+      ]
+    },
+    {
+      "paragraph": 197,
+      "text": "[16,122]. Differentiating MPC with applications in Reinforcement Learning",
+      "links": [
+        {
+          "text": "[16,122]. Differentiating MPC with applications in Reinforcement Learning",
+          "url": "https://d-biswa.github.io/Differentiable-SysCon/slides/diff_MPC_RL.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 198,
+      "text": "[17]. Efficient Model-Based Reinforcement Learning through Optimistic Policy Search and Planning",
+      "links": [
+        {
+          "text": "[17]. Efficient Model-Based Reinforcement Learning through Optimistic Policy Search and Planning",
+          "url": "https://las.inf.ethz.ch/files/curi20_hucrl.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 199,
+      "text": "[20,21,22,84,129,130,131,132,165,193,209]. Reinforcement Learning of the Prediction Horizon in Model Predictive Control",
+      "links": [
+        {
+          "text": "[20,21,22,84,129,130,131,132,165,193,209]. Reinforcement Learning of the Prediction Horizon in Model Predictive Control",
+          "url": "https://torarnj.folk.ntnu.no/lahmpc_nmpc2021_eeb.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 200,
+      "text": "[23,128]. Model Predictive Control and Reinforcement Learning: A Unified Framework Based on Dynamic Programming",
+      "links": [
+        {
+          "text": "[23,128]. Model Predictive Control and Reinforcement Learning: A Unified Framework Based on Dynamic Programming",
+          "url": "https://web.mit.edu/dimitrib/www/Bertsekas_NMPC_IFAC.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 201,
+      "text": "[24,123,157]. BLENDING MPC & VALUE FUNCTION APPROXIMATION FOR EFFICIENT REINFORCEMENT LEARNING",
+      "links": [
+        {
+          "text": "[24,123,157]. BLENDING MPC & VALUE FUNCTION APPROXIMATION FOR EFFICIENT REINFORCEMENT LEARNING",
+          "url": "https://homes.cs.washington.edu/~bboots/files/MPQ-Lambda.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 202,
+      "text": "[26,155]. Differentiable Implicit Layers",
+      "links": [
+        {
+          "text": "[26,155]. Differentiable Implicit Layers",
+          "url": "https://ml4eng.github.io/camera_readys/43.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 203,
+      "text": "[32]. Reinforcement Learning and Markov Decision Processes",
+      "links": [
+        {
+          "text": "[32]. Reinforcement Learning and Markov Decision Processes",
+          "url": "https://www.ai.rug.nl/~mwiering/Intro_RLBOOK.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 204,
+      "text": "[35,36,188,189]. Inverse Reinforcement Learning with Multiple Planning Horizons",
+      "links": [
+        {
+          "text": "[35,36,188,189]. Inverse Reinforcement Learning with Multiple Planning Horizons",
+          "url": "https://rlj.cs.umass.edu/2024/papers/RLJ_RLC_2024_138.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 205,
+      "text": "[55,63,180]. Solving large stochastic planning problems using multiple dynamic abstractions",
+      "links": [
+        {
+          "text": "[55,63,180]. Solving large stochastic planning problems using multiple dynamic abstractions",
+          "url": "http://dspace.mit.edu/bitstream/handle/1721.1/33928/67299107-MIT.pdf?sequence=2"
+        }
+      ]
+    },
+    {
+      "paragraph": 206,
+      "text": "[57,58,62,183,184,221]. Using Classical Planners to Solve Nondeterministic Planning Problems",
+      "links": [
+        {
+          "text": "[57,58,62,183,184,221]. Using Classical Planners to Solve Nondeterministic Planning Problems",
+          "url": "https://www.cs.umd.edu/~nau/papers/kuter2008using.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 207,
+      "text": "[78]. 流数据驱动的多模态网络转发",
+      "links": [
+        {
+          "text": "[78]. 流数据驱动的多模态网络转发",
+          "url": "https://www.telecomsci.com/rc-pub/front/front-article/download/100455472/lowqualitypdf/%E6%B5%81%E6%95%B0%E6%8D%AE%E9%A9%B1%E5%8A%A8%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%BD%91%E7%BB%9C%E8%BD%AC%E5%8F%91.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 208,
+      "text": "[79]. 学习式数据库系统:挑战与机遇",
+      "links": [
+        {
+          "text": "[79]. 学习式数据库系统:挑战与机遇",
+          "url": "http://iir.ruc.edu.cn/~fanj/papers/jos2020.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 209,
+      "text": "[83,142,192]. Temporal Difference Learning for Model Predictive Control",
+      "links": [
+        {
+          "text": "[83,142,192]. Temporal Difference Learning for Model Predictive Control",
+          "url": "https://par.nsf.gov/servlets/purl/10347840"
+        }
+      ]
+    },
+    {
+      "paragraph": 210,
+      "text": "[85,126,143,190,194]. Dynamic Visual Servoing for Fast Robotics Arms",
+      "links": [
+        {
+          "text": "[85,126,143,190,194]. Dynamic Visual Servoing for Fast Robotics Arms",
+          "url": "https://www-sop.inria.fr/members/Philippe.Martinet/publis/phdreport/phdfranco.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 211,
+      "text": "[95,202]. Learned Functions for Perceptually Informed Robot Navigation",
+      "links": [
+        {
+          "text": "[95,202]. Learned Functions for Perceptually Informed Robot Navigation",
+          "url": "https://dspace.mit.edu/bitstream/handle/1721.1/129139/1227504264-MIT.pdf?sequence=1&isAllowed=y"
+        }
+      ]
+    },
+    {
+      "paragraph": 212,
+      "text": "[96,203]. 具身逃脱：机器人在狭窄环境中导航的端到端强化学习",
+      "links": [
+        {
+          "text": "[96,203]. 具身逃脱：机器人在狭窄环境中导航的端到端强化学习",
+          "url": "https://www.xueshuxiangzi.com/downloads/2025_3_6/2503.03208.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 213,
+      "text": "以下来源未被直接引用",
+      "links": []
+    },
+    {
+      "paragraph": 214,
+      "text": "Non-myopic Generation of Language Models for Reasoning and Planning",
+      "links": [
+        {
+          "text": "Non-myopic Generation of Language Models for Reasoning and Planning",
+          "url": "https://openreview.net/pdf?id=OoNazl6T7D"
+        }
+      ]
+    },
+    {
+      "paragraph": 215,
+      "text": "基于多智能体深度强化学习的多星协同任务规划架构与算法研究",
+      "links": [
+        {
+          "text": "基于多智能体深度强化学习的多星协同任务规划架构与算法研究",
+          "url": "https://www.spacejournal.cn/shht/cn/article/pdf/preview/10.19328/j.cnki.2096-8655.2026.01.019.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 216,
+      "text": "Reinforcement learning and planning for autonomous agent navigation: With a focus on sparse reward settings",
+      "links": [
+        {
+          "text": "Reinforcement learning and planning for autonomous agent navigation: With a focus on sparse reward settings",
+          "url": "https://pure.uva.nl/ws/files/162777709/Thesis.pdf"
+        }
+      ]
+    },
+    {
+      "paragraph": 217,
+      "text": "Rollout Total Correlation for Deep Reinforcement Learning",
+      "links": [
+        {
+          "text": "Rollout Total Correlation for Deep Reinforcement Learning",
+          "url": "https://openreview.net/pdf/c0e481a899449381161df01dd8264ac7a82178e0.pdf"
+        }
+      ]
+    }
+  ]
+}

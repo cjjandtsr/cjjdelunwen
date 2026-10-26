@@ -1,0 +1,1286 @@
+===== PDF PAGE 1 =====
+    Emergent Complexity and Zero-shot Transfer via
+                    Unsupervised Environment Design
+
+
+
+
+             Michael Dennis∗, Natasha Jaques∗2, Eugene Vinitsky, Alexandre Bayen,
+                            Stuart Russell, Andrew Critch, Sergey Levine
+            University of California Berkeley AI Research (BAIR), Berkeley, CA, 94704
+                      2Google Research, Brain team, Mountain View, CA, 94043
+                michael_dennis@berkeley.edu,  natashajaques@google.com,
+            <evinitsky,  bayen,  russell,  critch,  svlevine>@berkeley.edu
+
+
+                                                  Abstract
+
+          A wide range of reinforcement learning (RL) problems — including robustness,
+          transfer learning, unsupervised RL, and emergent complexity — require speci-
+          fying a distribution of tasks or environments in which a policy will be trained.
+          However, creating a useful distribution of environments is error prone, and takes
+          a signiﬁcant amount of developer time and effort.  We propose Unsupervised
+          Environment Design (UED) as an alternative paradigm, where developers pro-
+          vide environments with unknown parameters, and these parameters are used to
+          automatically produce a distribution over valid, solvable environments. Existing
+          approaches to automatically generating environments suffer from common failure
+          modes: domainrandomizationcannotgeneratestructureoradaptthedifﬁcultyof
+          the environment to the agent’s learning progress, and minimax adversarial training
+          leads to worst-case environments that are often unsolvable.  To generate struc-
+          tured, solvable environments for our protagonist agent, we introduce a second,
+          antagonist agent that is allied with the environment-generating adversary. The
+          adversaryismotivatedtogenerateenvironmentswhichmaximizeregret,deﬁnedas
+          thedifferencebetweentheprotagonistandantagonistagent’sreturn. Wecallour
+          technique Protagonist Antagonist Induced Regret Environment Design (PAIRED).
+          Our experiments demonstrate that PAIRED produces a natural curriculum of in-
+          creasingly complex environments, and PAIRED agents achieve higher zero-shot
+          transfer performance when tested in highly novel environments.
+
+1   Introduction
+
+Many reinforcement learning problems require designing a distribution of tasks and environments
+thatcan beusedto evaluateandtrain effective policies. Thisis truefora diverse arrayofmethods
+includingtransferlearning(e.g.,[2,50,34,43]),robustRL(e.g.,[4,16,30]),unsupervisedRL(e.g.,
+[15]),and emergentcomplexity(e.g.,[40,47,48]). For example,suppose wewishto trainarobot
+in simulation to pick up objects from a bin in a real-world warehouse. There are many possible
+conﬁgurationsof objects,including objectsbeingstacked ontop ofeachother. We maynotknowa
+priori the typical arrangement of the objects, but can naturally describe the simulated environment as
+having a distribution over the object positions.
+However, designing an appropriate distribution of environments is challenging. The real world is
+complicated, and correctly enumerating all of the edge cases relevant to an application could be
+impracticalor impossible. Evenif thedeveloper oftheRL methodknewevery edgecase,specifying
+this distribution could take asigniﬁcant amount of time andeffort. We wantto automate this process.
+
+   ∗Equal contribution
+
+
+34th Conference on Neural Information Processing Systems (NeurIPS 2020), Vancouver, Canada.
+
+===== PDF PAGE 2 =====
+  (a)DomainRandomization      (b) Minimax Adversarial        (c) PAIRED (ours)           (d) Transfer task
+
+Figure 1: An agent learns to navigate an environment where the position of the goal and obstacles is
+an underspeciﬁed parameter. If trained using domain randomization to randomly choose the obstacle
+locations (a), the agent will fail to generalize to a speciﬁc or complex conﬁguration of obstacles,
+such as a maze (d). Minimax adversarial training encourages the adversary to create impossible
+environments, as shown in (b). In contrast, Protagonist Antagonist Induced Regret Environment
+Design (PAIRED), trains the adversary based on the difference between the reward of the agent
+(protagonist) and the reward of a second, antagonist agent. Because the two agents are learning
+together, theadversaryis motivated tocreatea curriculumof difﬁcultbut achievable environments
+tailoredtotheagents’currentlevelofperformance(c). PAIREDfacilitateslearningcomplexbehaviors
+andpoliciesthatperformwellunderzero-shottransfertochallengingnewenvironmentsattesttime.
+
+Inorderforthisautomationtobeuseful,theremustbeawayofspecifyingthedomainofenvironments
+in which the policy should be trained, without needing to fully specify the distribution.  In our
+approach, developers only need to supply an underspeciﬁed environment: an environment which
+has free parameters which control its features and behavior.  For instance, the developer could
+give a navigation environment in which the agent’s objective is to navigate to the goal and the
+free parameters are the positions of obstacles.  Our method will then construct distributions of
+environmentsbyproviding adistributionofsettingsofthesefreeparameters; inthiscase,positions
+for those blocks. We call this problem of taking the underspeciﬁed environment and a policy, and
+producing an interesting distribution of fully speciﬁed environments in which that policy can be
+furthertrained UnsupervisedEnvironmentDesign(UED).Weformalize unsupervisedenvironment
+designinSection3,providingacharacterizationofthespaceofpossibleapproacheswhichsubsumes
+priorwork. AftertrainingapolicyinadistributionofenvironmentsgeneratedbyUED,wearriveat
+an updatedpolicy and canuse UED togenerate more environments in whichthe updated policycan
+be trained. In this way, an approach for UED naturally gives rise to an approach for Unsupervised
+CurriculumDesign(UCD).Thismethodcanbeusedtogeneratecapablepoliciesthroughincreasingly
+complex environments targeted at the policy’s current abilities.
+Two prior approaches to UED are domain randomization, which generates fully speciﬁed environ-
+ments uniformly randomly regardless of the current policy (e.g., [17, 34, 43]), and adversarially
+generating environments to minimize the reward of the current policy; i.e. minimax training (e.g.,
+[30,27,45,20]). Whileeachoftheseapproacheshavetheirplace,theycaneachfailtogenerateany
+interestingenvironments. InFigure1weshowexamplesofmazenavigationenvironmentsgenerated
+by each of these techniques. Uniformly random environments will often fail to generate interesting
+structures;inthemazeexample,itwillbeunlikelytogeneratewalls(Figure1a). Ontheotherextreme,
+a minimax adversary is incentivized to make the environments completely unsolvable, generating
+mazes with unreachable goals (Figure 1b). In many environments, both of these methods fail to
+generatestructuredandsolvableenvironments. Wepresentamiddleground,generatingenvironments
+whichmaximizeregret,whichproducesdifﬁcultbutsolvabletasks(Figure1c). Ourresultsshowthat
+optimizingregretresultsinagentsthatareabletoperformdifﬁculttransfertask(Figure1d),which
+are not possible using the other two techniques.
+Weproposeanoveladversarialtrainingtechniquewhichnaturallysolvestheproblemoftheadversary
+generatingunsolvableenvironmentsbyintroducinganantagonistwhichisalliedwiththeenvironment-
+generatingadversary. Forthesakeofclarity,werefertotheprimaryagentwearetryingtotrainas
+the protagonist. Theenvironmentadversary’s goal isto designenvironments inwhich theantagonist
+achieveshighrewardandtheprotagonistreceiveslowreward. Iftheadversarygeneratesunsolvable
+environments,the antagonist andprotagonist would performthe same and theadversary wouldget a
+scoreofzero,butiftheadversaryﬁndsenvironmentstheantagonistsolvesandtheprotagonistdoes
+notsolve,theadversaryachievesapositivescore. Thus,theenvironmentadversaryisincentivizedto
+
+
+                                                        2
+
+===== PDF PAGE 3 =====
+create challenging butfeasibleenvironments, in whichthe antagonistcan outperformthe protagonist.
+Moreover,astheprotagonistlearns tosolvesthesimpleenvironments,theantagonistmustgenerate
+morecomplexenvironmentstomaketheprotagonistfail,increasingthecomplexityofthegenerated
+tasks and leading to automatic curriculum generation.
+WeshowthatwhenbothteamsreachaNashequilibrium,thegeneratedenvironmentshavethehighest
+regret, in which the performance of the protagonist’s policy most differs from that of the optimal
+policy.  Thus, we call our approach Protagonist Antagonist Induced Regret Environment Design
+(PAIRED). Our results demonstrate that compared to domain randomization, minimax adversarial
+training, and population-based minimax training (as in Wang et al. [47]), PAIRED agents learn
+more complex behaviors, and have higher zero-shot transfer performance in challenging, novel
+environments.
+Insummary,ourmaincontributionsare: a)formalizingtheproblemofUnsupervisedEnvironment
+Design (UED) (Section 3), b) introducing the PAIRED Algorithm (Section 4), c) demonstrating
+PAIREDleadstomorecomplexbehaviorandmoreeffectivezero-shottransfertonewenvironments
+thanexistingapproachestoenvironmentdesign(Section5),andd)characterizingsolutionstoUED
+and connecting the framework to classical decision theory (Section 3).
+
+2   Related Work
+
+WhenproposinganapproachtoUEDweareessentiallymakingadecisionaboutwhichenvironments
+to prioritize during training, based on an underspeciﬁed environment set provided by the designer.
+Makingdecisions insituationsof extremeuncertaintyhas beenstudiedin decisiontheoryunder the
+name“decisionsunderignorance”[ 29]andisinfactdeeplyconnectedtoourwork,aswedetailin
+Section 3. Milnor [26] characterize several of these approaches; usingMilnor’s terminology, we see
+domainrandomization[17]as“theprincipleofinsufﬁcientreason”proposedbyLaplace,minimax
+adversarial training [20] as the “maximin principle” proposed by Wald [ 46], and our approach,
+PAIRED,as“minimaxregret”proposedbySavage[ 35]. Savage’sapproachwasbuiltintoatheoryof
+making sequential decisions which minimize worst case regret [33, 21], which eventually developed
+into modern literature on minimizing worst case regret in bandit settings [6].
+Multi-agenttraininghasbeenproposedasawaytoautomaticallygeneratecurriculainRL[22,23,14].
+Competition can drive the emergence of complex skills, even some that the developer did not
+anticipate [5, 13]. Asymmetric Self Play (ASP) [40] trains a demonstrator agent to complete the
+simplest possible task that a learner cannot yet complete, ensuring that the task is, in principle,
+solvable.  In contrast, PAIRED is signiﬁcantly more general because it generates complex new
+environments, rather than trajectories within an existing, limited environment. Campero et al. [7]
+studycurriculumlearninginasimilarenvironmenttotheoneunderinvestigationinthispaper. They
+use a teacher to propose goal locations to which theagent must navigate, and the teacher’s reward
+is computed based on whether the agent takes more or less steps than a threshold value. To create
+a curriculum, the threshold is linearly increased over the course of training. POET [47, 48] uses
+a population of minimax (rather than minimax regret) adversaries to generate the terrain for a 2D
+walker. However,POET[47]requiresgeneratingmanynewenvironments, testingallagentswithin
+eachone,anddiscardingenvironmentsbasedonamanuallychosenrewardthreshold,whichwastesa
+signiﬁcant amount of computation. In contrast, our minimax regret approach automatically learns
+to tune the difﬁculty of the environment by comparing the protagonist and antagonist’s scores. In
+addition, these works do not investigate whether adversarial environment generation can provide
+enhanced generalization when agents are transferred to new environments, as we do in this paper.
+Environment design has also beeninvestigatedwithin the symbolic AI community. Theproblem of
+modifying an environment to inﬂuence an agent’s decisions is analyzed in Zhang et al. [52], and was
+laterextendedthroughtheconceptofValue-basedPolicyTeaching[51]. Kerenetal.[18,19]usea
+heuristic best-ﬁrst search to redesign an MDP to maximize expected value.
+WeevaluatedPAIREDintermsofitsabilitytolearnpoliciesthattransfertounseen,hand-designed
+test environments. One approach to produce policies which can transfer between environments is
+unsupervised RL (e.g., [36, 38]).  Gupta et al. [15] propose an unsupervised meta-RL technique
+thatcomputesminimaxregretagainstadiversetaskdistributionlearnedwiththeDIAYNalgorithm
+[10].  However, this algorithm does not learn to modify the environment and does not adapt the
+task distribution based on the learning progress of the agent.  PAIRED provides a curriculum of
+
+
+                                                        3
+
+===== PDF PAGE 4 =====
+increasinglydifﬁcultenvironmentsandallowsustoprovideatheoreticalcharacterizationofwhen
+minimax regret should be preferred over other approaches.
+The robust control literature has made use of both minimax and regret objectives. Minimax training
+has been used in the controls literature [39, 3, 53], the Robust MDP literature [4, 16, 28, 41], and
+morerecently,throughtheuseofadversarialRLtraining[30,45,27]. Unlikeouralgorithm,minimax
+adversaries have no incentive to guide the learning progress of the agent and can make environments
+arbitrarily hardor unsolvable. Ghavamzadeh et al. [12] minimize theregret of amodel-based policy
+againstasafebaselinetoensuresafepolicyimprovement. ReganandBoutilier[31,32]studyMarkov
+Decision Processes (MDPs) in which the reward function is not fully speciﬁed, and use minimax
+regretasanobjectivetoguidetheelicitationofuserpreferences. Whiletheseapproachesusesimilar
+theoreticaltechniques toours,theyuseanalytical solutionmethodsthat donotscale tothetype of
+deep learningapproach used inthis paper, donot attempt tolearn to generateenvironments, and do
+not consider automatic curriculum generation.
+Domain randomization (DR) [17] is an alternative approach in which a designer speciﬁes a set of
+parameterstowhichthepolicyshouldberobust[34,43,42]. Theseparametersarethenrandomly
+sampled for each episode, and a policy is trained that performs well on average across parameter
+values. However,thisdoesnotguaranteegoodperformanceonaspeciﬁc,challengingconﬁguration
+of parameters. While DR has had empirical success [1], it requires careful parameterization and
+doesnotautomaticallytailorgeneratedenvironmentstothecurrentproﬁciencyofthelearningagent.
+Mehta et al. [25] propose to enhance DR by learning which parameter values lead to the biggest
+decrease in performance compared to a reference environment.
+
+3   Unsupervised Environment Design
+
+The goal of this work is to construct a policy that performs well across a large set of environments.
+We train policies by starting with an initially random policy, generating environments based on
+that policy to best suit its continued learning, train that policy in the generated environments, and
+repeat until the policy converges or we run out of resources. We then test the trained policies in
+a set of challenging transfer tasks not provided during training. In this section, we will focus on
+the environment generation step, which we call unsupervised environment design (UED). We will
+formallydeﬁneUEDastheproblemofusinganunderspeciﬁedenvironmenttoproduceadistribution
+over fullyspeciﬁedenvironments,whichsupportsthe continuedlearningofaparticularpolicy. Todo
+this, wemust formallydeﬁne fullyspeciﬁed and underspeciﬁedenvironments, and describehow to
+create a distribution of environments using UED. We will end this section by proposing minimax
+regret as a novel approach to UED.
+We will model our fully speciﬁed environments with a Partially Observable Markov Decision
+Process(POMDP),which isatuple⟨A,O,S,T,I,R,γ⟩ whereAisaset ofactions,O isaset of
+observations,S is a set of states,T  :S×A→∆(S) is a transition function,I :S→O is an
+observation(orinspection)function,R :S→R,andγ isadiscountfactor. Wewilldeﬁnetheutility
+asU(π) =∑Ti=0rtγt, whereT is a horizon.
+To model an underspeciﬁed environment, we propose the Underspeciﬁed Partially Observable
+MarkovDecisionProcess(UPOMDP)asatupleM =⟨A,O,Θ,SM,TM,IM,RM,γ⟩. Theonly
+difference between a POMDP and a UPOMDP is that a UPOMDP has a set Θ representing the
+free parameters of the environment, which can be chosen to be distinct at each time step and are
+incorporated into the transition function asTM :S×A×Θ→∆(S). Thus a possible setting of
+theenvironmentis given bysome trajectoryof environmentparameters⃗θ. Asan exampleUPOMDP,
+considerasimulationofarobotinwhich⃗θ areadditionalforceswhichcanbeappliedateachtime
+step. A setting of the environment⃗θ can be naturally combined with the underspeciﬁed environment
+M to give a speciﬁc POMDP, which we will denoteM⃗θ.
+In UED,we want to generate adistributionof environmentsin which tocontinue training a policy.
+We would like to curate this distribution of environments to best support the continued learning of a
+particularagentpolicy. Assuch,wecanproposeasolutiontoUEDbyspecifyingsomeenvironment
+policy, Λ : Π→∆(ΘT) where Π is the set of possible policies and ΘT  is the set of possible
+sequences of environment parameters. In Table 2, we see a few examples of possible choices for
+environmentpolicies,aswellashowtheycorrespondtopreviousliterature. Eachofthesechoicesalso
+
+
+                                                       4
+
+===== PDF PAGE 5 =====
+                                  Table 1: Example Environment Policies
+ UED Technique                                    Environment Policy                                  Decision Rule
+ Domain Randomization [17, 34, 43]    ΛDR(π) =U(ΘT)                                   Insufﬁcient Reason
+ Minimax Adversary [30, 45, 27]         ΛM(π) = argmin
+                                                            ⃗θ∈ΘT{U⃗θ(π)}                      Maximin
+ PAIRED (ours)                                  ΛMR(π) ={θπ :cπvπ, ˜Dπ : otherwise}    Minimax Regret
+Table 2: The environmentpolicies corresponding to the three techniquesfor UED which we study,
+along with their corresponding decision rule. WhereU(X) is a uniform distribution over X, ˜Dπ is
+a baseline distribution,   θπ is the trajectory which maximizes regret ofπ,vπ is the value above the
+baselinedistributionthatπ achievesonthattrajectory,andcπ isthenegativeoftheworst-caseregret
+ofπ, normalized so thatcπvπ is between0 and1. This is described in full in the appendix.
+
+
+
+have a corresponding decision rule used for making decisions under ignorance [29]. Each decision
+rulecanbeunderstoodasamethodforchoosingapolicygivenanunderspeciﬁedenvironment. This
+connectionbetweenUEDanddecisionsunderignoranceextendsfurtherthanthesefewdecisionrules.
+IntheAppendixwewillmakethisconnectionconcreteandshowthat,underreasonableassumptions,
+UED and decisions under ignorance are solving the same problem.
+PAIRED can be seen as an approach for approximating the environment policy, ΛMR, which
+corresponds to the decision rule minimax regret.  One useful property of minimax regret, which
+is not true of domain randomization or minimax adversarial training, is that whenever a task has
+a sufﬁciently well-deﬁned notion of success and failure it chooses policies which succeed.  By
+minimizing the worst case difference between what is achievable and what it achieves, whenever
+there is a policy which ensures success, it will not fail where others could succeed.
+Theorem 1.  Suppose that all achievable rewards fall into one of two class of outcomes labeled
+SUCCESS giving rewards in [Smin,Smax] andFAILURE giving rewards in [Fmin,Fmax], such
+thatFmin≤Fmax<Smin≤Smax. Inaddition assumethatthe rangeof possiblerewards ineither
+class is smaller than the difference between the classes so we haveSmax−Smin<Smin−Fmax
+andFmax−Fmin<Smin−Fmax. Furthersupposethatthereisapolicyπ whichsucceedsonany
+⃗θ whenever success is possible. Then minimax regret will choose a policy which has that property.
+
+Theproofofthisproperty,andexamplesshowinghowminimaxanddomainrandomizationfailto
+havethisproperty,areintheAppendix. Inthenextsectionwewillformallyintroduce PAIREDasa
+method for approximating the minimax regret environment policy,ΛMR.
+
+4   Protagonist Antagonist Induced Regret Environment Design (PAIRED)
+
+Here, we describe how to approximate minimax regret, and introduce our proposed algorithm,
+Protagonist Antagonist Induced Regret Environment Design (PAIRED). Regret is deﬁned as the
+differencebetweenthepayoffobtainedforadecision,andtheoptimalpayoffthatcouldhavebeen
+obtained in the same setting with a different decision. In order to approximate regret, we use the
+differencebetweenthepayoffsoftwoagentsactingunderthesameenvironmentconditions. Assume
+we are given a ﬁxed environment with parameters⃗θ, a ﬁxed policy for the protagonist agent,πP, and
+wethentrain asecondantagonistagent,πA,to optimality inthisenvironment. Then, thedifference
+between the reward obtained by the antagonist,U⃗θ(πA), and the protagonist,U⃗θ(πP), is the regret:
+
+                               REGRET⃗θ(πP,πA)=U⃗θ(πA)−U⃗θ(πP)                                     (1)
+In PAIRED, we introduce an environment adversary that learns to control the parameters of the
+environment,⃗θ, tomaximize theregretof theprotagonist against theantagonist. Foreach training
+batch,theadversarygeneratestheparametersoftheenvironment,⃗θ∼ ˜Λ,whichbothagentswillplay.
+The adversary and antagonist are trained to maximize the regret as computed in Eq. 1, while the
+protagonistlearnstominimizeregret. ThisprocedureisshowninAlgorithm1. ThecodeforPAIRED
+and our experiments is available in open source at https://github.com/google-research/
+
+
+                                                        5
+
+===== PDF PAGE 6 =====
+google-research/tree/master/social_rl/.  We note that our approach is agnostic to the
+choice of RL technique used to optimize regret.
+To improve the learning signal for the adversary, once the adversary creates an environment, both
+the protagonist and antagonist generate several trajectories within that same environment.  This
+allowsforamoreaccurateapproximationtheminimaxregretasthedifferencebetweenthemaximum
+rewardoftheantagonistandtheaveragerewardoftheprotagonistoveralltrajectories: REGRET≈
+maxτAU⃗θ(τA)−EτP[U⃗θ(τP)]. Wehavefoundthisreducesnoiseintherewardandmoreaccurately
+rewards the adversary for building difﬁcult but solvable environments.
+
+Algorithm 1: PAIRED.
+Randomly initialize ProtagonistπP, AntagonistπA, and Adversary ˜Λ;
+while not converged do
+    Use adversary to generate environment parameters:⃗θ∼ ˜Λ. Use to create POMDPM⃗θ.
+    Collect Protagonist trajectoryτP inM⃗θ. Compute:U⃗θ(πP) =∑Ti=0rtγt
+    Collect Antagonist trajectoryτA inM⃗θ. Compute:U⃗θ(πA) =∑Ti=0rtγt
+    Compute: REGRET⃗θ(πP,πA) =U⃗θ(πA)−U⃗θ(πP)
+    Train Protagonist policyπP with RL update and rewardR(τP) =−REGRET
+    Train Antagonist policyπA with RL update and rewardR(τA) = REGRET
+    Train Adversary policy ˜Λ with RL update and rewardR(τ˜Λ) = REGRET
+end
+
+Ateachtrainingstep,theenvironmentadversarycanbeseenassolvingaUEDproblemforthecurrent
+protagonist, generating a curated set of environments in which it can learn. While the adversary
+ismotivatedtogeneratetasksbeyondtheprotagonist’sabilities,theregretcanactuallyincentivize
+creating the easiest task on which the protagonist fails but the antagonist succeeds. This is because if
+the reward functioncontains any bonus forsolving thetask moreefﬁciently (e.g. in fewer timesteps),
+theantagonistwillgetmorerewardifthetaskiseasier. Thus,theadversarygetsthemostregretfor
+proposingthe easiesttask whichis outsidetheprotagonist’sskill range. Thus,regretincentivizesthe
+adversarytoproposetaskswithintheagent’s“zoneofproximaldevelopment”[ 8]. Astheprotagonist
+learnstosolvethesimpletasks,theadversaryisforcedtoﬁndhardertaskstoachievepositivereward,
+increasing the complexity of the generated tasks and leading to automatic curriculum generation.
+Thoughmulti-agent learningmaynotalwaysconverge[24],we canshow that,ifeachteam inthis
+game ﬁnds an optimal solution, the protagonist would be playing a minimax regret policy.
+Theorem 2. Let(πP,πA,⃗θ) be in Nash equilibrium and the pair(πA,⃗θ) be jointly a best response
+toπP. ThenπP∈ argmin
+                      πP∈ΠP{   argmaxπA,⃗θ∈ΠA×ΘT{REGRET⃗θ(πP,πA)}}.
+
+Proof. Let (πP,πA,⃗θ) be in Nash equilibria and the pair (πA,⃗θ) is jointly a best response toπP.
+Then we can consider(πA,⃗θ) as one player with policy which we will write asπA+⃗θ∈ Π×ΘT.
+ThenπA+⃗θ is in a zero sum game withπP, and the condition that the pair(πA,⃗θ) is jointly a best
+responsetoπP isequivalenttosayingthatπA+⃗θ isabestresponsetoπP. ThusπP andπA+⃗θ forma
+Nash equilibria of a zero sum game, and the minimax theorem applies. Since the reward in this game
+is deﬁned by REGRET we have:
+
+                           πP∈ argmin
+                                   πP∈ΠP{  argmaxπA+⃗θ∈Π×ΘT{REGRET⃗θ(πP,πA)}}
+
+By the deﬁnition ofπA+⃗θ this proves the protagonist learns the minimax regret policy.
+
+TheproofgivesusreasontobelievethattheiterativePAIREDtrainingprocessinAlgorithm1can
+produce minimax regretpolicies. In Appendix Dwe show that if theagents are in Nash equilibrium,
+without the coordination assumption, the protagonist will perform at least as well as the antagonist
+in every parameterization, and Appendix E.1providesempirical results for alternative methods for
+approximatingregretwhichbreakthecoordinationassumption. Inthefollowingsections,wewill
+
+
+                                                       6
+
+===== PDF PAGE 7 =====
+show that empirically, policies trained with Algorithm 1 exhibit good performance and transfer, both
+in generating emergent complexity and in training robust policies.
+
+5   Experiments
+
+Theexperimentsinthissectionfocuson assessing whethertrainingwithPAIREDcanincreasethe
+complexity of agents’ learned behavior, and whether PAIRED agents can achieve better or more
+robustperformancewhentransferredtonovelenvironments. Tostudythesequestions,weﬁrstfocus
+on the navigation tasks shown in Figure 1. Section 5.2 presents results in continuous domains.
+
+5.1   Partially Observable Navigation Tasks
+
+Here we investigate navigation tasks (based on [9]), in which an agent must explore to ﬁnd a
+goal (green square in Figure 1) while navigating around obstacles. The environments are partially
+observable; the agent’s ﬁeld of view is shown as a blue shaded area in the ﬁgure. To deal with the
+partial observability, weparameterize theprotagonist and antagonist’spolicies usingrecurrent neural
+networks (RNNs). All agents are trained with PPO [37]. Further details about network architecture
+and hyperparameters are given in Appendix F.
+We train adversaries that learn to build these environments by choosing the location of the obstacles,
+thegoal,andthestartinglocationoftheagent. Theadversary’sobservationsconsistofafullyobserved
+view of the environment state, the current timestept, and a random vectorz∼N(0,I),z∈ RD
+sampled for each episode.  At each timestep, the adversary outputs the location where the next
+object will be placed; at timestep 0 it places the agent, 1 the goal, and every step afterwards an
+obstacle.  Videos of environments being constructed and transfer performance are available at
+https://www.youtube.com/channel/UCI6dkF8eNrCz6XiBJlV9fmw/videos.
+
+5.1.1   Comparison to Prior Methods
+Tocomparetopriorworkthatusespureminimaxtraining[30,45,27](ratherthanminimaxregret),
+weusethesameparameterizationoftheenvironmentadversaryandprotagonist,butsimplyremove
+the antagonist agent. The adversary’s reward isR(Λ) =−EτP[U(τP)]. While a direct comparison
+to POET [47] is challenging since many elements of the POET algorithm are speciﬁc to a 2D walker,
+the main algorithmic distinction between POET and minimax environment design is maintaining
+a population of environment adversaries and agents that are periodically swapped with each other.
+Therefore, we also employ a Population Based Training (PBT) minimax technique in which the
+agent and adversary are sampled from respective populations for each episode. This baseline is our
+closest approximation of POET [47]. To apply domain randomization, we simply sample the(x,y)
+positions of theagent, goal, and blocks uniformly atrandom. We sweep shared hyperparametersfor
+allmethodsequally. Parametersfortheemergentcomplexitytaskareselectedtomaximizethesolved
+path length, and parameters for the transfer task are selected using a set of validation environments.
+Details are given in the appendix.
+
+5.1.2   Emergent Complexity
+Priorwork[47,48]focusedondemonstratingemergentcomplexityastheprimarygoal,arguingthat
+automatically learning complex behaviors is key to improving the sophistication of AI agents. Here,
+we track the complexity of the generated environments and learned behaviors throughout training.
+Figure 2 shows the number of blocks (a), distance to the goal (b), and the length of the shortest path
+to the goal (c) in the generated environments. The solved path length (d) tracks the shortest path
+length ofa mazethat theagent hascompleted successfully, andcan beconsidered ameasure of the
+complexity of the agent’s learned behavior.
+Domain randomization (DR) simply maintains environment parameters within a ﬁxed range, and
+cannot continueto proposeincreasingly difﬁculttasks. Techniques basedon minimaxtraining are
+purelymotivatedtodecreasetheprotagonist’sscore,andassuchdonotenabletheagenttocontinue
+learning;bothminimaxandPBTobtainsimilarperformancetoDR.Incontrast,PAIREDcreatesa
+curriculum of environments that begin with shorter paths and fewer blocks, but gradually increase in
+complexity based on both agents’ current level of performance. As shown in Figure 2 (d), this allows
+PAIRED protagonists to learn to solve more complex environments than the other two techniques.
+
+
+                                                         7
+
+===== PDF PAGE 8 =====
+   (a) Number of blocks         (b) Distance to goal       (c) Passable path length     (d) Solved path length
+Figure2: Statisticsofgeneratedenvironmentsintermsofthenumberofblocks(a),distancefromthe
+startpositiontothegoal(b),andtheshortestpathlengthbetweenthestartandthegoal,whichiszero
+ifthereisnopossiblepath(c). Theﬁnalplotshowsagentlearningintermsoftheshortestpathlength
+ofamazesuccessfullysolvedbytheagents. Eachplotismeasuredoverﬁverandomseeds;errorbars
+area95%CI.Domainrandomization(DR)cannottailorenvironmentdesigntotheagent’sprogress,
+sometricsremainﬁxedorvaryrandomly. Minimaxtraining(evenwithpopulationsofadversaries
+andagents)hasnoincentivetoimproveagentperformance,sothelengthofmazesthatagentsare
+able to solve remains similar to DR (d). In contrast, PAIRED is the only method that continues to
+increase the passable path length to create more challenging mazes (c), producing agents that solve
+more complex mazes than the other techniques (d).
+
+
+
+
+
+
+
+
+
+
+
+
+
+      (a) Empty       (b) 50 Blocks      (c) 4 Rooms       (d) 16 Rooms      (e) Labyrinth        (f) Maze
+Figure 3: Percent successful trials in environments used to test zero-shot transfer, out of 10 trials
+eachfor5randomseeds. Theﬁrsttwo(a,b)simplytestout-of-distributiongeneralizationtoasetting
+of the number of blocks parameter.  Four Rooms (c) tests within-distribution generalization to a
+speciﬁc conﬁguration that isunlikely tobe generatedthrough randomsampling. The 16Rooms (d),
+Labyrinthenvironment(e)andMaze(f)environmentsweredesignedbyahumantobechallenging
+navigation tasks. The bar charts show the zero-shot transfer performance of models trained with
+domain randomization(DR), minimax, or PAIRED in each ofthe environments. Errorbars show a
+95% conﬁdenceinterval. Astask difﬁculty increases,only PAIRED retains itsability to generalizeto
+the transfer tasks.
+
+
+5.1.3   Zero-Shot Transfer
+In order for RL algorithms to be useful in the real world, they will need to generalize to novel
+environment conditions that their developer was not able to foresee. Here, we test the zero-shot
+transferperformanceonaseriesofnovelnavigationtasksshowninFigure3. Theﬁrsttwotransfer
+tasks simply use aparameter setting for thenumber ofblocks thatis outof thedistribution (OOD)
+of the training environments experienced by the agents (analogous to the evaluation of [30]). We
+expectthesetransferscenariostobeeasyforallmethods. Wealsoincludeamorestructuredbutstill
+verysimpleFourRoomsenvironment,wherethenumberofblocksiswithindistribution,butinan
+unlikely (though simple) conﬁguration. As seen in the ﬁgure, this can usually be completed with
+nearly straight-line paths to the goal. To evaluate difﬁcult transfer settings, we include the 16 rooms,
+Labyrinth,and Mazeenvironments,whichrequire traversing amuchlonger andmorechallenging
+pathto thegoal. Thispresentsa muchmorechallenging transferscenario,sincethe agentmustlearn
+meaningful navigation skills to succeed in these tasks.
+Figure 3 shows zero-shot transfer performance. As expected, all methods transfer well to the ﬁrst
+twoenvironments,althoughtheminimaxadversaryissigniﬁcantlyworsein50Blocks. Varyingthe
+number of blocks may be a relatively easy transfer task, since partial observability has been shown to
+
+
+                                                        8
+
+===== PDF PAGE 9 =====
+                 (a) Reward                      (b) Minimax Adversarial                   (c) PAIRED
+
+Figure 4: Training curves for PAIRED and minimax adversaries on the MuJoCo hopper, where
+adversary strength is scaled up over the ﬁrst 300 iterations (a). While both adversaries reduce the
+agent’s reward by making the task more difﬁcult, the minimax adversary is incentivized to drive
+the agent’s reward as low as possible. In contrast, the PAIRED adversary must maintain feasible
+parameters. When varying force and mass are applied at test time, the minimax policy performs
+poorly in cumulative reward (b), while PAIRED is more robust (c).
+
+
+improve generalizationperformance in grid-worlds[49]. As theenvironments increase indifﬁculty,
+so does the performance gap between PAIRED and the prior methods. In 16 Rooms, Labyrinth,
+and Maze,PAIRED shows a large advantage over the othertwo methods. In theLabyrinth (Maze)
+environment,PAIREDagents areableto solvethe taskin 40%(18%) oftrials. Incontrast, minimax
+agents solve 10% (0.0%) of trials, and DR agents solve 0.0%. The performanceof PAIRED on these
+taskscan beexplainedbythe complexityofthegenerated environments;asshown inFigure1c, the
+ﬁeld ofview of theagent (shaded blue) lookssimilar to what it might encounter ina maze, although
+the idea of a maze was never explicitly speciﬁed to the agent, and this conﬁguration blocks isvery
+unlikelyto begenerated randomly. Theseresults suggestthatPAIRED trainingmay bebetter ableto
+prepare agents for challenging, unknown test settings.
+
+5.2   Continuous Control Tasks
+
+To compare more closely with prior work on minimax adversarial RL [30, 45], we construct an
+additional experiment in a modiﬁed version of the MuJoCo hopper domain [44]. Here, the adversary
+outputsadditionaltorquestobeappliedtoeachjointateachtimestep,⃗θ. WebenchmarkPAIRED
+againstunconstrained minimax training. To make minimax training feasible, thetorque theadversary
+canapplyislimitedtobeaproportionoftheagent’sstrength,andisscaledfrom0.1to1.0overthe
+course of 300 iterations. After this point, we continue training with no additional mechanisms for
+constraining the adversary. We pre-train the agents for 100 iterations, then test transfer performance
+to a set of mass and friction coefﬁcients. All agents are trained with PPO [37] and feed-forward
+policies.
+Figure 4a shows the rewards throughout training.  We observe that after the constraints on the
+adversariesare removedafter300 iterations,thefull-strengthminimaxadversary hastheabilityto
+makethetaskunsolvable, sotheagent’srewardisdriventozerofortherestoftraining. Incontrast,
+PAIRED is able to automatically adjust the difﬁculty of the adversary to ensure the task remains
+solvable. Asexpected,Figure4showsthatwhenconstraintsontheadversaryarenotcarefullytuned,
+policies trained with minimax fail to learn and generalize to unseen environment parameters. In
+contrast, PAIRED agents aremore robust to unseenenvironment parameters, even withoutcareful
+tuning of the forces that the adversary is able to apply.
+
+6   Conclusions
+
+We develop the framework of Unsupervised Environment Design (UED), and show its relevance to a
+rangeofRLtasks,fromlearningincreasinglycomplexbehaviorormorerobustpolicies,toimproving
+generalization to novel environments. In environments like games, for which the designer has an
+accurate model of the test environment, or can easily enumerate all of the important cases, using
+UEDmaybeunnecessary. However,UEDcouldprovideanapproachtobuildingAIsystemsinmany
+of the ambitious uses of AI in real-world settings which are difﬁcult to accurately model.
+
+
+                                                         9
+
+===== PDF PAGE 10 =====
+We have shown that tools from the decision theory literature can be used to characterize existing
+approaches to environment design, and motivate a novel approach based on minimax regret. Our
+algorithm, which we call Protagonist Antagonist Induced Regret Environment Design (PAIRED),
+avoids common failure modesof existing UED approaches, andis able to generate acurriculum of
+increasinglycomplexenvironments. OurresultsdemonstratethatPAIREDagentslearnmorecomplex
+behaviors, and achieve higher zero-shot transfer performance in challenging, novel environments.
+
+Broader Impact
+
+Unsupervised environment design is a technique with a wide range of applications, including un-
+supervised RL, transfer learning, and Robust RL. Each of these applications has the chance of
+dramatically improving the viability of real-world AI systems. Real-world AI systems could have
+a variety of positive impacts, reducing the possibility forcostly human error, increasingefﬁciency,
+and doingtasks thatare dangerousor difﬁcult forhumans. However, thereare a numberof possible
+negativeimpacts: increasingunemploymentbyautomatingjobs[11]andimprovingthecapabilities
+of automatedweapons. Thesepositives and negativesare potentially exacerbated bythe emergent
+complexity we described in Section 5.1.2, which could lead to improved efﬁciency and generality
+allowing the robotics systems to be applied more broadly.
+However, if we are to receive any of the beneﬁts of AI powered systems being deployed into real
+worldsettings,itiscriticalthatweknowhowtomakethesesystemsrobustandthattheyknowhow
+to make good decisions in uncertain environments. In Section 3 we discussed the deep connections
+betweenUEDanddecisionsunderignorance,whichshowsthatreasonabletechniquesformaking
+decisions in uncertain settings correspond to techniques for UED, showing that the study of UED
+techniquescanbethoughtofasanotherangleofattackattheproblemofunderstandinghowtomake
+robust systems. Moreover,we showed inSection 5.2that these connectionsare notjust theoretical,
+butcanleadtomoreeffectivewaysofbuildingrobustsystems. Continuedworkinthisareacanhelp
+ensure that the predominant impact of our AI systems is the impact we intended.
+Moreover,manyoftherisksofAIsystemscomefromthesystemactingunexpectedlyinasituationthe
+designerhadnotconsidered. ApproachesforUnsupervisedEnvironmentDesigncouldworktowards
+a solution to this problem, by automatically generating interesting and challenging environments,
+hopefully detecting troublesome cases before they appear in deployment settings.
+
+Acknowledgments and Disclosure of Funding
+
+Wewould like tothank Michael Chang,Marvin Zhang, DaleSchuurmans, Aleksandra Faust,Chase
+Kew, Jie Tan, Dennis Lee, Kelvin Xu, Abhishek Gupta, Adam Gleave, Rohin Shah, Daniel Filan,
+Lawrence Chan, Sam Toyer, Tyler Westenbroek, Igor Mordatch, Shane Gu, DJ Strouse, and Max
+Kleiman-Weiner for discussions that contributed to this work. We are grateful for funding of this
+workasagiftfromtheBerkeleyExistentialRiskIntuitive. WearealsogratefultoGoogleResearch
+for funding computation expenses associated with this work.
+
+References
+ [1]  OpenAI: Marcin Andrychowicz, Bowen Baker, Maciek Chociej, Rafal Jozefowicz, Bob Mc-
+      Grew,JakubPachocki,ArthurPetron,MatthiasPlappert,GlennPowell,AlexRay,etal.Learning
+      dexterous in-handmanipulation. The InternationalJournal ofRobotics Research, 39(1):3–20,
+      2020.
+
+ [2]  RikaAntonova,SilviaCruciani,ChristianSmith,andDanicaKragic. Reinforcementlearning
+      for pivoting task. arXiv preprint arXiv:1703.00472, 2017.
+
+ [3]  Karl Johan Åström. Theory and applications of adaptive control—a survey.  Automatica, 19(5):
+      471–486, 1983.
+
+ [4]  J Andrew Bagnell, Andrew Y Ng, and Jeff G Schneider. Solving uncertain markov decision
+      processes. 2001.
+
+
+                                                       10
+
+===== PDF PAGE 11 =====
+ [5]  Bowen Baker, Ingmar Kanitscheider, Todor Markov, Yi Wu, Glenn Powell, Bob McGrew,
+      and Igor Mordatch.   Emergent tool use from multi-agent autocurricula.   arXiv preprint
+      arXiv:1909.07528, 2019.
+ [6]  Sébastien Bubeck and Nicolo Cesa-Bianchi. Regret analysis of stochastic and nonstochastic
+      multi-armed bandit problems. arXiv preprint arXiv:1204.5721, 2012.
+ [7]  Andres Campero, Roberta Raileanu, Heinrich Küttler, Joshua B Tenenbaum, Tim Rocktäschel,
+      andEdwardGrefenstette. Learningwithamigo: Adversariallymotivatedintrinsicgoals. arXiv
+      preprint arXiv:2006.12122, 2020.
+ [8]  Seth Chaiklinet al. Thezone of proximal development invygotsky’sanalysis of learning and
+      instruction. Vygotsky’s educational theory in cultural context, 1(2):39–64, 2003.
+ [9]  MaximeChevalier-Boisvert,LucasWillems,andSumanPal. Minimalisticgridworldenviron-
+      ment for openai gym. https://github.com/maximecb/gym-minigrid, 2018.
+[10] Benjamin Eysenbach, Abhishek Gupta, Julian Ibarz, and Sergey Levine. Diversity is all you
+      need: Learning skills without a reward function. arXiv preprint arXiv:1802.06070, 2018.
+[11] Carl BenediktFrey andMichael A Osborne. The futureof employment: How susceptibleare
+      jobs to computerisation? Technological forecasting and social change, 114:254–280, 2017.
+[12] Mohammad Ghavamzadeh, Marek Petrik, and Yinlam Chow.  Safe policy improvement by
+      minimizing robust baseline regret.  In Advances in Neural Information Processing Systems,
+      pages 2298–2306, 2016.
+[13] Adam Gleave, Michael Dennis, Cody Wild, Neel Kant, Sergey Levine, and Stuart Russell.
+      Adversarialpolicies: Attackingdeepreinforcementlearning. InInternationalConferenceon
+      Learning Representations, 2020.
+[14] Alex Graves, MarcG Bellemare, Jacob Menick, Remi Munos, and Koray Kavukcuoglu. Auto-
+      mated curriculum learning for neural networks. arXiv preprint arXiv:1704.03003, 2017.
+[15] Abhishek Gupta, Benjamin Eysenbach, Chelsea Finn, and Sergey Levine.   Unsupervised
+      meta-learning for reinforcement learning. arXiv preprint arXiv:1806.04640, 2018.
+[16] Garud N Iyengar. Robust dynamic programming. Mathematics of Operations Research, 30(2):
+      257–280, 2005.
+[17] Nick Jakobi. Evolutionary robotics and the radical envelope-of-noise hypothesis. Adaptive
+      behavior, 6(2):325–368, 1997.
+[18] Sarah Keren, Luis Pineda, Avigdor Gal, Erez Karpas, and Shlomo Zilberstein. Equi-reward
+      utility maximizing design in stochastic environments. HSDIP 2017, page 19, 2017.
+[19] SarahKeren,LuisPineda,AvigdorGal,ErezKarpas,andShlomoZilberstein. Efﬁcientheuristic
+      search for optimalenvironment redesign. In Proceedings ofthe International Conferenceon
+      Automated Planning and Scheduling, volume 29, pages 246–254, 2019.
+[20] Rawal Khirodkar, Donghyun Yoo, and Kris M Kitani.  Vadra:  Visual adversarial domain
+      randomization and augmentation. arXiv preprint arXiv:1812.00491, 2018.
+[21] Tze Leung Lai and Herbert Robbins. Asymptotically efﬁcient adaptive allocation rules.Ad-
+      vances in applied mathematics, 6(1):4–22, 1985.
+[22] Joel Z Leibo, Edward Hughes, Marc Lanctot, and Thore Graepel.  Autocurricula and the
+      emergence of innovation from social interaction: A manifesto for multi-agent intelligence
+      research. arXiv preprint arXiv:1903.00742, 2019.
+[23]TambetMatiisen, AvitalOliver, TacoCohen, andJohn Schulman. Teacher-student curriculum
+      learning. IEEE transactions on neural networks and learning systems, 2019.
+[24] EricMazumdar,LillianJRatliff,andSShankarSastry. Ongradient-basedlearningincontinuous
+      games. SIAM Journal on Mathematics of Data Science, 2(1):103–131, 2020.
+
+
+                                                       11
+
+===== PDF PAGE 12 =====
+[25] Bhairav Mehta, Manfred Diaz, Florian Golemo, Christopher J Pal, and Liam Paull.  Active
+      domain randomization. In Conference on Robot Learning, pages 1162–1176. PMLR, 2020.
+[26]John Milnor. Games against nature.        Decision Processes, pages 49–59, 1954.
+[27] Jun Morimoto andKenji Doya. Robustreinforcement learning. In Advancesin neuralinforma-
+      tion processing systems, pages 1061–1067, 2001.
+[28] ArnabNilimandLaurentElGhaoui. Robustcontrolofmarkovdecisionprocesseswithuncertain
+      transition matrices. Operations Research, 53(5):780–798, 2005.
+[29]Martin Peterson.        An introduction to decision theory. Cambridge University Press, 2017.
+[30] Lerrel Pinto, JamesDavidson, and Abhinav Gupta. Supervisionvia competition: Robot adver-
+      saries for learning tasks. In 2017 IEEE International Conference on Robotics and Automation
+      (ICRA), pages 1601–1608. IEEE, 2017.
+[31] Kevin Regan and Craig Boutilier. Robust online optimization of reward-uncertain mdps. In
+      Twenty-Second International Joint Conference on Artiﬁcial Intelligence. Citeseer, 2011.
+[32] KevinReganandCraigBoutilier. Regret-basedrewardelicitationformarkovdecisionprocesses.
+      arXiv preprint arXiv:1205.2619, 2012.
+[33] HerbertRobbins. Someaspectsofthesequentialdesignofexperiments. BulletinoftheAmerican
+      Mathematical Society, 58(5):527–535, 1952.
+[34] FereshtehSadeghiandSergeyLevine. Cad2rl: Realsingle-imageﬂightwithoutasinglereal
+      image. arXiv preprint arXiv:1611.04201, 2016.
+[35] Leonard J Savage.  The theory of statistical decision.  Journal of the American Statistical
+      association, 46(253):55–67, 1951.
+[36] Jürgen Schmidhuber. Formal theory of creativity, fun, and intrinsic motivation (1990–2010).
+      IEEE Transactions on Autonomous Mental Development, 2(3):230–247, 2010.
+[37] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal
+      policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017.
+[38] PierreSermanet,CoreyLynch,YevgenChebotar,JasmineHsu,EricJang,StefanSchaal,Sergey
+      Levine,and GoogleBrain. Time-contrastivenetworks: Self-supervised learningfromvideo. In
+      2018 IEEE InternationalConference onRobotics and Automation (ICRA), pages 1134–1141.
+      IEEE, 2018.
+[39] Jean-Jacques E Slotine and Weiping Li. On the adaptive control of robot manipulators. The
+      international journal of robotics research, 6(3):49–59, 1987.
+[40] Sainbayar Sukhbaatar,Zeming Lin,Ilya Kostrikov, GabrielSynnaeve, ArthurSzlam, and Rob
+      Fergus. Intrinsic motivation and automatic curriculavia asymmetric self-play. arXiv preprint
+      arXiv:1703.05407, 2017.
+[41] AvivTamar,ShieMannor,andHuanXu. Scalinguprobustmdpsusingfunctionapproximation.
+      InInternational Conference on Machine Learning, pages 181–189, 2014.
+[42] JieTan,TingnanZhang,ErwinCoumans,AtilIscen,YunfeiBai,DanijarHafner,StevenBohez,
+      andVincentVanhoucke. Sim-to-real: Learningagilelocomotionforquadrupedrobots. arXiv
+      preprint arXiv:1804.10332, 2018.
+[43] Josh Tobin, Rachel Fong, Alex Ray, Jonas Schneider, Wojciech Zaremba, and Pieter Abbeel.
+      Domainrandomization fortransferringdeepneural networks fromsimulationto therealworld.
+      In 2017 IEEE/RSJ international conference on intelligent robots and systems (IROS), pages
+      23–30. IEEE, 2017.
+[44] Emanuel Todorov, Tom Erez, and Yuval Tassa. Mujoco: A physics engine for model-based
+      control. In2012IEEE/RSJInternationalConferenceonIntelligentRobotsandSystems,pages
+      5026–5033. IEEE, 2012.
+
+
+                                                       12
+
+===== PDF PAGE 13 =====
+[45] Eugene Vinitsky, Kanaad Parvate, Yuqing Du, Pieter Abbeel, and Alexandre Bayen. D-malt:
+      Diverse multi-adversarial learning for transfer 003. InSubmission to ICML 2020).
+[46]Abraham Wald. Statistical decision functions. 1950.
+[47] Rui Wang, Joel Lehman, Jeff Clune, and Kenneth O Stanley. Paired open-ended trailblazer
+      (poet): Endlessly generating increasingly complex and diverse learning environments and their
+      solutions. arXiv preprint arXiv:1901.01753, 2019.
+[48] Rui Wang,Joel Lehman,Aditya Rawal,Jiale Zhi, Yulun Li,Jeff Clune, andKennethO Stanley.
+      Enhancedpoet: Open-endedreinforcementlearningthroughunboundedinventionoflearning
+      challenges and their solutions. arXiv preprint arXiv:2003.08536, 2020.
+[49] Chang Ye, Ahmed Khalifa, Philip Bontrager, and Julian Togelius. Rotation, translation, and
+      cropping for zero-shot generalization. arXiv preprint arXiv:2001.09908, 2020.
+[50] Wenhao Yu, Jie Tan, C Karen Liu, and Greg Turk.  Preparing for the unknown: Learning a
+      universal policy with online system identiﬁcation.arXiv preprint arXiv:1702.02453, 2017.
+[51] Haoqi Zhangand DavidC Parkes. Value-basedpolicy teachingwith activeindirect elicitation.
+      InAAAI, volume 8, pages 208–214, 2008.
+[52] Haoqi Zhang, Yiling Chen, and David C Parkes. A general approach to environment design
+      with one agent. 2009.
+[53] KeminZhou,JohnComstockDoyle,KeithGlover,etal. Robustandoptimalcontrol,volume40.
+      Prentice hall New Jersey, 1996.
+
+A   Generality of UED
+
+In Section 3 we deﬁned UPODMPS and UED and showed a selection of natural approaches to
+UEDandcorrispondingdecisionrules. However,theconnectionbetweenUEDanddecisionsunder
+ignorance is much broader than these few decision rules. In fact, they can be seen as nearly identical
+problems.
+To see the connection to decisions under ignorance, it is important to notice that any decision rule
+can be thought of as an ordering over policies, ranking the policies that it chooses higher than other
+policies. We will want to deﬁne a condition on this ordering, to do this we will ﬁrst deﬁne what it
+means for one policy to totally dominateanother.
+Deﬁnition3. Apolicy,πA,istotallydominatedbysomepolicy,πB ifforeverypairofparameteriza-
+tions⃗θA,⃗θBUM⃗θA(πA)<UM⃗θB(πB).
+
+ThusifπA totallydominatesπB,it isreasonable toassumethatπA isbetter, sincethebest outcome
+we could hope for from policyπB is still worse than the worst outcome we fear from policyπA.
+ThuswewouldhopethatourdecisionrulewouldnotpreferπB toπA. Ifadecisionrulerespectsthis
+property we will say that itrespects total dominationor formally:
+Deﬁnition 4.  We will say that an ordering≺ respects total domination iffπA≺πB wheneverπB
+totally dominatesπA.
+
+Thisisaveryweakcondition,butitisalreadyenoughtoallowustoprovideacharacterizationofall
+suchorderings overpolicies intermsof policy-conditioneddistributions over parameters⃗θ,which
+we willnotateΛ as inSection 3. Speciﬁcally,anyordering whichrespects total dominationcan be
+writtenasmaximizingtheexpectedvaluewithrespecttoapolicy-conditionedvaluefunction,thus
+every reasonable way of ranking policies can be described in the UED framework. For example,
+thisimpliesthatthereisanenvironmentpolicywhichrepresentsthestrategyofminimaxregret. We
+explicitly construct one such environment policy in Appendix B.
+Tomake thisformal, thepolicy-conditionedvalue function,VMΛ(π), isdeﬁned tobe theexpected
+valueapolicywillreceiveinthepolicy-conditioneddistributionofenvironmentsMΛ(π),orformally:
+
+                                         VMΛ(π) =   E⃗θ∼Λ(π)[U⃗θ(π)]                                                     (2)
+
+
+
+                                                        13
+
+===== PDF PAGE 14 =====
+.
+The policy-conditioned value function is like the normal value function, but computed over the
+distributionofenvironmentsdeﬁnedbytheUPOMDPandenvironmentpolicy. Thisofcourseimplies
+an ordering over policies, deﬁned in the natural way.
+Deﬁnition 5. We will say thatΛ prefersπB toπA notatedπA≺ΛπB ifVMΛ(πA)<VMΛ(πB)
+
+Finally, this allows us to state the main theorem of this Section.
+Theorem 6.  Given an order over deterministic policies in a ﬁnite UPOMDP,≺, there exits an
+environmentpolicyΛ : Π→∆(ΘT) suchthat≺ isequivalentto≺Λ iffitrespectstotaldomination
+and it ranks policies with an equal and a deterministic outcome as equal.
+
+Proof. Suppose you have some order of policies in a ﬁnite UPOMDP,≺, which respects total
+dominationandrankspoliciesequal iftheyhaveanequalanddeterministicoutcome. Ourgoalisto
+construct a functionΛ such thatπA≺ΛπB iffπA≺πB.
+When  constructing Λ  notice  that  we  can  chose Λ(π)  independently  for  each  policyπ  and
+that  we  can  choose  the  resulting  value  forVMΛ(π)  to  lie  anywhere  within  the  range
+[min⃗θ∈ΘT{U⃗θ(π)}, max⃗θ∈ΘT{U⃗θ(π)}].  Since the number of deterministic policies in a ﬁnite POMDP
+is ﬁnite, we can buildΛ inductively by taking the lowest ranked policyπ in terms of≺ for whichΛ
+has not yet been deﬁned and choosing the value forVMΛ(π) appropriately.
+For the lowest ranked policyπB for whichΛ(πB) has not yet been deﬁned we setΛ(πB) such that
+VMΛ(πB) greater than Λ(πA) for allπA≺πB and is lower than the minimum possible value of
+anyπC suchthatπB≺πC,ifsuchasettingispossible. Thatis,wechooseΛ(πB) tosatisfyforall
+πA≺πB≺πC:
+
+                                 Λ(πA)<VMΛ(πB)< max⃗θ∈ΘT{U⃗θ(πC)}                                          (3)
+
+
+Intuitively this ensures thatVMΛ(πB) is high enough to be above allπA lower thanπB and low
+enough such that all futureπC can still be assigned an appropriate value.
+Finally,wewillshowthatitispossibletosetΛ(πB)tosatisfytheseconditionsinEquation3. Byour
+inductive hypothesis, we know thatΛ(πA)< max⃗θ∈ΘT{U⃗θ(πB)} andΛ(πA)< max⃗θ∈ΘT{U⃗θ(πC)}. Since
+
+≺ respects total domination, we know that min⃗θ∈ΘT{U⃗θ(πB)}≤ max⃗θ∈ΘT{U⃗θ(πC)} for allπB≤πC.
+Sincethereareaﬁnite numberofπC wecansetVMΛ(πB) tobetheaverageofthesmallestvalue
+for max⃗θ∈ΘT{U⃗θ(πC)} and the largest value forΛ(πA) for anyπC andπA satisfyingπA≺πB≺πC.
+
+The other direction, can be checked directly. IfπA is totally dominated byπB, then:
+
+                  VMΛ(πA) =    E⃗θ∼Λ(πA)[U⃗θ(πA)]<    E⃗θ∼Λ(πB)[U⃗θ(πB)] =VMΛ(πB)
+
+
+Thus if≺ can be represented with an appropriate choice ofΛ then it respects total domination and it
+ranks policies with an equal and a deterministic outcome equal.
+
+Thus,thesetofdecisionruleswhichrespecttotaldominationareexactlythosewhichcanbewritten
+by some concrete environment policy, and thus any approach to making decisions under uncertainty
+which has this property can be thought of as a problem of unsupervised environment design and
+vice-versa.  To the best of our knowledge there is no seriously considered approach to making
+decisions under uncertainty which does not satisfy this property.
+
+B   Deﬁning an Environment Policy Corresponding to Minimax Regret
+
+In this section we will be deriving a functionΛ(π) which corresponds to regret minimization. We
+willbeassumingaﬁniteMDPwithaboundedrewardfunction. Explicitly,wewillbederivingaΛ
+
+
+                                                       14
+
+===== PDF PAGE 15 =====
+suchthatminimaxregretisthedecisionrulewhichmaximizesthecorrespondingpolicy-conditioned
+value functiondeﬁned in Appendix A:
+
+                                        VMΛ(π) =   E⃗θ∼Λ(π)[U⃗θ(π)]
+
+
+In this context, we will deﬁne regret to be:
+
+                            REGRET(π,⃗θ) = max
+                                                πB∈Π{UM⃗θ(πB)−UM⃗θ(π)}
+Thus theset of MINIMAXREGRET strategies can bedeﬁned naturallyas the oneswhich achivethe
+minimum worst case regret:
+
+                        MINIMAXREGRET = argmin
+                                                    π∈Π{max⃗θ∈ΘT{REGRET(π,⃗θ)}}
+WewanttoﬁndafunctionΛforwhichthesetofoptimalpolicieswhichmaximizevaluewithrespect
+toΛ is the same as the set of MINIMAXREGRET strategies. That is, we want to ﬁndΛ such that:
+                               MINIMAXREGRET = argmax
+                                                           π∈Π{VMΛ(π)}
+
+To do this it is useful to ﬁrst introduce the concept ofweak total domination, which is the natural
+weakeningoftheconceptoftotaldominationintroducedinAppendixA.Apolicyissaidtobeweakly
+totallydominatedbyapolicyπB ifthemaximumoutcomethatcanbeachievedbyπA isequaltothe
+minimum outcome that can be achieved byπB, or formally:
+Deﬁnition 7.  A policy,πA, is weakly totally dominated by some policy,πB if for every pair of
+parameterizations⃗θA,⃗θBUM⃗θA(πA)≤UM⃗θB(πB).
+
+Theconceptofweaktotaldominationisonlyneededheretoclarifywhathappensinthespecialcase
+that there are policies that are weakly totally dominated but not totally dominated. These policies
+may ormay not beminimax regret optimalpolicies, and thushaveto be treated with morecare. To
+get a general sense for how the proof works you may assume that there are no policies which are
+weakly totally dominated but not totally dominated and skip the sections of the proof marked as a
+specialcase: thesecondparagraphoftheproofforLemma8andthesecondparagraphoftheproof
+for Theorem 9.
+We can use this concept to help deﬁne a normalization functionD : Π→∆(ΘT) which has the
+property that if there are two policiesπA,πB such that neither is totally dominated by the other,
+thenthey evaluatethe samevalueon thedistributionof environments. Wewill useD asa basisfor
+creatingΛ byshiftingprobabilitymasstowardsorawayfromthisdistribution intherightproportion.
+Ingeneraltherearemanysuchnormalizationfunctions,but wewillsimplyshowthatone ofthese
+exists.
+Lemma 8.  There exists a functionD : Π→∆(ΘT) such thatΛ(π) has support at leasts> 0 on
+the highest-valued regret-maximizing parameterization          θπ for allπ, that for allπA,πB such that
+neitherisweakly totallydominatedbyanyother policy,VMD(πA) =VMD(πB) andVMD(πA)>
+VMD(πB) whenπB is totally dominated andπA is not. If the policyπ is weakly dominated but
+not totally dominated we chooseD to put full support on the highest-valued regret-maximizing
+parameterization,D(π) =       θπ.
+
+Proof. WewillﬁrstdeﬁneD forthesetofpolicieswhicharenottotallydominated,whichwewill
+callX. Note that by the deﬁnition of not being totally dominated, there is a constantC which is
+between the worst-case and best-case values of all of the policies inX.
+Special Case: If there is only one choice forC and if that does have support over              θπ for eachπ
+whichisnottotallydominated,thenweknowthatthereisaweaklytotallydominatedpolicywhichis
+not totally dominated. In this case we choose aC which is between the best-case and the worst-case
+forthenotweaklytotallydominatedpolicies. Thusforeachπ whichisnotweaklydominatedwecan
+
+
+                                                      15
+
+===== PDF PAGE 16 =====
+ﬁndadistribution⃗θ suchthatU⃗θ(π) =C. IfCisnotthemaximumorminimumachievablevaluefor
+π then we will choseD(π) to have expected valueC and and have support over allΘT.
+Otherwise,wecanchooseD(π) =            θπ. Forotherπ/∈X,wecanletD(π) =U(ΘT),whichachieves
+value less thanC since all outcomes forπ have utility less thanC. Thus, by constructionD satisﬁes
+the desired conditions.
+
+
+
+
+
+Given sucha functionD, wewill constructaΛ which works byshifting probabilitytowardsor away
+fromtheenvironmentparametersthatmaximizetheregretforthegivenagent,intherightproportions
+to achieve the desired result. We claim that the following deﬁnition works:
+
+
+                                    Λ(π) ={θπ :cπvπ, ˜Dπ : otherwise}
+
+
+Where the bracket notation deﬁnes a mixture distribution{x :P,y :Q}(θ) =xP(θ) +yQ(θ)
+and where ˜Dπ =D(π) is a baseline distribution satisfying the conditions of Lemma 8,                  θπ is the
+trajectory which maximizes regret ofπ, andvπ is the value above the baseline distribution thatπ
+achieves on that trajectory, andcπ is the negative of the worst-case regret ofπ, normalized so that
+cπ                                                                                                        θπ in
+vπ is between−s and 1. Ifcπvπ is negative then we will interpret probability mass ofcπvπ on
+˜Dπ beingredistributedproportionallyin ˜Dπ asisimpliedbytheequation. Notethatifvπ = 0then
+˜Dπ =  θπ by our construction, socπvπ can be interpreted to be anything in[0,1] without effecting the
+distributionΛ(π).
+
+Theorem 9. ForΛ as deﬁned above:
+
+
+                             argmax
+                               π∈Π{  E⃗θ∼Λ(π)[U⃗θ(π)]} = MINIMAXREGRET
+
+
+
+
+
+
+
+Proof. BytheconstructionofD(π)byLemma8,wewillletC =  E⃗θ∼˜Dπ[U⃗θ(π)],whichisaconstant
+
+independent ofπ by constructionfor allof thepolicies whichare notweakly totallydominated. If
+therearenopolicieswhichareweaklytotallydominatedbutnottotallydominatedthenextparagraph
+can be skipped, otherwise it handles the special case by showing that the conditions we ensured for
+thenon-totallydominatedpoliciesholdfortheseweaklytotallydominatedpoliciesifandonlyifthey
+are minimax regret optimal policies.
+SpecialCase: Fortheπ whichareweaklytotallydominated,butnottotallydominated,wewillshow
+that  E⃗θ∼˜Dπ[U⃗θ(π)] =C ifπ∈ MINIMAXREGRETand  E⃗θ∼˜Dπ[U⃗θ(π)]<C ifπ/∈ MINIMAXREGRET.
+
+LetM be the maximum value achieved by any policy.  Then ifπ∈ MINIMAXREGRET and the
+maximum value it achieves isC′ then note that any policy that weakly dominatesπ, sayπ′, can
+achieve no more thanM−C′ regret.  Thus ifπ is a minimax optimal strategy, it must achieve
+exactlyM−C′ regret and bothπ andπ′ must have a regret maximizing outcome at the same value
+M−C′, which is the maximum value outcome forπ and the minimum value outcome forπ′. Thus
+C =C′ sincebothπ andπ′ musthavesupportontheanoutcomeofvalueC′ and  E⃗θ∼˜Dπ[U⃗θ(π)] =C.
+
+Otherwiseπ/∈ MINIMAXREGRET so it achieves more thanM−C′ regret and  E⃗θ∼˜Dπ[U⃗θ(π)]<C.
+
+
+                                                      16
+
+===== PDF PAGE 17 =====
+Withthiscase outoftheway, wecanusethedeﬁnition ofΛ andsimplifyto showthedesiredresult.
+
+                                                               θπ(π)cπ
+                 argmax                                          vπ       +C(1−cπvπ)}                           (4)
+                   π∈Π{  E⃗θ∼Λ(π)[U⃗θ(π)]} = argmaxπ∈Π{U
+
+                                              = argmax            vπ        +(Cvπ−Ccπvπ       )}                  (5)
+                                                    π∈Π{vπcπ +Ccπ
+                                              = argmax            vπ  }                                              (6)
+                                                    π∈Π{vπcπ +Cvπ
+                                              = argmax
+                                                    π∈Π{cπ +C}                                                       (7)
+                                              = argmax
+                                                    π∈Π{cπ}                                                               (8)
+                                              = argmax
+                                                    π∈Π{min⃗θ∈ΘT{−REGRET(π,⃗θ)}}                            (9)
+                                              = argmin
+                                                    π∈Π{max⃗θ∈ΘT{REGRET(π,⃗θ)}}                              (10)
+
+
+C   Minimax Regret Always Succeeds when There is a Clear Notion of
+      Success
+
+In this section we will show that when there is a sufﬁciently strong notion of success and failure,
+and there is a policy which can ensure success, minimax regret will choose a successful strategy.
+Moreover, we will show that neither pure randomization, nor maximin has this property.
+Theorem 1.  Suppose that all achievable rewards fall into one of two class of outcomes labeled
+SUCCESS giving rewards in [Smin,Smax] andFAILURE giving rewards in [Fmin,Fmax], such
+thatFmin≤Fmax<Smin≤Smax. Inaddition assumethatthe rangeof possiblerewards ineither
+class is smaller than the difference between the classes so we haveSmax−Smin<Smin−Fmax
+andFmax−Fmin<Smin−Fmax. Furthersupposethatthereisapolicyπ whichsucceedsonany
+⃗θ whenever success is possible. Then minimax regret will choose a policy which has that property.
+
+Further suppose that there is a policyπ which succeeds on any⃗θ whenever any policy succeedson⃗θ.
+Then minimax regret will choose a policy which has that property.
+
+Proof. LetC = Smin−Fmax and letπ∗ be one of the policies that succeeds on any⃗θ whenever
+success is possible. By assumptionSmax−Smin<C and Fmax−Fmin<C. Sinceπ∗ succeeds
+whenever success is possible we have:
+                                         max⃗θ∈ΘT{REGRET(π∗,⃗θ)}<C
+
+Thus anystrategywhich achieves minimaxregretmust have regret lessthanC, sinceit mustdo at
+least aswell asπ∗. Supposeπ∈ MINIMAXREGRET, thenifπ does notsolve some solvable⃗θ then
+REGRET(π∗,⃗θ)>C. Thus every minimax regret policy succeeds whenever that is possible.
+
+Thoughminimaxregrethasthisproperty, theotherdecision rulesconsidereddo not. Forexample,
+considerthetask described byTable3a,where anentryinposition(i,j) shows thepayoffUθj(πi)
+obtained for the policyπi in rowi, in the environment parameterized byθj in columnj. If you
+chooseπB youcanensuresuccesswheneveranypolicycanensuresuccess,butmaximinwillchoose
+πA, as it only cares about the worst case outcome.
+Choosing the policy that maximizes the expected return fails in the game described by Table 3b.
+UnderauniformdistributionallofπB,πC,πD,πE,πF giveanexpectedvalueof80,whileπA gives
+an expected value of 75. Here maximizing expected value on a uniform distribution will choose
+one ofπB,πC,πD,πE,πF whileπA guarantees success. Moreover, this holds for every possible
+distribution over parameters, sinceπA will always give an expected value of 75 and on average
+πB,πC,πD,πE,πF will give an expected value of80, so at least one of them gives above80.
+
+
+                                                       17
+
+===== PDF PAGE 18 =====
+                                                      θ1     θ2      θ3      θ4     θ5
+                                              πA      75     75      75     75      75
+                     θ1     θ2                πB      0      100    100     100    100
+             πA       0     0                 πC     100      0     100     100    100
+             πB     100     -1                πD     100     100      0     100    100
+                     (a)                      πE     100     100    100      0     100
+                                              πF     100     100    100     100      0
+                                                                 (b)
+Table3: Inthesesetting,SUCCESSisscoringintherange[75,100]andFAILUREisscoringinthe
+range[−1,0]
+
+
+D   Nash solutions to PAIRED
+
+InthissectionweshowhowPAIREDworkswhencoordinationisnotachieved. Thefollowingproof
+showsthatiftheantagonist,protagonist,andadversaryﬁndaNashEquilibrium,thentheprotagonist
+performs better than or equal to the antagonist in every parameterization.
+Theorem 10.  Let(πP,πA,⃗θ) be in Nash equilibria. Then for all⃗θ′:U⃗θ′(πP)≥U⃗θ′(πA).
+
+Proof. Let(πP,πA,⃗θ) beinNashequilibria. ThenregardlessofπA,⃗θ,theprotagonistalwayshas
+thechoice toplayπP =πA, so REGRET(πP,πA,⃗θ)≤ 0. Since,the adversary chooses⃗θ overany
+other⃗θ′ weknowthat REGRET(πP,πA,⃗θ′)≤ 0mustholdforall⃗θ′. ThusbythedeﬁnitionofRegret
+U⃗θ′(πP)≥U⃗θ′(πA).
+
+Thisshowsthatwithacapableantagonisttheprotagonistwouldlearntheminimaxregretpolicy,even
+without theadversary and theantagonist coordinating,and suggests thatmethods whichstrengthen
+the antagonist could serve to improve the protagonist.
+
+E   Additional experiments
+
+E.1   Alternative methods for computing regret
+
+Given the arguments in Appendix D, we experimented with additional methods for approximating
+the regret, which attempt to improve the antagonist. We hypothesized that using a ﬁxed agent as
+the antagonist could potentially lead to optimization problems in practice; if the antagonist became
+stuckinalocalminimum and stoppedlearning,itcouldlimitthecomplexityoftheenvironmentsthe
+adversary couldgenerate. Therefore, wedeveloped an alternative approachusing population-based
+training (PBT),where foreach environmentdesigned bythe adversary, each agentin thepopulation
+collects a single trajectory in the environment. Then, the regret is computed using the difference
+between the maximum performing agent in the population, and the mean of the population. Assume
+there is a population ofK agents, andi andj index agents within the population. Then:
+
+
+
+                                                                     K∑
+                               REGRETpop = maxi U(τi)− 1K               [U(τj)]                                     (11)
+                                                                    j=1
+
+Wealsousedapopulationofadversaries,whereforeachepisode,werandomlyselectanadversaryto
+generatetheenvironment,thentestallagentswithinthatenvironment. WecallthisapproachPAIRED
+Combined PBT.
+Since using PBT can be expensive, we also investigated using a similar approach in the case of a
+populationofK = 2agents,andasingleadversary. ThisisanalogoustoaversionofPAIREDwhere
+thereisnoﬁxedantagonist,buttheantagonistisﬂexiblychosentobethecurrentlybest-performing
+agent. We call this approachFlexible PAIRED.
+
+
+                                                      18
+
+===== PDF PAGE 19 =====
+   (a) Number of blocks         (b) Distance to goal       (c) Passable path length     (d) Solved path length
+Figure 5: Comparison of alternative methods for computing the regret in terms of the statistics of
+generatedenvironments (a-c),andthelengthof mazesthatagentsareableto solve(d). Neitherthe
+combinedpopulationorﬂexibleapproach(whichbothbreakthecoordinationassumptioninTheorem
+2) show improved complexity. Statistics of generated and solved environments measured over ﬁve
+random seeds; error bars are a 95% CI.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      (a) Empty       (b) 50 Blocks      (c) 4 Rooms       (d) 16 Rooms      (e) Labyrinth        (f) Maze
+Figure 6: Comparison of transfer performance for alternative methods for computing the regret.
+While both alternatives still retain the ability to solve complex tasks, achieving superior performance
+tominimaxanddomainrandomization,theirperformanceisnotasgoodastheproposedmethodfor
+computing the regret.
+
+
+Figure5 plotsthecomplexityresults ofthesetwo approaches. Weﬁnd thattheyboth performworse
+than the proposed version of PAIRED. Figure 6 shows the transfer performance of both methods
+against the original PAIRED. Both methods achieve reasonable transfer performance, retaining the
+ability to solve complex test tasks like the labyrinth and maze (when domain randomization and
+minimax training cannot).  However, we ﬁnd that the original method for computing the regret
+outperforms both approaches. We note that both the combined population and ﬂexible PAIRED
+approachesdonotenabletheadversaryandantagonisttocoordinate(sincetheantagonistdoesnot
+remainﬁxed). CoordinationbetweentheantagonistandadversaryisanassumptioninTheorem2of
+Section4,whichshowsthatiftheagentsreachaNashequilibrium,theprotagonistwillbeplayingthe
+minimumregretpolicy. Theseempiricalresultsappeartoindicatethatwhencoordinationbetweenthe
+adversaryandantagonistisnolongerpossible,performancedegrades. Futureworkshouldinvestigate
+whether these results hold across more domains.
+
+E.2   Should agents themselves optimize regret?
+
+Weexperimentedwithwhethertheprotagonistandantagonistshouldoptimizeforregret,orforthe
+normal reward supplied by the environment (note that the environment-generating adversary always
+optimizesfortheregret). Forboththeprotagonistandantagonist,theregretisbasedonthedifference
+between their reward for the current trajectory, and the max reward of the other agent received over
+severaltrajectoriesplayedinthecurrentenvironment. LetthecurrentagentbeA,andtheotheragent
+beO. ThenagentAshouldreceiverewardRA =U(τA)−maxτOU(τO)forepisodeτA. However,
+thisrewardislikelytobenegative. Ifgivenattheendofthetrajectory,itwouldessentiallypunishthe
+agentfor reachingthe goal,making learningdifﬁcult. Thereforewe instead computea per-timestep
+penalty of maxτOU(τO)T         , whereT is the maximum length of an episode. This is subtracted post-hoc
+from each agent’s reward at every step during each episode, after the episode has been collected but
+
+
+                                                       19
+
+===== PDF PAGE 20 =====
+   (a) Number of blocks         (b) Distance to goal       (c) Passable path length      (d) Solved path length
+Figure 7: Comparison of alternative methods for computing the regret in terms of the statistics of
+generated environments (a-c), and the length of mazes that agents are able to solve. Neither the
+combined population or ﬂexible approach show improved complexity. Statistics of generated and
+solved environments measured over ﬁve random seeds; error bars are a 95% CI.
+
+
+before the agent is trained on it. When the agent reaches the goal, it receives the normal Minigrid
+reward for successfully navigating to the goal, which isR = 1−0.9∗(M/T), whereM is the
+timestep on which the agent found the goal.
+Figure7showsthecomplexityresultsforthebestperforminghyperparametersinwhichtheprotag-
+onist and antagonist optimized the regret according to the formula above, or whether they simply
+learnedaccordingtothe environmentreward. Notethat inbothcases,theenvironment-generating
+adversary optimizes the regret of the protagonist with respect to the antagonist. As is evident in
+Figure7,training agentsontheenvironmentreward itself, ratherthantheregret, appearstobemore
+effectiveforlearningcomplexbehavior. Wehypothesizethisisbecausetheregretisverynoisy. The
+performanceoftheotheragentisstochastic,andvariationsintheotheragent’srewardareoutside
+of the agent’s control. Further, agents do not receive observations about the otheragent, and cannot
+usethemtodeterminewhatis causingtherewardtovary. However,wenotethatoptimizingforthe
+regret can provide good transfer performance. The transfer plots in Figure 3 were created with an
+agentthatoptimizedforregret,aswedescribebelow. Itispossiblethatastheotheragentconverges,
+the regret provides a more reliable signal indicating when the agent’s performance is sub-optimal.
+
+F   Experiment Details and Hyperparameters
+
+F.1   Navigation Experiments
+
+F.1.1   Agent parameterization
+
+The protagonist and antagonist agents for both PAIRED and the baselines received a partially
+observed,5×5×3viewoftheenvironment,aswellasanintegerrangingfrom0−3representing
+the direction the agent is currently facing. The agents use a network architecture consisting of a
+single convolutional layer whichconnects toan LSTM,and thento twofully connected layerswhich
+connect to the policy outputs. A second network with identical parameters is used to estimate the
+value function. The agents use convolutional kernels of size 3 with 16 ﬁlters to input the view of
+the environment, anextra fully-connected layerof size5to processthe direction andinput it tothe
+LSTM,an LSTMofsize256,and twofullyconnectedlayers ofsize32 whichconnect toeitherthe
+policy outputs or the value estimate. The best entropy regularization coefﬁcient was found to be
+0.0. Allagents(includingenvironmentadversaries)aretrainedwithPPOwithadiscountfactorof
+0.995, alearningrate of0.0001, and30environmentworkers operatingin paralleltocollect abatch
+of episodes, which is used to complete one training update.
+
+F.1.2   Adversary parameterization
+
+Theenvironmentsexploredinthispaperarea15×15tilediscretegrid,withaborderofwallsaround
+the edge. This meansthere are13×13 = 169 free tiles forthe adversaryto use to place obstacles.
+Weparameterizedtheadversarybygivingitanactionspaceofdimensionality169,andeachdiscrete
+actionindicatesthelocationofthenextobjecttobeplaced. Itplaysasequenceofactions,suchthat
+on the ﬁrst step it places the agent, on the second it places the goal, and for50 steps afterwards it
+places a wall (obstacle). If the adversary places an object on top of a previously existing object, its
+
+
+                                                        20
+
+===== PDF PAGE 21 =====
+action doesnothing; thisallowsit to placefewerthan50obstacles. If ittries toplace thegoal on top
+of the agent, the goal will be placed randomly.
+Wealsoexploredanalternativeparameterization,inwhichtheadversaryhadonly4actions,which
+correspondedto placingthe agent,goal, anobstacle, ornothing. It thentooka sequenceof169 steps
+toplaceallobjects,movingthroughthegridfromtoptobottomandlefttoright. Ifitchosetoplace
+the agentor goalwhen theyhad alreadybeen placedelsewhere inthe map, theywould bemoved to
+the current location. This parameterization allows the adversary to place as manyblocks as there are
+squaresinthe map. However, wefoundthatadversariestrainedwith thisparameterizationdrastically
+underperformedthealternativeversionusedinthepaper,scoringanaveragesolvedpathlengthof
+≈ 2, as opposed to≈ 15. We hypothesize this is because when the adversaryis randomly initialized,
+sampling from its random policy is more likely to produce impossible environments. This makes
+itimpossiblefortheagentstolearn,andcannotprovidearegretsignaltotheadversarytoallowit
+toimprove. Wesuggestthat whendesigning anadversary parameterization,it maybe importantto
+ensure that sampling from a random adversary policy can produce feasible environments.
+The environment-constructing adversary’s observations consist of a 15× 15× 3 image of the
+state of the environment, an integert representing the current timestep, and a random vectorz∼
+N(0,I),z∈ R50 to allow it to generate random mazes.  Because the sequencing of actions is
+important, we experiment with using an RNN to parameterize the adversary as well, although we
+ﬁnd itis notalways necessary. The adversary architecture is similarto thatof theagents; itconsists
+of a singleconvolutional layerwhich connects to an LSTM,and then to two fullyconnected layers
+which connect to the policy outputs. Additional inputs such ast andz are connected directly to
+the LSTM layer. We use a second, identical network to estimate the value function. To ﬁnd the
+best hyperparameters for PAIRED and the baselines, we perform a grid search over the number of
+convolution ﬁlters used by the adversary, the degree of entropy regularization, which of the two
+parameterizations to use, and whether or not to use an RNN, and ﬁnally, the number of steps the
+protagonistisgiventoﬁndthegoal(wereasonedthatloweringtheprotagonistepisodelengthrelative
+to the antagonist length would make the regret a less noisy signal). These parameters are shared
+betweenPAIREDandthe baselineMinimaxadversary,and wesweepall oftheseparametersequally
+for both. For PAIRED, we also experiment with whether the protagonist and antagonist optimize
+regret, and with using a non-negative regret signal, i.e. REGRET = max(0,REGRET), reasoning this
+could also lead to a less noisy reward signal.
+For the complexity experiments, we chose the parameters that resulted in the highest solved path
+length in the last 20% of training steps. The best parameters for PAIRED were an adversary with
+128 convolution ﬁlters, entropy regularization coefﬁcient of0.0, protagonist episode length of250,
+non-negative regret, and the agents did not optimize regret. The best parameters for the minimax
+adversarywere256 convolution ﬁlters,entropyregularizationof0.0,andepisodelength of250. For
+the Population-based-training (PBT) Minimax experiment, the best parameters were an adversary
+populationofsize3,andanagentpopulationofsize3. Alladversariesusedaconvolutionkernelsize
+of3, an LSTM size of256, two fully connected layersof size32 each, and a fully connected layer of
+size10 that inputs the timestep and connects to the LSTM.
+For the transfer experiments, we ﬁrst limited the hyperparameters we searched based on those
+which produced the highest adversary reward, reasoning that these were experiments in which the
+optimizationobjectivewasachievedmosteffectively. Wetestedalimitednumberofhyperparameter
+settingsona setofvalidationenvironments,consisting ofadifferentmazeand labyrinth,mazeswith
+5blocksand40blocks,andanineroomsenvironment. Wethentestedtheseparametersonnoveltest
+environmentstoproducethescoresinthepaper. ThebestparametersforthePAIREDadversarywere
+foundto be64convolutionﬁlters, entropyregularization of0.1,no RNN,non-negative regret,and
+havingtheagentsthemselvesoptimizeregret. Thebestparametersfortheminimaxadversaryinthis
+experimentwerefoundtobethesame: 64convolutionﬁlters,entropyregularizationof0.1,andno
+RNN.
+
+
+F.2   Hopper Experiments
+
+ThehopperexperimentsinthispaperareinthestandardMuJoCo[44]simulator. Theadversaryis
+allowed to apply additional torques to the joints of the agent at a some proportion of the original
+agent’s strengthα.  The torques that are applied at each time step are chosen by the adversary
+
+
+                                                       21
+
+===== PDF PAGE 22 =====
+independentofthestateoftheenvironment,andinthePAIREDexperiments,boththeprotagonist
+and the antagonist are given the same torques.
+The adversaries observation consists of only of the the time step. Each policy is a DNN with two
+hidden layers each with width 32,tanh activation internally and a linear activation on the output
+layer. They were trained simultaneously using PPO [37] and an schedule inthe adversarystrength
+parameterα is scaled from 0.1to 1.0 overthe course of 300 iterations, after which training continues
+at full strength. We pre-train agents without any adversary for 100 iterations.
+Hyperparameter tuning was conducted over the learning rate values [5e-3, 5e-4, 5e-5] and the GAE
+lambda values [0.5,0.9].  The minimax adversary worked best with a leaning rate of 5e-4 and a
+lambda value of0.5; PAIRED worked best with a leaning rate of 5e-3 and a lambda value of0.09.
+Otherwise we use the standard hyperparameters in Ray 0.8.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         22

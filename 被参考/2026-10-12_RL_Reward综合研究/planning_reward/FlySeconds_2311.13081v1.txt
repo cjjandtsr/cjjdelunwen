@@ -1,0 +1,479 @@
+===== PDF PAGE 1 =====
+                                                Learning to Fly in Seconds
+
+                                  Jonas Eschmann1,2, Dario Albani2, and Giuseppe Loianno1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   Abstract—Learning-based methods, particularly Reinforce-                                              I.  INTRODUCTION
+ment Learning (RL), hold great promise for streamlining de-
+ployment,enhancingperformance,andachievinggeneralization                           With the availability of cheap Commercial Off-The-Shelf
+in the control of autonomous multirotor aerial vehicles. Deep                   (COTS) gyroscopes and accelerometers that are implemented
+RL has been able to control complex systems with impressive                     as Microelectromechanical Systems (MEMS), the large-scale
+fidelity and agility in simulation but the simulation-to-reality
+transfer often brings a hard-to-bridge reality gap. Moreover,                   production of cheap Unmanned Aerial Vehicles (UAVs), par-
+RL is commonly plagued by prohibitively long training times.                    ticularly quadrotors, became viable. Bearing Vertical Take-
+In this work, we propose a novel asymmetric actor-critic-based                  Off and Landing (VTOL) as well as hovering capabilities
+architecture coupled with a highly reliable RL-based training                   a myriad of use cases, such as search and rescue, infras-
+paradigm  for  end-to-end  quadrotor  control.  We  show  how                   tructure inspection, or package delivery emerged. Leveraging
+curriculum learning and a highly optimized simulator enhance
+sample complexity and lead to fast training times. To precisely                 classical,cascaded controlhierarchies,multirotorsare ableto
+discuss the challenges related to low-level/end-to-end multirotor               performavarietyoftasks.However,thesecontrolapproaches
+control, we also introduce a taxonomy that classifies the existing              require  domain  expertise  and  engineering  to  be  adapted
+levels  of  control  abstractions  as  well  as  non-linearities  and           to  new  platforms  and  use  cases.  At  the  same  time,  the
+domain  parameters.  Our  framework  enables  Simulation-to-                    recent  developments  in  machine  learning  and  particularly
+Reality (Sim2Real) transfer for direct Revolutions Per Minute
+(RPM) control after only 18 seconds of training on a consumer-                  the success of deep learning for supervised tasks like image
+grade  laptop  as  well  as  its  deployment  on  microcontrollers              classification [1], [2], raise the question if these learning-
+to  control  a  multirotor  under  real-time  guarantees.  Finally,             based capabilities could be transferred to quadrotor control.
+our  solution  exhibits  competitive  performance  in  trajectory               In contrast to supervised learning, (multirotor) control is a
+tracking, as demonstrated through various experimental com-                     decision-making problem that can be phrased as a Markov
+parisons with existing state-of-the-art control solutions using
+a  real  Crazyflie  nano  quadrotor.  We  open  source  the  code               Decision Process (MDP) where labels usually do not directly
+including a very fast multirotor dynamics simulator that can                    exist.TosolveMDPs,RLhasbeenemployedtotrainpolicies
+simulate about 5 months of flight per second on a laptop GPU.                   for complex continuous control problems in simulation [3]–
+The fast training times and deployment to a cheap, off-the-shelf                [6]. However, while the results attained in simulation are
+quadrotor lower the barriers to entry and help democratize the                  impressive, most of the downstream use cases involving real
+research and development of these systems.
+                  SUPPLEMENTARY MATERIAL                                        robots  show  limited  performance.  This  is  mainly  due  to
+Video: https://youtu.be/NRD43ZA1D-4                                             model inaccuracies, partial observation of the state, obser-
+Code: https://github.com/arplaboratory/learning-to-fly                          vation and action noise, and other disturbances. It is often
+Parameters: https://github.com/{...}/parameters.pdf                             assumed that without extra measures like domain random-
+                                                                                ization [7]–[9] policies can not be successfully transferred
+  1The  authors  are  with  the  New  York  University,  Tandon  School  of     to real robots but in our experiments, we demonstrate this
+Engineering, Brooklyn, NY 11201, USA.email: {jonas.eschmann,                    to be possible even for complex systems like quadrotors.
+loiannog}@nyu.edu.
+  2The   authors   are   with   the   Autonomous   Robotics   Research   Cen-   Furthermore,tobetterhighlightthechallengesandclarifythe
+ter,   Technology   Innovation   Institute,   Abu   Dhabi,   UAE.   email:      scope of true end-to-end control, we describe the different
+{jonas.eschmann,  dario.albani}@tii.ae.                                         levels of quadrotor dynamics and control by developing a
+  Giuseppe Loianno serves as consultant for the Technology Innovation           taxonomy  to  categorize  related  work.  We  argue  that  the
+Institute. This arrangement has been reviewed and approved by the New
+York University in accordance with its policy on objectivity in research.       abstractions in classic control stacks introduce information
+
+===== PDF PAGE 2 =====
+                  loss (e.g., actuator constraints in differential flatness-based                    research, enabling everyone with a consumer-grade lap-
+                  control) and constrain the expressivity of the control policy.                     top to train and deploy state-of-the-art quadrotor control
+                  Due to Bellman’s Principle of Optimality (BPO), the optimal                        policies  in  a  matter  of  seconds,  greatly  reducing  the
+                  policy for a decision/control problem can be represented as a                      barriers to entry in this research area.
+                  function mapping from states/observations to actions. Hence,                        II.  TAXONOMY OF MULTIROTOR DYNAMICS AND
+                  in theory, the optimal policy can be expressed as a neural                                                   CONTROL
+                  network which in the limit is a general function approx-
+                  imator [10]. Compared to general function approximators,                         In  the  following,  we  introduce  a  taxonomy  classifying
+                  classical control stacks (based on multi-level abstractions)                  the different abstraction levels in multirotor dynamics and
+                  have limited expressivity and can not necessarily represent                   control. We believe this taxonomy to be beneficial to the
+                  the optimal policy, especially when accounting for evermore                   discussion  as  it  allows  for  the  precise  categorization  of
+                  (non-linear)  factors  in  the  simulation.  Optimization-based               different controllers, particularly those that we analyze in
+                  controllers can circumvent this limitation but are usually too                the related work (see Section III). Furthermore, it explicitly
+                  computationally expensive to run end-to-end control under                     exposes at which levels non-linearities and domain param-
+                  hard real-time constraints inside microcontrollers. Hence, we                 eters exert an influence on the motion of multirotors. We
+                  believe it can be desirable to design and train an end-to-end                 list the different control levels based on the order of the
+                  controller using RL, directly mapping the quadrotor state to                  system when expressed in terms of a flat state. The taxonomy
+                  RPM outputs.                                                                  shown  in  Fig.  1  is  expressed  from  the  perspective  of  a
+                     We  observe  that  the  end-to-end  control  of  quadrotors                position controller and each subsequent level denotes a lower
+                  using state-of-the-art deep RL techniques (especially using                   level  of  control  inputs.  The  sub-bullets  denote  non-linear
+                  off-policy  RL)  is  not  well  explored  and  documented.  It                transformations that allow expressing the dynamical system
+                  is particularly unclear which level of performance end-to-                    using different inputs. These transformations are not only
+                  end  policies  can  achieve  compared  to  classic  controllers               challenging because of the non-linearity they bear but also
+                  when deployed directly on a real quadrotor under real-time                    due to the additional system/domain parameters they might
+                  constraints. With this work, we aim to push the boundaries                    introduce (marked in square brackets). It is worth noting that
+                  of deep RL-based end-to-end quadrotor control and present                     every layer incorporates an additional level of indirection,
+                  the following contributions                                                   manifesting in the form of integrators. The lower the input
+                                                                                                level to the system is chosen, the more detached the effect
+                   •  RL-based controller design: We propose a novel asym-                      on the higher level (e.g., the position) is from the cause (e.g.,
+                      metric  actor-critic-based  architecture  coupled  with  a                RPM  setpoints).  For  controllers  on  the  lowest  levels,  the
+                      highly reliable training paradigm for end-to-end quadro-                  cause-effectrelationshiptraversesthroughuptofiveordersof
+                      tor control. The proposed training paradigm takes advan-                  integration and multiple non-linear transformations that are
+                      tage of the ground truth available in the simulator while                 dependent on system parameters. We would like to highlight
+                      explicitly accounting for the partial observability of the                that  3.1  Angular  rate  &  thrust  inputs  are  commonly
+                      real system using an action history.
+                   •  Best sample complexity: We devise a curriculum that                                 Position
+                      gradually increases the penalties in the reward function                            Velocity
+                      leading to better sample complexity and more reliable                               Acceleration
+                      policies.  We  show  the  benefit  of  the  components  in                             Attitude/orientation & thrust: Non-linear orien-
+                      our proposed training paradigm by conducting an exten-                                 tation→ acceleration transfer function [mass]
+                      sive ablation study containing 300 real-world trajecto-                             Jerk
+                      ries across different configurations, seeds and tasks. In
+                      contrast to existing works, our training setup uses off-                               Angular rate & thrust (CTBR): Non-linear rota-
+                      policy RL and we demonstrate the training of an end-to-                                tional kinematics
+                      end quadrotor control policy using the fewest number of                             Snap
+                      environment interactions reported.                                                     Body torque & thrust: Rotational dynamics [in-
+                   •  Fastest  training  time: By implementing a highly op-                                  ertia]
+                      timized  simulator,  we  demonstrate  the  fastest  training                           Individual rotor thrusts (SRT): [vehicle geome-
+                      of an  end-to-end quadrotor control policy  that can be                                try]
+                      transferred to a real system.                                                          RPMs:       Non-linear       torque/thrust       curves
+                   •  Sim2Real: We conduct extensive experiments including                                   [torque/thrust model parameters]
+                      more than 300 flights across configurations, seeds and                              Crackle
+                      tasks to test the Sim2Real transfer of end-to-end policies                             Motor   commands/RPM   setpoints:  [first-order
+                      for direct RPM control. We show that training a position                               low-pass time constant (motor delay)]
+                      controller using our setup generalizes to other tasks like                             Motor effort: [battery level]
+                      (agile) trajectory tracking.
+                   •  Open  Source:  We  open-source  our  setup  to  facilitate                    Fig. 1: Taxonomy of multirotor dynamics and control.
+
+
+
+
+
+2.13.14.14.24.35.15.20.1.2.3.4.5.
+
+===== PDF PAGE 3 =====
+referred to as “low-level” commands but from the taxonomy,                                   Publication        Level      Time       Samples
+we can see that there is only one domain parameter (mass)                                    2019 [33]        5.1     9h       10×106
+and otherwise just the rotational kinematics of a rigid body.                                2019 [29]         4.3/5.1    N/A     168×106
+Alternatively, 3.1  Angular  rate  &  thrust inputs are also                                 2020 [30]        4.3     N/A      10×106
+commonly referred to as Collective Thrust and Body Rates                                     2021 [31]            4.3     ∼ 2h         N/A
+(CTBR) inputs. Compared to the CTBR level, the reality                                       2021 [25]        2.1     27m       1×106
+gap and complexity of the system greatly increases towards                                   2023 [27]            3.1       21m          N/A
+the lowest levels like 5.1 Motor commands/RPM setpoints                                      Ours             5.1     18s     0.3×106
+which is the level of control used in this work. The high
+order of integration between inputs and the desired output                                         TABLE I: Training times.
+(position) poses a great challenge for RL algorithms because                  [28].  The  authors  train  a  position  controller  that  outputs
+the high-frequency exploratory actions (from ϵ-greedy-like                    individual rotor thrusts but in contrast to our approach, they
+exploration  schemes)  are  already  suppressed  in  the  early               are using a complex training procedure (exploration scheme)
+layers and hence lead to high-sample complexity and un-                       that requires a resettable simulator and drives up the sample
+reliable training behavior. In our proposed architecture, we                  complexity  to  more  than  100  million  environment  steps.
+overcomethischallengebyusingacombinationofoff-policy                          Additionally,  they  do  not  take  into  account  rotor  delays
+RL, curriculum learning, and by scheduling the exploration                    and their code is not available. In [29], the authors apply
+noise. From Fig. 1, we can observe that the complexity of                     domain randomization to transfer a policy that outputs SRT
+the control problem, as well as the size of the reality gap,                  to different quadrotors but they require knowledge about the
+follows a superlinear scaling where most of the non-linear                    particular thrust-to-weight ratio and thrust limits. In compar-
+dynamics and system parameters can be found in the lower                      ison, our approach demonstrates Sim2Real transfer without
+levels.                                                                       domain randomization and without modifications to the state
+                      III.  RELATED WORKS                                     estimation in the firmware as well as much faster training
+   Simulators. In the past, a large number of general robotics                times (comparison in Table I). In [22] the authors perform a
+and specifically quadrotor simulators have been proposed.                     benchmark of training controllers outputting velocity, CTBR
+Many of these focus on visual fidelity and photo-realistic                    and SRT commands but in contrast to our work they did not
+reproduction  of  the  environment  (e.g.,  to  enable  realistic             manage to transfer the low-level controller (SRT) to the real
+RGB camera perception) [11]–[14]. Others, as the one pre-                     world. Moreover, in all of the aforementioned works as well
+sented in this work, focus on the accurate implementation                     as in [22], [30], [31], SRT control outputs are used which
+of  quadrotor  dynamics  [13]–[16].  Among  the  referenced                   simplify  the  learning  problem  by  not  exposing  the  agent
+simulators, Flightmare [13] is the most related because it                    to the non-linear RPM ↔ thrust relationship. Furthermore,
+emphasizes the simulation speed of the quadrotor dynamics                     in  the  latter  three  cases,  the  code  is  not  published  for
+for  the  sake  of  RL.  Our  simulator  also  focuses  on  fast              independent replication and benchmarking. Lastly in [32],
+dynamics but since we are concerned with low-level control                    RPM outputs are used but rather than cutting out lower-level
+we just provide a basic User Interface (UI) instead of the                    controls to simplify the learning problem as commonly done
+                                                                              and  described  in  Section  II,  they  discard  the  higher-level
+photo-realism that is offered by other simulators.                            control and take CTBR as input from a high-level controller.
+   Reinforcement learning for quadrotor control. As de-                       Their work focuses on the adaptability and transferability
+scribed in Section II, it is usually easier to learn controllers              between different quadrotors and hence the decision about
+on the higher levels, especially for Sim2Real transfer. Hence,                the architecture is also aligned with our earlier observation
+a lot of work that focuses on downstream tasks has been                       in Section II that most of the dynamic parameters are at
+usingCTBRandhigher-levelcontrolinputstotrainRLbased                           the lower-level control where the adaptation takes place in
+agents. The use of velocity commands has been particularly                    their work. In contrast to all the most related work which
+common [17]–[22]. Fewer works also use orientation level                      rely on on-policy, policy gradient RL algorithms (particularly
+commands  [23],  [24]  or  angular  rate  commands  (CTBR)                    Proximal Policy Optimization (PPO)), we use Twin Delayed
+[22], [25]–[27]. The latter is usually used when increased                    Deep Deterministic policy gradient (TD3), an off-policy RL
+agility  is  required  (e.g.,  for  acrobatics,  racing,  or  flying          algorithm which offers better sample complexity and helps
+through a narrow gap).                                                        us achieve very fast wall-clock training times.
+   Tousethequadrotordynamic’sfullpotential,thefocushas                                                IV.  METHODOLOGY
+been shifting to training agents outputting individual rotor
+thrusts (also referred to as Single Rotor Thrusts (SRT)) [22],                   To be able to take full advantage of the capabilities of the
+[28]–[31]. The authors in [32] even go lower-level, training                  robot, we phrase our control problem as an MDP where the
+a controller outputting RPM. These represent the works that                   policydirectlymapsstatestomotorcommandsintheformof
+are closely related to our proposed solution. In the following,               RPMs. We select quaternions to represent orientation as they
+we  will  discuss  their  similarities  and  differences.  One  of            are a compact and global representation. However, for the
+the  earliest  demonstrations  of  the  successful  application               observations fed into the actor and critic, we convert them to
+of  deep  RL  for  quadrotor  control  has  been  presented  in               rotationmatricestoremovetheambiguitystemmingfromthe
+
+===== PDF PAGE 4 =====
+                   Fig. 2: Overview of the training and inference setup with a view of the simulator UI (left).
+
+
+quaternion’s double coverage of the space of rotations. Since                 onanyreal-worldplatformwithoutrequiringadditionalhard-
+we model the motors as a first-order low-pass filter, RPMs                    ware (in contrast to direct RPM feedback measurements).
+are also part of the state. This makes the state17 dimensional                Therefore, the actor’s observations are18+NH·4 dimen-
+withthefollowingstructures ={p,q,v,ω,ωm},consisting                           sional, where NH is the length of the action history, and are
+ofposition,orientation,linearandangularvelocityandmotor                       defined as follows:oa ={p,R,v,ω,H} with H being the
+speeds respectively.                                                          action history.
+   On real platforms, motor speeds are usually not observable                    While the critic observes the ground truth state, the actor’s
+and RPM setpoints are fed to the Electronic Speed Controller                  observations  are  additionally  perturbed  using  observation
+(ESC) in a feed-forward, one-way fashion through Pulse-                       noise to account for imperfections in the sensors (the scale of
+Width Modulation (PWM). Hence, we implement an asym-                          the noise components is described with all other parameters
+metric actor-critic scheme [34], where the critic, being only                 in the supplementary material). The actions consist of the
+required during training, has access to privileged information                RPM setpoints as a = {ωsp1,ωsp2,ωsp3,ωsp4} which places
+from the simulator. In particular, we let the critic access the               our policy/controller on the lowest order (level 5.1) of the
+RPMs and a random forcefr and torqueτr disturbance that                       taxonomy described in Section II.
+are sampled at the beginning of each episode to increase                         For the initial state distribution, we sample from a diverse
+the robustness of the trained policies. Hence, the privileged                 set of positions, orientations, linear and angular velocities as
+observations of the critic are represented by a28 dimensional                 well as rotor speeds. We use a negative squared cost with
+vector oc ={p,R,v,ω,ωm,fr,τr} consisting of position,                         an additive constant incentivizing survival to mitigate the
+orientation,  linear  velocity,  angular  velocity,  rotor  speeds,           “learning to terminate” problem [35]
+force disturbance, and torque disturbance respectively.                           r(s,a,s′) =−Crp∥p∥22−Crq  1−qw2−Crv∥v∥22
+   We  also  notice  that  the  delay  in  the  step-response  on                                 −Crω∥ω∥22−Cra∥a−Crab∥22+Crs.
+quadrotors is significant and caused by their low-pass behav-
+ior. This behavior also strongly impacts the dynamics of the                  The  values  of  the  constants C∗  are  supplied  in  the  sup-
+27g nano quadrotor (Crazyflie) used in this work. Common                      plementary  material.  Additionally,  we  find  that  a  simple
+values for the RC equivalent time constant (1−e−1≈ 63%                        curriculumthatistransitioningfromaninitialsetofconstants
+step response) are between 0.05s and 0.25s. We empirically                    Cinit,∗ to a more restrictiveCtarget,∗ (punishing position errors
+find0.15s to be suitable for Sim2Real transfer which is also                  and particularly control actions more harshly) benefits the
+supportedbythemanufacturersmeasurements1.Thesedelays                          sample complexity and Sim2Real transfer (as described in
+are significantly larger than the usual control interval of low-              Section V). Every 100000 steps the weights are adjusted
+level controllers which usually run at around hundreds of Hz.                 by  multiplying  them  by  the Cp∗  factors  described  in  the
+Therefore, these delays lead to actions only impacting the                    supplementary material until they reach the Ctarget,∗ values,
+state after 5 to 25 control steps. To mitigate this large level               where they remain constant. We also decay the exploration
+of partial observability, we add a history of control actions to              noiseusingthesameexponentialschemeasinthecurriculum
+the actor’s observation. The action history is a proprioceptive               of the reward function.
+measurement that can be trivially implemented in software                        We would also like to highlight that we train a position
+
+  1Crazyflie motor step response: https://web.archive.org/web/2022030909      controller, not merely a stabilizing controller that only works
+2320/https://www.bitcraze.io/wp-content/uploads/2015/02/M1-step-respons       around a particular state. The goal of our position controller
+e.png                                                                         is to return to the origin point with zero linear velocity from
+
+===== PDF PAGE 5 =====
+any initial conditions (within reasonable bounds described
+in the parameters in the supplementary material). Hence, we
+train a policy that can go to any position or velocity setpoint
+by shifting the current position and velocity (so there is no
+need to apply goal-conditioned RL). For stable behavior, the
+position and velocity errors induced by the shifted setpoints
+should not exceed the errors seen during training which can
+easily be accommodated for by clipping.
+   To facilitate fast training times we implement a highly
+optimized simulator for multirotor dynamics. A sample view
+of  the  interface  is  shown  in  Fig.  2  (left).  By  leveraging
+C++  template  metaprogramming  the  simulation  code  can
+be  highly  optimized  by  the  compiler  and  can  be  tightly
+integrated into the RLtools [36] deep RL framework.                           Fig. 3: Episode return (µ and σ over 50 runs with different
+
+                                                                              initial seeds).
+                    V.  EXPERIMENTAL SETUP
+
+   Simulation. We run our multirotor dynamics simulator on
+a Nvidia T2000 laptop GPU and attain 1284 million steps/s.
+To reach this level of performance, 64 blocks of 128 threads
+are each executing the forward dynamics in parallel. This
+amounts to 8192 environments in total which are run for
+1000000stepseach.TherequiredexecutiontimeoftheGPU
+kernel is 6380ms amounting to 1284 million steps/s. At a
+simulation frequency of 100Hz this is about 5 months of
+simulated flight per second. Compared to Flightmare [13]
+which is the state of the art in terms of dynamics simulation
+speed  with  a  reported  frequency  of 200000  steps/s  on  a
+laptop, our simulation is about 6420× faster.
+   Training. Leveraging the training setup described in Sec-                  Fig. 4: Episode lengths (µ and σ over 50 runs with different
+tion IV and using the RLtools RL framework [36], we train a                   initial seeds). Note, compared to Fig. 3 the horizontal axis
+low-level quadrotor control policy. Fig. 3 shows the learning                 is zoomed in to highlight the initial phase.
+curve in terms of the returns (sum of rewards per episode).                                                VI.  RESULTS
+Purely looking at the reward/returns, it is hard to judge the
+level of flying capabilities of a particular policy because it                   Ablation  study.  To  show  the  impact  of  the  different
+is highly dependent on the reward function formulation. We                    components of the training setup (as shown in Fig. 2) on
+believe the episode length is a more understandable measure                   the performance during training and real-world deployment,
+than the return because if the agent crashes or flies away                    we  conduct  a  large-scale  ablation  study  and  present  the
+from a tight box around the origin, the episode is terminated.                results in Table II. We train each configuration for up to
+Hence, from Fig. 4 we can see that after about 300000 steps                   3000000 steps using 50 different initial seeds each. Figs.
+(total number of interactions with the environment) or18s of                  3  and  4  are  generated  from  the 50  runs  of  the  baseline
+training on a 2020 MacBook Pro, the policy has learned to                     configuration (containing all components). Furthermore, we
+flyrelativelyreliably.Incomparisontorelatedwork(listedin                      execute  the  resulting  policy  after  300000  and  3000000
+Table I) our approach is substantially faster and requires an                 steps of training using the first 10 different seeds of each
+order of magnitude less samples when compared to learned                      configuration  on  a  real  Crazyflie  quadrotor.  We  manually
+policies on a similar level of control outputs.                               terminate the position control episodes after 20s of flying
+   We investigate the 50 differently seeded training runs by                  because  in  our  experience,  at  this  level,  policies  can  fly
+selecting the 5 seeds with the worst cumulative number of                     without  crashing  until  the  battery  runs  out.  In  the  case
+steps  over  the  whole  training  run  (area  under  the  curve)             of the trajectory tracking task, we complete 4 subsequent
+shown in Fig. 4. We notice that even the worst 5 runs learn                   cycles or report a failed attempt if the quadrotor crashes
+to fly rapidly. This shows the remarkable reliability of our                  beforehand. We report the mean and median as well as the
+training approach which is not commonly expected from RL                      minimum  of  the  position  error  across  the 10  runs/seeds.
+training pipelines (e.g., in [29] the authors state that cherry-              The minimum positional error is a particularly interesting
+pickingacrossmanyseedsisrequiredtofindapolicythatcan                          metric  because  it  corresponds  to  cherry-picking  which  is
+fly). This remarkable level of reliability is also confirmed by               common  in  related  works  (e.g.,  [29]).  We  would  like  to
+real-world experiments that are described in the following.                   note  that  turning  off  the  rotor  delay  also  implies  turning
+
+===== PDF PAGE 6 =====
+                                  Training (Simulation)                                          Inference (Real World)
+             Task                    Position Control               Position Control                                Trajectory Tracking
+      Checkpoint [steps]         300000        3000000                                   300000                                          3000000
+           Ablation             N      R      N      R          #        e     emed    emin         #     e     emed   emin         #     e     emed    emin
+     All Components             398    -335    368    302     10/10    0.26    0.24     0.1   10/10     0.34    0.38   0.18    10/10     0.27    0.26   0.21
+      Observation Noise         392     -346     369     313  10/10    0.26     0.27      0.1       8/10      0.33     0.31     0.23    10/10   0.21    0.21     0.16
+    Reward Recalculation        391    -455    394    319      9/10    0.24    0.15    0.07    9/10     0.34    0.3    0.25     7/10     0.22    0.22    0.2
+  Exploration Noise Decay       398     -335     363     303   9/10      0.25     0.22     0.08      8/10     0.31    0.3     0.19    10/10   0.21   0.18   0.15
+         Disturbances           404    -310    375    291      9/10    0.28    0.27    0.08    8/10     0.33    0.32   0.21    10/10    0.21     0.21   0.17
+   Asymmetric Actor-Critic      186     -305    429     272    6/10      0.28     0.29     0.08      4/10       0.4      0.34     0.32      9/10      0.25     0.26     0.19
+        Action History          138    -332    296     27      5/10    1.18    1.41    0.25    5/10     0.63    0.6    0.25     0/10      ∞      ∞       ∞
+          Curriculum            64      -200     384     180   1/10      0.18     0.18     0.18      1/10      0.23     0.23     0.23      9/10       0.2       0.2      0.15
+         Rotor Delay            46     -207     44    -195     0/10     ∞       ∞       ∞      0/10      ∞       ∞      ∞       0/10      ∞      ∞       ∞
+     AAC & Curriculum           44     -178    383      17     0/10     ∞     ∞     ∞       0/10     ∞     ∞     ∞       2/10      0.26     0.26     0.23
+TABLE II: Ablation study: Removing different components from the baseline (which includes all the components). The
+Ablation column describes the component that is removed. Returns R and number of steps per episode (N) are mean over
+50 training runs with different seeds each. The mean(e)/median(emed)/minimum(emin) of the position error (in the xy-plane)
+are statistics over 10 flights of the real quadrotor with policies from different seeds each (no cherry-picking, seeds are the
+first 10 of the 50 trained in simulation). The # column shows the number of successful flights (without crashing). For the
+trajectory tracking task we use the figure-eight trajectory shown in Fig. 5b with an interval of T = 5.5s. For each metric,
+the best value is marked in bold. The best values of the real-world tests are awarded provided that at least 5/10 of the
+runs/seeds of a particular configuration are successful for each of the three tests.
+off the action history (as there is no partial observability of                   simulating the rotor delay leads to no usable policy. When
+the true RPM anymore). In the ablation of the asymmetric                          simulating  the  rotor  delays  but  not  including  the  action
+actor-critic, the critic, like the actor, receives action history                 history we can still see a considerable drop in reliability and
+observations.  Since  the  curriculum  entails  changes  in  the                  positional accuracy, particularly after 3000000 steps where
+reward function and we apply reward recalculation of all                          the  policy  seems  to  be  overfitting  the  system  dynamics.
+rewards in the replay buffer after each modification of the                       This  validates  the  need  for  an  action  history  to  account
+reward function, we also ablate the setup without reward                          for  the  partial  observability  in  our  training  setup.  When
+recalculation.Notethattheconfigurationsdifferdrasticallyin                        taking into account the average episode lengths and returns
+the added/removed complexity. The components observation                          achieved by the different configurations during training in
+noise,  reward  recalculation,  exploration  noise  decay,  and                   simulation we can only observe a loose correlation between
+disturbances are relatively minor changes to the baseline,                        simulation and real-world performance. As described earlier,
+while  the  asymmetric  actor-critic  structure,  action  history                 the episode lengths appear to be a better gauge for the real-
+as well as rotor delay, and the curriculum are more drastic                       world performance as well.
+modifications in terms of complexity of the implementation                           We conclude that overall the baseline configuration with
+as well as the expected impact on the training behavior.                          all components and the configurations with minor ablations
+   From  the  results  in  Table  II,  we  can  see  that  overall                yield  the  best  performance  when  taking  into  account  the
+(and  particularly  when  executed  on  the  real  system)  the                   speed  of  training  (sample  complexity)  and  position  error.
+baseline  is  the  most  reliable  with  no  crashes  in  any  of                 We observe that the baseline configuration yields the most
+the tasks/seed combinations. In general, we can observe a                         reliable policies at all stages and anecdotally is also most
+trend  that  removing  the  smaller  modifications  still  yields                 robust with respect to e.g. turbulent wind (cf. the supplemen-
+reliable policies (early during the training as well as after                     tary video). For trajectory tracking, after 3000000 steps in
+convergence). In contrast, when removing the more com-                            particular, we find that the configuration without exploration
+plex components, we can see a more pronounced drop in                             noise gives the lowest tracking error among the tested seeds
+reliability as well as tracking performance. Here, we can                         and hence chose it for the trajectory tracking experiments in
+observe  that  the  curriculum  indeed  strongly  impacts  the                    the next section. Overall, we observe multiple reliable con-
+training speed. Without the curriculum, the policies are not                      figurations that can fly as long as the battery lasts, which is a
+able to fly early on while after convergence they reach a                         big improvement over e.g. [37] where RL-based control was
+comparable  performance  to  the  baseline.  We  can  observe                     able to fly Crazyflies for only up to6s. Compared to [29] we
+a similar behavior when removing the Asymmetric Actor-                            do not require a modification of the firmware (adjusting the
+Critic  (AAC)  and  hence  also  ablate  removing  both,  the                     gyroscope filter), complex motor noise (Ornstein-Uhlenbeck
+asymmetric actor-critic and the curriculum and find that the                      process) and cherry-picking seeds/policies.
+training takes considerably longer and even after 3000000                            Trajectory tracking. In addition, even though we train
+steps most of the policies are crashing. As deduced from                          a  position  controller,  we  find  that  the  resulting  policies
+first principles, we can also confirm that training without                       can  track  trajectories  like  the  Lissajous  in  Fig.  5  when
+
+===== PDF PAGE 7 =====
+             (a) Slow (T =15s)                                (b) Normal (T =5.5s)                                  (c) Fast (T =3.5s)
+        Fig. 5: Real-world tracking of a Lissajous trajectory with different cycle times (reference trajectory in black).
+
+                                                                              jectory. The nonlinear controller [39] also uses the velocity
+                                                                              reference  but  performs  worse  on  low  speeds  and  crashes
+                                                                              in the fast setting. Compared to the other controllers our
+                                                                              learned controller directly outputs RPMs and hence does not
+                                                                              take advantage of the battery voltage compensation, hence
+                                                                              we also report the RMSE without the z component. Using
+                                                                              the slow trajectory, the geometric controller [38] performs
+                                                                              better than our policy which we attribute to its integral part
+Fig. 6: Long exposure photo of the real-world tracking of a                   which can help it to reduce the steady state error. Our policy
+Lissajous trajectory with a 5.5 s cycle time.                                 does not have memory (which the integral part can be seen
+                                                                              as) which it could use to reduce the steady-state position
+                                                                              error. In the case of the normal-speed trajectory our policy
+      Interval        Slow (15s)       Normal (5.5s)      Fast (3.5s)         isroughlyonparwiththegeometriccontroller[38]andwhen
+     Controller        e      exy        e      exy        e      exy         moving to even more agile trajectories the performance gap
+        PID          0.23     0.22     0.72     0.72     0.88     0.87        inverts and our policy achieves lower error compared to [38].
+  Geometric [38]     0.06    0.04      0.16     0.16     0.36     0.36        Anecdotally, we also find that the geometric controller (using
+   Nonlinear [39]    0.29     0.11     0.38     0.32      ∞        ∞          the default configuration in the Crazyflie) is very sensitive
+     INDI [40]       0.21     0.21     1.13      1.13    1.04     1.04        to position and velocity errors and is unstable during the
+       Ours          0.08     0.08     0.17     0.15     0.24     0.22        takeoff. In contrast, most of our policies are robust towards
+TABLE  III:  Real-world  trajectory  tracking  error           e  (Root-      higher position and velocity errors and hence also manage
+Mean-Square Error (RMSE) including z in meter) and                   exy      to take off as a response to a step function in z.
+(RMSE excluding z in meter) when tracking the Lissajous                                                VII.  CONCLUSION
+trajectory in Fig. 5 using different controllers.
+                                                                                 In this work, we presented an unprecedentedly fast RL
+deployed on the real quadrotor. We test the tracking per-                     architecture for quadrotor control that directly outputs RPMs
+formance using a figure-eight Lissajous trajectory p(t) =                     andcanbetrainedtoflyarealquadrotorin18sonconsumer-
+cos(2πt/T)   sin(4πt/T)/2   const⊤  with  varying  cycle                    grade laptops. The approach directly transfers to real-world
+
+times T  and show the tracking performance in Fig. 5. We                      platforms  even  without  domain  randomization.  Compared
+conduct the trajectory tracking experiments in a flying space                 to prior work, our approach leads to very reliable training
+of 10×6×4 m3 at the Agile Robotics and Perception Lab                         behavior and does not require the cherry-picking of trained
+(ARPL)  at  New  York  University  (equipped  with  a  Vicon                  policies. Furthermore, we conduct a large ablation study and
+motion capturing system). We can see that our trained policy                  find that our policies are competitive with classic controllers.
+is able to track even agile trajectories like in Fig. 5c where                   We open-source our approach and simulator setup to the
+it reaches up to 3ms−1 and accelerations of up to 0.9 g. In                   community to democratize learning-based quadrotor control.
+Fig. 6, we show a long-exposure photo of the trajectory in                    Duetothecurseofdimensionality,thedesignspace(interms
+Fig. 5b being tracked by one of our policies.                                 of hyperparameters and other design decisions) of RL-based
+   We execute the same trajectory using different types of                    end-to-endquadrotorcontrolisstillsparselyexploredandwe
+classical controllers: Proportional–Integral–Derivative (PID),                believe that our experimental results constitute a foundation
+geometric [38], nonlinear [39] and Incremental Non-Linear                     that future research can build upon. Our proposed training
+Dynamic  Inversion  (INDI)  [40].  We  report  the  results  in               paradigm and the resulting highly optimized implementation
+Table III and find that the geometric controller [38] gives                   allow  for  greatly  reduced  training  times  and  hence  more
+the lowest tracking error among these classical controllers                   rapid iteration. We would also like to note that the Crazyflie
+because, like our approach, it can take advantage not only                    quadrotor uses open-source firmware and is widely available
+of the position but also the velocity reference of the tra-                   and relatively inexpensive.
+
+===== PDF PAGE 8 =====
+   Future works will push the training speed and robustness                                   [19]C. Sampedro, A. Rodriguez-Ramos, I. Gil, L. Mejias, and P. Campoy,
+as  well  as  the  tracking  performance  of  learned  low-level                                    “Image-Based Visual Servoing Controller for Multirotor Aerial Robots
+controllers through automatic hyperparameter optimization.                                          Using  Deep  Reinforcement  Learning,”  in  IEEE/RSJ  International
+                                                                                                    Conference on Intelligent Robots and Systems (IROS), 2018, pp. 979–
+Furthermore, we are interested in extending the policy to be                                        986.
+adaptive to changing system or environment parameters like                                    [20]S.Belkhale,R.Li,G.Kahn,R.McAllister,R.Calandra,andS.Levine,
+battery levels or wind, possibly using meta-RL.                                                     “Model-Based  Meta-Reinforcement  Learning  for  Flight  with  Sus-
+                                                                                                    pended  Payloads,” IEEE  Robotics  and  Automation  Letters,  vol.  6,
+                                                                                                    no. 2, pp. 1471–1478, 2021.
+                                  REFERENCES                                                  [21]B. Rub      ´ı, B. Morcego, and R. P´erez, “Deep reinforcement learning for
+ [1]A.Krizhevsky,I.Sutskever,andG.E.Hinton,“ImageNetclassification                                  quadrotor path following with adaptive velocity,”Autonomous Robots,
+      with  deep  convolutional  neural  networks,” Communications  of  the                         vol. 45, no. 1, pp. 119–134, 2021.
+      ACM, vol. 60, no. 6, pp. 84–90, 2012.                                                   [22]E.  Kaufmann,  L.  Bauersfeld,  and  D.  Scaramuzza,  “A  Benchmark
+ [2]K. He, X. Zhang, S. Ren, and J. Sun, “Deep Residual Learning for                                Comparison of Learned Control Policies for Agile Quadrotor Flight,”
+      Image Recognition,” in IEEE Conference on Computer Vision and                                 inIEEEInternationalConferenceonRoboticsandAutomation(ICRA),
+      Pattern Recognition (CVPR), 2016, pp. 770–778.                                                2022, pp. 10504–10510.
+ [3]V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G.                          [23]P. Becker-Ehmck, M. Karl, J. Peters, and P. van der Smagt, “Learning
+      Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski,                           to Fly via Deep Model-Based Reinforcement Learning,” Aug. 2020.
+      S.Petersen,C.Beattie,A.Sadik,I.Antonoglou,H.King,D.Kumaran,                             [24]J. Lin, L. Wang, F. Gao, S. Shen, and F. Zhang, “Flying through a
+      D. Wierstra, S. Legg, and D. Hassabis, “Human-level control through                           narrow gap using neural network: an end-to-end planning and control
+      deep reinforcement learning,”Nature, vol. 518, no. 7540, pp. 529–533,                         approach,”inIEEE/RSJInternationalConferenceonIntelligentRobots
+      2015.                                                                                         and Systems (IROS), 2019, pp. 3526–3533.
+ [4]T.P.Lillicrap,J.J.Hunt,A.Pritzel,N.Heess,T.Erez,Y.Tassa,D.Sil-                            [25]J. E. Kooi and R. Babuska, “Inclined Quadrotor Landing using Deep
+      ver, and D. Wierstra, “Continuous control with deep reinforcement                             Reinforcement Learning,” in IEEE/RSJ International Conference on
+      learning,” in International Conference on Learning Representations                            Intelligent Robots and Systems (IROS), 2021, pp. 2361–2368.
+      (ICLR), 2016.                                                                           [26]E. Kaufmann, A. Loquercio, R. Ranftl, M. M      ¨uller, V. Koltun, and
+ [5]J.  Schulman,  P.  Moritz,  S.  Levine,  M.  I.  Jordan,  and  P.  Abbeel,                      D. Scaramuzza, “Deep Drone Acrobatics,” in Robotics: Science and
+      “High-dimensional  continuous  control  using  generalized  advantage                         Systems, 2020.
+      estimation,” in International Conference on Learning Representations                    [27]A. Romero, Y. Song, and D. Scaramuzza, “Actor-Critic Model Pre-
+      (ICLR), 2016.                                                                                 dictive Control,” 2023.
+ [6]J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov,                           [28]J.Hwangbo,I.Sa,R.Siegwart,andM.Hutter,“ControlofaQuadrotor
+      “Proximal Policy Optimization Algorithms,” 2017.                                              withReinforcementLearning,”IEEERoboticsandAutomationLetters,
+ [7]J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel,                             vol. 2, no. 4, pp. 2096–2103, 2017.
+      “Domain Randomization for Transferring Deep Neural Networks from                        [29]A.  Molchanov,  T.  Chen,  W.  H      ¨onig,  J.  A.  Preiss,  N.  Ayanian,  and
+      Simulation to the Real World,” inIEEE/RSJ International Conference                            G. S. Sukhatme, “Sim-to-(Multi)-Real: Transfer of Low-Level Robust
+      on Intelligent Robots and Systems (IROS), 2017, pp. 23–30.                                    Control Policies to Multiple Quadrotors,” in IEEE/RSJ International
+ [8]X. B. Peng, M. Andrychowicz, W. Zaremba, and P. Abbeel, “Sim-to-                                Conference on Intelligent Robots and Systems (IROS), 2019, pp. 59–
+      Real Transfer of Robotic Control with Dynamics Randomization,” in                             66.
+      IEEE International Conference on Robotics and Automation (ICRA),                        [30]C.-H. Pi, K.-C. Hu, S. Cheng, and I.-C. Wu, “Low-level autonomous
+      2018, pp. 3803–3810.                                                                          control  and  tracking  of  quadrotor  using  reinforcement  learning,”
+ [9]OpenAI,  I.  Akkaya,  M.  Andrychowicz,  M.  Chociej,  M.  Litwin,                              Control Engineering Practice, vol. 95, p. 104222, 2020.
+      B. McGrew, A. Petron, A. Paino, M. Plappert, G. Powell, R. Ribas,                       [31]Y.  Song,  M.  Steinweg,  E.  Kaufmann,  and  D.  Scaramuzza,  “Au-
+      J. Schneider, N. Tezak, J. Tworek, P. Welinder, L. Weng, Q. Yuan,                             tonomous  Drone  Racing  with  Deep  Reinforcement  Learning,”  in
+      W. Zaremba, and L. Zhang, “Solving Rubik’s Cube with a Robot                                  IEEE/RSJ International Conference on Intelligent Robots and Systems
+      Hand,” 2019.                                                                                  (IROS), 2021, pp. 1205–1212.
+[10]K. Hornik, M. Stinchcombe, and H. White, “Multilayer feedforward                          [32]D. Zhang, A. Loquercio, X. Wu, A. Kumar, J. Malik, and M. W.
+      networks are universal approximators,”Neural Networks, vol. 2, no. 5,                         Mueller, “Learning a Single Near-hover Position Controller for Vastly
+      pp. 359–366, 1989.                                                                            Different Quadcopters,” inIEEE International Conference on Robotics
+[11]S. Kohlbrecher, J. Meyer, T. Graber, K. Petersen, U. Klingauf, and                              and Automation (ICRA), 2023, pp. 1263–1269.
+      O. von Stryk, “Hector Open Source Modules for Autonomous Map-                           [33]W.Koch,“Flightcontrollersynthesisviadeepreinforcementlearning,”
+      ping and Navigation with Rescue Robots,” in RoboCup 2013: Robot                               Ph.D. dissertation, 2019.
+      World Cup XVII, 2014, vol. 8371, pp. 624–631.                                           [34]L. Pinto, M. Andrychowicz, P. Welinder, W. Zaremba, and P. Abbeel,
+[12]S. Shah, D. Dey, C. Lovett, and A. Kapoor, “AirSim: High-Fidelity                               “Asymmetric  Actor  Critic  for  Image-Based  Robot  Learning,”  in
+      Visual and Physical Simulation for Autonomous Vehicles,” in Field                             Robotics: Science and Systems XIV, 2018.
+      and Service Robotics, 2018, vol. 5, pp. 621–635.                                        [35]J.  Eschmann,  “Reward  function  design  in  reinforcement  learning,”
+[13]Y. Song, S. Naji, E. Kaufmann, A. Loquercio, and D. Scaramuzza,                                 Reinforcement Learning Algorithms: Analysis and Applications, pp.
+      “Flightmare:AFlexibleQuadrotorSimulator,”inConferenceonRobot                                  25–33, 2021.
+      Learning, 2020, pp. 1147–1157.                                                          [36]J. Eschmann, D. Albani, and G. Loianno, “RLtools: A Fast, Portable
+[14]J. Panerati, H. Zheng, S. Zhou, J. Xu, A. Prorok, and A. P. Schoel-                             Deep Reinforcement Learning Library for Continuous Control,” 2023.
+      lig, “Learning to Fly - a Gym Environment with PyBullet Physics                         [37]N. O. Lambert, D. S. Drew, J. Yaconelli, S. Levine, R. Calandra,
+      for Reinforcement Learning of Multi-agent Quadcopter Control,” in                             and K. S. J. Pister, “Low-Level Control of a Quadrotor With Deep
+      IEEE/RSJ International Conference on Intelligent Robots and Systems                           Model-Based Reinforcement Learning,” IEEE Robotics and Automa-
+      (IROS), 2021.                                                                                 tion Letters, vol. 4, no. 4, pp. 4224–4230, 2019.
+[15]F.  Furrer,  M.  Burri,  M.  Achtelik,  and  R.  Siegwart,  “RotorS  -  A                 [38]D. Mellinger and V. Kumar, “Minimum snap trajectory generation and
+      Modular Gazebo MAV Simulator Framework,” in Robot Operating                                   control for quadrotors,” inIEEE International Conference on Robotics
+      System (ROS): The Complete Reference (Volume 1), 2016.                                        and Automation (ICRA), 2011, pp. 2520–2525.
+[16]G.  Li,  X.  Liu,  and  G.  Loianno,  “RotorTM:  A  Flexible  Simulator                   [39]D. Brescianini, M. Hehn, and R. D’Andrea, “Nonlinear quadrocopter
+      for Aerial Transportation and Manipulation,” IEEE Transactions on                             attitude control: Technical report,” ETH Zurich, Tech. Rep., 2013.
+      Robotics, 2023.                                                                         [40]E.  J.  J.  Smeur,  Q.  Chu,  and  G.  C.  H.  E.  de  Croon,  “Adaptive
+[17]F. Sadeghi and S. Levine, “Cad2rl: Real single-image flight without a                           Incremental  Nonlinear  Dynamic  Inversion  for  Attitude  Control  of
+      single real image,” in Proceedings of Robotics: Science and Systems,                          Micro Air Vehicles,” Journal of Guidance, Control, and Dynamics,
+      Cambridge, Massachusetts, 2017.                                                               vol. 39, no. 3, pp. 450–461, 2016.
+[18]R. Polvara, M. Patacchiola, S. Sharma, J. Wan, A. Manning, R. Sut-
+      ton, and A. Cangelosi, “Autonomous Quadrotor Landing using Deep
+      Reinforcement Learning,” 2018.

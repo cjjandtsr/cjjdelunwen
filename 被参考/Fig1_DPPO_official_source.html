@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-74JZKJCRZ6"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-74JZKJCRZ6');
+    </script>
+
+    <title>Diffusion Policy Policy Optimization</title>
+
+    <meta name="description" content="Diffusion Policy Policy Optimization">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/default.min.css">
+    <link rel="stylesheet" href="css/app.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.8.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.3/clipboard.min.js"></script>
+
+    <style>
+        .nav-pills {
+          position: relative;
+          display: inline;
+        }
+        .imtip {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+        .container {
+            max-width: 70%; /* Set the max-width as desired */
+            margin: auto; /* Centers the container */
+        }
+        .full-width-video-container {
+            width: 120%; /* Set wider than viewport */
+            position: relative;
+            left: 50%; /* Move to the center */
+            transform: translateX(-50%); /* Center the container */
+            display: flex;
+            justify-content: center; /* Center videos inside */
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main">
+        <br>
+        <div class="row mt-2">
+            <div class="col-md-12 text-center">
+                <h1 class="heading" style="font-size: 40px !important;">
+                    Diffusion Policy Policy Optimization
+                </h1>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <ul class="list-inline">
+                <li><a href="//allenzren.github.io">Allen Z. Ren</a></li>
+                <li><a href="//jlidard.github.io/">Justin Lidard</a></li>
+                <li><a href="//ankile.com/">Lars L. Ankile</a></li>
+                <li><a href="//anthonysimeonov.github.io/">Anthony Simeonov</a></li><br>
+                <li><a href="//people.csail.mit.edu/pulkitag/">Pulkit Agrawal</a></li>
+                <li><a href="//irom-lab.princeton.edu/majumdar">Anirudha Majumdar</a></li>
+                <li><a href="//www.benburchfiel.com/">Benjamin Burchfiel</a></li>
+                <li><a href="//hongkai-dai.github.io/">Hongkai Dai</a></li>
+                <li><a href="//msimchowitz.github.io/">Max Simchowitz</a></li>
+                </ul>
+            </div>
+            <br>
+            <div class="col-md-12 text-center">
+                <ul class="list-inline">
+                <li style="display: inline; border-right: 2px solid #bbb; padding-right: 10px; margin-right: 10px;">
+                    <a href="//arxiv.org/abs/2409.00588">Paper</a>
+                </li>
+                <li style="display: inline;">
+                    <a href="//github.com/irom-lab/dppo">Code</a>
+                </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <p class="text-justify text-center large-text">
+                    TL;DR: We introduce DPPO, an algorithmic framework and set of best practices for fine-tuning diffusion-based policies in continuous control and robot learning tasks. DPPO shows marked improvements over diffusion and non-diffusion baselines alike, across a variety of tasks and sim-to-real transfer.
+                </p>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 text-center">
+                <video id="v0" width="75%" preload="metadata" playsinline muted loop autoplay>
+                    <source src="videos/dppo-banner-v2.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br><br>
+                <h3>
+                    Approach overview
+                </h3>
+                <p class="text-justify">
+                    DPPO introduces a <strong>two-layer Diffusion Policy MDP</strong> with the inner MDP representing the denoising process and the outer MDP representing the environment --- each step of the entire MDP involves Gaussian likelihood and thus can be optimized with policy gradient. DPPO builds upon Proximal Policy Optimization (PPO) and proposes a set of best practices including <strong>modifications to the denoising schedule</strong> to ensure fine-tuning efficiency and stability.
+                    <br><p style="text-align:center;">
+                        <image src="img/mdp.png" width="100%">
+                    </p>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br><br>
+                <h3>
+                    Performance evaluation
+                </h3>
+                <p class="text-justify">
+                    <!-- (see <a href="//arxiv.org/abs/?">paper</a>) -->
+                    DPPO yields consistent and marked improvements in training stability and final performance compared to other diffusion-based RL algorithms and common policy parameterizations such as Gaussian and Gaussian Mixture. Most remarkably, DPPO achieves robust <strong>zero-shot sim-to-real transfer</strong> (no usage of real data) in a state-based, long-horizon assembly task, while Gaussian policy shows a significant sim-to-real gap and consistently causes hardware error.
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <video id="v0" width="100%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-real-comparison.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                    <br>
+                    <p style="text-align:center;">
+                        <image src="img/hardware-eval.png" width="75%">
+                    </p>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <p class="text-justify">
+                    BC-only policy tends to exhibit haphazard behavior, e.g., not ensuring the peg is properly inserted before loosening the grip. DPPO policy, after RL fine-tuning, exhibits more <strong>robust</strong> insertion behavior.
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <video id="v0" width="100%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-insertion-comparison.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                    <br>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <p class="text-justify">
+                    DPPO policy shows robust <strong>recovery behavior</strong>, e.g., here the peg is pushed away after the failed grasp, but the robot then relocates to the peg and drags it back to the proper location. Such behavior is not present in the expert demonstrations or the BC-only policy.
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <video id="v0" width="70%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-robust.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                    <br>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <p class="text-justify">
+                    DPPO solves the more challenging <em>Square</em> and <em>Transport</em> tasks from <a href="//robomimic.github.io/docs/introduction/overview.html">robomimic</a> to <strong>>90% success rates</strong> using either <strong>state or pixel input</strong> and <strong>sparse reward</strong>. To our knowledge, DPPO is <strong>the first RL algorithm</strong> to solve <em>Transport</em> to >50% success rates. The final behavior is robust and smooth without using any regularization or reward shaping in training.
+                    <div class="row mt-4">
+                        <div class="col-md-6 text-center">
+                            <video id="v0" width="100%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-square-sim-v3.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <video id="v1" width="100%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-transport-sim-v3.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br><br>
+                <p class="text-justify">
+                    In three multi-stage assembly tasks from <a href="//clvrai.github.io/furniture-bench/">Furniture-Bench</a>, <em>One-leg</em>, <em>Lamp</em>, and <em>Round-table</em>, DPPO improves the success rate of pre-trained policies from <strong>57% to 97%</strong>, <strong>12% to 87%</strong>, and <strong>1% to 86%</strong>, respectively, learning from only <strong>sparse reward</strong>.
+                </p>
+            </div>
+        </div>
+
+        <div class="full-width-video-container">
+            <div class="row mt-4 justify-content-center">
+                <div class="col-md-4 text-center">
+                    <video id="v0" width="100%" preload="metadata" playsinline muted loop autoplay>
+                        <source src="videos/dppo-one_leg-sim-v2.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-md-4 text-center">
+                    <video id="v1" width="100%" preload="metadata" playsinline muted loop autoplay>
+                        <source src="videos/dppo-lamp-sim-v2.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="col-md-4 text-center">
+                    <video id="v2" width="100%" preload="metadata" playsinline muted loop autoplay>
+                        <source src="videos/dppo-round_table-sim-v2.mp4" type="video/mp4">
+                    </video>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br><br>
+                <p class="text-justify">
+                    Although the fine-tuned <strong>Gaussian</strong> policy can sometimes achieve high success rate in simulation, e.g., in the <em>Lamp</em> task, its behavior is very jittery and unstable and thus <strong>unlikely to transfer well to the real world</strong>. We discuss the reason from the perspective of <strong>exploration</strong> next. We also find adding action penalty for possibly smoothening the behavior hinders fine-tuning.
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <video id="v0" width="75%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-gaussian-lamp.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                    <br>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br><br><br>
+                <h3>
+                    Understanding DPPO's properties
+                </h3>
+                <p class="text-justify">
+                    <!-- The combination of diffusion parameterization with the denoising of action chunks means that policy stochasticity in DPPO is structured in both action dimension and time horizon.  -->
+                    Through investigative experiments, we find DPPO engages in <strong>structured, on-manifold exploration</strong> around the expert data. Gaussian policy generates less structured exploration noise (especially in M2) and Gaussian Mixture exhibits narrower coverage. DPPO's structured exploration also leads to more <strong>natural behavior</strong> after fine-tuning, which in turn leads to robust sim-to-real transfer.
+                    <!-- <p style="text-align:center;">
+                        <image src="img/d3il-trajectories.png" width="90%">
+                    </p> -->
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <video id="v0" width="100%" preload="metadata" playsinline muted loop autoplay>
+                                <source src="videos/dppo-avoid-v2.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+            </div>
+            <br>
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <p class="text-justify">
+                    DPPO preserves the iterative action refinement through denoising process, and generates policies that are <strong>robust to perturbations</strong> in dynamics and the initial state distribution. Such robustness is crucial to maintainining <strong>training stability</strong>, and notably, allowing more extensive domain randomization in simulation to facilitate sim-to-real transfer.
+                    <p style="text-align:center;">
+                        <image src="img/d3il-robust.png" width="100%">
+                    </p>
+            </div>
+        </div>
+
+        <div class="row justify-content-md-center">
+            <div class="col-md-12 col-lg-10">
+                <br>
+                <h3>
+                    Citation 
+                </h3>
+                <div class="form-group col-md-12">
+                    <textarea id="bibtex" class="form-control" rows="7" readonly>
+@inproceedings{dppo2024,
+    title={Diffusion Policy Policy Optimization},
+    author={Ren, Allen Z. and Lidard, Justin and Ankile, Lars L. and Simeonov, Anthony and Agrawal, Pulkit and Majumdar, Anirudha and Burchfiel, Benjamin and Dai, Hongkai and Simchowitz, Max},
+    booktitle={arXiv preprint arXiv:2409.00588},
+    year={2024}
+}</textarea>
+                </div>
+            </div>
+        </div>
+        <br>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

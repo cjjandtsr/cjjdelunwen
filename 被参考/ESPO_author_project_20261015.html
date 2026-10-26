@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="DESCRIPTION META TAG" />
+        <meta property="og:title" content="SOCIAL MEDIA TITLE TAG" />
+        <meta
+            property="og:description"
+            content="SOCIAL MEDIA DESCRIPTION TAG TAG"
+        />
+        <meta property="og:url" content="URL OF THE WEBSITE" />
+
+        <meta
+            property="og:image"
+            content="static/image/your_banner_image.png"
+        />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        <meta name="twitter:title" content="TWITTER BANNER TITLE META TAG" />
+        <meta
+            name="twitter:description"
+            content="TWITTER BANNER DESCRIPTION META TAG"
+        />
+
+        <meta
+            name="twitter:image"
+            content="static/images/your_twitter_banner_image.png"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+
+        <meta name="keywords" content="KEYWORDS SHOULD BE PLACED HERE" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>Principled RL for Diffusion LLMs Emerges from a Sequence-Level Perspective</title>
+        <link
+            href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+            rel="stylesheet"
+        />
+
+        <link rel="stylesheet" href="static/css/bulma.min.css" />
+        <link rel="stylesheet" href="static/css/bulma-carousel.min.css" />
+        <link rel="stylesheet" href="static/css/bulma-slider.min.css" />
+        <link rel="stylesheet" href="static/css/fontawesome.all.min.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+        />
+        <link rel="stylesheet" href="static/css/index.css" />
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+        <script defer src="static/js/fontawesome.all.min.js"></script>
+        <script src="static/js/bulma-carousel.min.js"></script>
+        <script src="static/js/bulma-slider.min.js"></script>
+        <script src="static/js/index.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <style>
+            .method-section {
+                background-color: #f5f5f5;
+                padding: 30px;
+                margin: 30px 0;
+                border-radius: 10px;
+            }
+            .highlight-box {
+                background-color: #e3f2fd;
+                padding: 20px;
+                border-left: 4px solid #2196f3;
+                margin: 20px 0;
+                border-radius: 5px;
+            }
+            .equation-box {
+                background-color: white;
+                padding: 15px;
+                margin: 15px 0;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                overflow-x: auto;
+            }
+        </style>
+    </head>
+
+    <body>
+        <section class="hero">
+            <div class="hero-body">
+                <div class="container is-max-desktop">
+                    <div class="columns is-centered">
+                        <div class="column has-text-centered">
+                            <h1 class="title is-1 publication-title">
+                                Principled RL for Diffusion LLMs Emerges from a Sequence-Level Perspective
+                            </h1>
+
+                            <div class="is-size-5 publication-authors">
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=6-wCRsoAAAAJ"
+                                        target="_blank"
+                                        >Jingyang Ou</a
+                                    ><sup>1,2,3</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=AKppgMAAAAAJ&hl=zh-CN"
+                                        target="_blank"
+                                        >Jiaqi Han</a
+                                    ><sup>4</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=fKuiInUAAAAJ&hl=zh-CN"
+                                        target="_blank"
+                                        >Minkai Xu</a
+                                    ><sup>4</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://github.com/xushaoxuan123/"
+                                        target="_blank"
+                                        >Shaoxuan Xu</a
+                                    ><sup>1,2,3</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=O3p4CIQAAAAJ&hl=en"
+                                        target="_blank"
+                                        >Jianwen Xie</a
+                                    ><sup>5</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=ogXTOZ4AAAAJ&hl=en"
+                                        target="_blank"
+                                        >Stefano Ermon</a
+                                    ><sup>4</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=dusV5HMAAAAJ&hl=en"
+                                        target="_blank"
+                                        >Yi Wu</a
+                                    ><sup>6, †</sup>,</span
+                                >
+                                <span class="author-block">
+                                    <a
+                                        href="https://scholar.google.com/citations?user=UKMcQn4AAAAJ"
+                                        target="_blank"
+                                        >Chongxuan Li</a
+                                    ><sup>1,2,3, †</sup></span
+                                >
+                            </div>
+
+                            <div class="is-size-5 publication-authors">
+                                <span class="author-block"
+                                    ><sup>1</sup>Gaoling School of Artificial Intelligence, Renmin University of China,</span
+                                >
+                                <span class="author-block"
+                                    ><sup>2</sup>Beijing Key Laboratory of Research on Large Models and Intelligent Governance,</span
+                                >
+                                <span class="author-block"
+                                    ><sup>3</sup>Engineering Research Center of Next-Generation Intelligent Search and Recommendation, MOE,</span
+                                >
+                                <span class="author-block"
+                                    ><sup>4</sup>Stanford University,</span
+                                >
+                                <span class="author-block"
+                                    ><sup>5</sup>Lambda, Inc,</span
+                                >
+                                <span class="author-block"
+                                    ><sup>6</sup>Tsinghua University</span
+                                >
+                            </div>
+
+                            <div class="is-size-5 publication-authors">
+                                <span class="author-block"
+                                    ><sup>†</sup> Corresponding authors</span
+                                >
+                            </div>
+
+                            <div class="column has-text-centered">
+                                <div class="publication-links">
+                                    <span class="link-block">
+                                        <a
+                                            href="https://arxiv.org/abs/2512.03759"
+                                            target="_blank"
+                                            class="external-link button is-normal is-rounded is-dark"
+                                        >
+                                            <span class="icon">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </span>
+                                            <span>Paper</span>
+                                        </a>
+                                    </span>
+
+                                    <span class="link-block">
+                                        <a
+                                            href="https://github.com/ML-GSAI/ESPO"
+                                            target="_blank"
+                                            class="external-link button is-normal is-rounded is-dark"
+                                        >
+                                            <span class="icon">
+                                                <i class="fab fa-github"></i>
+                                            </span>
+                                            <span>Code</span>
+                                        </a>
+                                    </span>
+
+                                    <span class="link-block">
+                                        <a
+                                            href="https://huggingface.co/collections/GSAI-ML/espo"
+                                            target="_blank"
+                                            class="external-link button is-normal is-rounded is-dark"
+                                        >
+                                            <span class="icon">🤗</span>
+                                            <span>Model</span>
+                                        </a>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p style="text-align: center; margin-top: 20px; font-size: 24px;">
+                                <strong>TL;DR:</strong> <span style="color: #000000;">We propose ESPO, a principled sequence-level RL framework for diffusion LLMs that uses ELBO as a tractable likelihood proxy, achieving dramatic improvements across math, coding, and planning tasks.
+                                </span>
+
+                            </p>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container is-max-desktop">
+                <!-- Module 1: The Challenge -->
+                <div class="method-section">
+                    <h2 class="title is-3">1. The Challenge: Token-Level RL Doesn't Fit dLLMs</h2>
+                    <div class="content">
+                        <div class="highlight-box">
+                            <p class="is-size-5"><strong>⚠️ The Problem:</strong> Mainstream RL algorithms (e.g., GRPO) rely on autoregressive factorization \(\pi(y|x) = \prod_{k=1}^{L} \pi(y^k|x, y^{&lt;k})\) with token-level importance ratios. But dLLMs generate sequences <strong>non-autoregressively</strong>, making these conditionals intractable.</p>
+                        </div>
+
+                        <div style="background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <h4 class="title is-5" style="color: #e74c3c; margin-bottom: 12px;">❌ Existing Heuristic Approaches for Approximating  \(\log \pi(y^k|x, y^{&lt;k})\)</h4>
+                            <div class="columns" style="margin-top: 10px;">
+                                <div class="column is-half">
+                                    <p style="margin-bottom: 8px;"><strong style="color: #e67e22;">d1:</strong> Mean-field \(\log p(y^k|x)\)</p>
+                                    <p style="color: #666; font-size: 0.9em;">❌ Ignores token context</p>
+                                </div>
+                                <div class="column is-half">
+                                    <p style="margin-bottom: 8px;"><strong style="color: #e67e22;">UniGRPO/Coupled-GRPO:</strong> Token ELBO \(\mathcal{L}^k(y|x)\)</p>
+                                    <p style="color: #666; font-size: 0.9em;">❌ Breaks ELBO integrity</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="highlight-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-left: 4px solid #673ab7;">
+                            <p class="is-size-5"><strong>💡 Our Insight:</strong> Token-level decomposition fundamentally doesn't fit diffusion language models. We must adapt the algorithm to respect <strong>sequence-level</strong> generation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 2: ESPO Method -->
+                <div class="method-section">
+                    <h2 class="title is-3">2. ESPO: Sequence-Level RL with ELBO Approximation</h2>
+                    <div class="content">
+                        <p class="is-size-5"><strong>Core Insight:</strong> Treat the generation of an entire sequence as a single action, and use the ELBO  \(\mathcal{L}(y|x)\)  as a tractable proxy for sequence log-likelihood \(\log \pi(y|x)\).</p>
+                        
+                        <div class="columns is-multiline" style="margin-top: 20px; margin-bottom: 10px;">
+                            <div class="column is-half">
+                                <div class="highlight-box">
+                                    <h4 class="title is-5">1️⃣ Sequence-Level Action Space</h4>
+                                    <p style="margin-bottom: 10px;">Use sequence-level importance ratio with per-token normalization:</p>
+                                    <div class="equation-box">
+                                        \(\rho_{\mathrm{seq}}^{(i)} = \exp \left( \frac{1}{L} (\mathcal{L}_{\theta}(y^{(i)}|x) - \mathcal{L}_{\theta_{\text{old}}}(y^{(i)}|x))\right)\)
+                                    </div>
+                                    <p style="margin-top: 10px; font-size: 0.95em;">Per-token normalization ensures stability across different sequence lengths.</p>
+                                </div>
+                            </div>
+                            <div class="column is-half">
+                                <div class="highlight-box">
+                                    <h4 class="title is-5">2️⃣ Stable KL-Divergence Estimation</h4>
+                                    <p style="margin-bottom: 10px;">Use the k2 estimator to avoid exponential instability:</p>
+                                    <div class="equation-box">
+                                        \(\widehat{\mathbb{KL}}_{\text{k2}} = \tfrac{1}{2}\left( \mathcal{L}_\theta(y^{(i)}|x) - \mathcal{L}_{\text{ref}}(y^{(i)}|x) \right)^2\)
+                                    </div>
+                                    <p style="margin-top: 10px; font-size: 0.95em;">Polynomial form ensures stable gradients for long sequences.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="highlight-box">
+                            <h3 class="title is-4" style="margin-top: 0px; margin-bottom: 15px; color: #2c3e50;">Complete ESPO Objective Function</h3>
+                            <div class="equation-box" style="background: white; overflow-x: auto;">
+                                \[
+                                \begin{aligned}
+                                \mathcal{J}_{\mathrm{ESPO}}(\pi_\theta) = \mathbb{E}_{x \sim \mathcal{D}, y^{(1)}, \dots, y^{(G)} \sim \pi_{\theta_{\text{old}}}(\cdot|x)} \Bigg[ 
+                                &\frac{1}{G} \sum_{i=1}^{G} \min \Big(
+                                \rho_{\mathrm{seq}}^{(i)} \hat{A}^{(i)}, \text{clip} ( \rho_{\mathrm{seq}}^{(i)}, 1 - \epsilon, 1 + \epsilon ) \hat{A}^{(i)} 
+                                \Big) - \beta \cdot \widehat{\mathbb{KL}}_{\text{k2}}
+                                \Bigg]
+                                \end{aligned}
+                                \]
+                            </div>
+                            <!-- <p style="margin-top: 10px; font-size: 0.95em;">where \(\rho_{\mathrm{seq}}^{(i)} = \exp \left( \frac{1}{L} (\mathcal{L}_{\theta}(y^{(i)}|x) - \mathcal{L}_{\theta_{\text{old}}}(y^{(i)}|x))\right)\) and \(\widehat{\mathbb{KL}}_{\text{k2}} = \tfrac{1}{2}\Big( \mathcal{L}_\theta(y^{(i)}|x) - \mathcal{L}_{\text{ref}}(y^{(i)}|x) \Big)^2\).</p> -->
+                        </div>
+
+                        <h3 class="title is-4" style="margin-top: 20px; margin-bottom: 20px; color: #2c3e50;">Empirical Validation</h3>
+                        <div class="columns" style="margin-top: 10px;">
+                            <div class="column is-half">
+                                <div style="text-align: center;">
+                                    <img
+                                        src="static/assets/sudoku_ablation_1_smoothed.png"
+                                        alt="Action space and likelihood comparison"
+                                        style="width: 100%; max-width: 450px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                                    />
+                                    <p class="is-size-6" style="margin-top: 10px; color: #666;">
+                                        <strong>Action Space & Likelihood:</strong> Sequence-level + ELBO (blue) achieves stable and superior performance.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="column is-half">
+                                <div style="text-align: center;">
+                                    <img
+                                        src="static/assets/sudoku_kl_ablation_smoothed.png"
+                                        alt="KL estimator comparison"
+                                        style="width: 100%; max-width: 450px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                                    />
+                                    <p class="is-size-6" style="margin-top: 10px; color: #666;">
+                                        <strong>KL Estimator:</strong> The k2 estimator (blue) enables stable learning, while k1/k3 fail.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 3: Experimental Results -->
+                <div class="method-section">
+                    <h2 class="title is-3">3. Experimental Results</h2>
+                    <div class="content">
+                        <p class="is-size-5">ESPO consistently outperforms token-level baselines across diverse benchmarks, with particularly strong gains on planning tasks requiring global reasoning and consistency.</p>
+                        
+                        <!-- Math & Planning Results -->
+                        <h3 class="title is-4" style="margin-top: 30px; color: #f5576c;">📐 Math & Planning Tasks</h3>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <img
+                                src="static/assets/math_planning.png"
+                                alt="Math and Planning results"
+                                style="width: 95%; max-width: 1000px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                            />
+                            <p class="is-size-6" style="margin-top: 10px; color: #666;">
+                                <strong>Dramatic improvements on math and planning tasks:</strong> ESPO achieves <strong>60+ point gains</strong> on Countdown and Sudoku, and consistent improvements on GSM8K and MATH benchmarks, demonstrating the effectiveness of sequence-level optimization for tasks requiring global consistency.
+                            </p>
+                        </div>
+
+                        <!-- Code Results -->
+                        <h3 class="title is-4" style="margin-top: 40px; color: #667eea;">💻 Coding Benchmarks</h3>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <img
+                                src="static/assets/code.png"
+                                alt="Coding results"
+                                style="width: 95%; max-width: 1000px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                            />
+                            <p class="is-size-6" style="margin-top: 10px; color: #666;">
+                                <strong>Consistent gains on coding tasks:</strong> ESPO outperforms baselines on HumanEval and MBPP benchmarks.
+                            </p>
+                        </div>
+                    </div>
+                </div>                <!-- Citation -->
+                <div class="citation-section">
+                    <h2 class="title is-3">Bibtex</h2>
+                    <div class="content">
+                        <p class="is-size-5">If you find ESPO useful in your research, please cite our paper:
+</p>
+
+                        <div class="highlight-box">
+                            <p class="is-size-5">
+                                <pre><code>@article{ou2025principledrldiffusionllms,
+      title={Principled RL for Diffusion LLMs Emerges from a Sequence-Level Perspective}, 
+      author={Jingyang Ou and Jiaqi Han and Minkai Xu and Shaoxuan Xu and Jianwen Xie and Stefano Ermon and Yi Wu and Chongxuan Li},
+      journal={arXiv preprint arXiv:2512.03759},
+      year={2025},
+}</code></pre>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>

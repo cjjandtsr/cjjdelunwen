@@ -1,0 +1,25 @@
+{
+  "url": "https://github.com/irom-princeton/dppo/issues/34",
+  "comments": [
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/34#issuecomment-2632519971",
+      "author": "allenzren",
+      "body": "Hey! There might be a bug about this. Could you try this branch instead? https://github.com/irom-princeton/dppo/tree/fix-eval-checkpoint\n\nThere is a pull request on this https://github.com/irom-princeton/dppo/pull/31 that I haven't merged with the main branch yet."
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/34#issuecomment-2632558049",
+      "author": "lakshitadodeja",
+      "body": "Sorry got marked completed accidentally. \nInitially I was getting this error - \n\n```\nError in call to target 'model.diffusion.diffusion_eval_ft.DiffusionEvalFT':\nTypeError(\"init() missing 1 required positional argument: 'use_ddim'\")\n```\n\nThen I added this in config - \n```\nuse_ddim: ${use_ddim}\n ddim_steps: ${ddim_steps}\n```\n\nNow I am getting this error - \n```\nRuntimeError('Error(s) in loading state_dict for DiffusionMLP:\\n\\tMissing key(s) in state_dict: \"time_embedding.1.weight\", \"time_embedding.1.bias\", \"time_embedding.3.weight\", \"time_embedding.3.bias\", \"cond_mlp.moduleList.0.linear_1.weight\", \"cond_mlp.moduleList.0.linear_1.bias\", \"cond_mlp.moduleList.1.linear_1.weight\", \"cond_mlp.moduleList.1.linear_1.bias\", \"mlp_mean.layers.0.weight\", \"mlp_mean.layers.0.bias\", \"mlp_mean.layers.1.l1.weight\", \"mlp_mean.layers.1.l1.bias\", \"mlp_mean.layers.1.l2.weight\", \"mlp_mean.layers.1.l2.bias\", \"mlp_mean.layers.2.weight\", \"mlp_mean.layers.2.bias\". ')\nfull_key: model\n```\n\nDo I need to pretrain the models again ?"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/34#issuecomment-2634554672",
+      "author": "allenzren",
+      "body": "Hey! Sorry there was an issue with the code. I just updated the branch (also merged with the main branch). Basically the eval config was not compatible with evaluating pre-trained (not fine-tuned) policy, which seems what you were trying?\n\nYou can use the main branch now for eval, either evaluating pre-trained or fine-tuned policy. Just make sure to specify `ft_denoising_steps` to 0 if evaluating pre-trained policy, and to the correct number of denoising steps fine-tuned if evaluating fine-tuned policy. I added a note on this in the evaluation section of the README.\n\nAlso, I realize the zero success rate is expected --- there is no issue with running evaluation with pre-trained policy in kitchen, in the original main branch. There are four stages in the kitchen task, and if the policy completes all four, it receives a reward of 4 (1 for each stage). The curves in Fig. 6 of the paper shows the normalized score (out of 4), instead of the success rate. For example, below shows the results I just ran with the pre-trained policy in Kitchen-Complete in the updated main branch, and it shows an average reward of 2.675, which is a normalized score of 2.675/4=0.66875.\n\n```\n[2025-02-04 11:57:59,841][root][INFO] - Number of network parameters: 175604\n[2025-02-04 11:57:59,921][root][INFO] - Actor weights not found. Using pre-trained weights!\n[2025-02-04 11:57:59,921][root][INFO] - Loaded base policy weights from /home/allen/dppo-dev/result/gym-pretrain/kitchen-complete-v0_pre_diffusion_mlp_ta4_td20/2024-10-20_16-47-42_42/checkpoint/state_8000.pt\nProcessed step 0 of 70\nProcessed step 10 of 70\nProcessed step 20 of 70\nProcessed step 30 of 70\nProcessed step 40 of 70\nProcessed step 50 of 70\nProcessed step 60 of 70\n[2025-02-04 11:58:06,897][agent.eval.eval_diffusion_agent][INFO] - eval: num episode   40 | success rate   0.0000 | avg episode reward   2.6750 | avg best reward   0.2500\n```\n\nHope this makes sense!"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/34#issuecomment-2634677922",
+      "author": "lakshitadodeja",
+      "body": "It works now ! \nThank you !!"
+    }
+  ]
+}

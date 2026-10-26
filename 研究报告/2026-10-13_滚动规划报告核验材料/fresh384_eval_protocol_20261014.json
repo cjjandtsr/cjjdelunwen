@@ -1,0 +1,84 @@
+{
+  "audit_date": "2026-10-14",
+  "audit_scope": "Read-only independent evaluation protocol and fresh four checkpoint provenance audit; original packages unchanged; package hashes are verified separately by the root audit.",
+  "evaluation_package": "wsl_snapshot/routea_r1_seed203_fresh384_v1_eval",
+  "training_package": "wsl_snapshot/routea_r1_seed203_fresh384_v1_train",
+  "actual_protocol_schema": "routea_paired_run_v2",
+  "required_protocol_schema": "routea_paired_run_v3",
+  "completion": {
+    "logged_stage_passes": 7,
+    "full_episodes": 1680,
+    "reference_full": 2940,
+    "comparison_full": 4620,
+    "smoke_episodes": 16,
+    "anchors_episodes": 84,
+    "full_matrix_status": "pass",
+    "full_matrix_policy_count": 4,
+    "full_matrix_conditions": 420,
+    "full_matrix_invalid": 0,
+    "full_matrix_ambiguous_first_event": 0,
+    "paired_index_conditions": 420,
+    "paired_index_models_per_condition": 11
+  },
+  "checkpoint_provenance": {
+    "runtime_identity_hash": "2f3f9914db78b4f9b712920a5f667beab7b240115eeb03c56f17f1281bbe1944",
+    "updates": [32, 128, 256, 384],
+    "model_header_and_state_hash_match_training_receipts": [32, 128, 256, 384],
+    "state_sha256": {
+      "32": "73609d111c937798a43ed822fdcbc2df28f61d4fe20d57775ad8da5129005a88",
+      "128": "65df2037673fc098e9e9a2152ac131c193351d251f752546db61c107d1ea80cd",
+      "256": "168836e6f879a873267445a56ea73842fef4995eac29818bf001326434b16727",
+      "384": "2c95a50971be09dcfc62f7f45bec29cb480bfde8c093a715e23ed9fff4426e68"
+    },
+    "weight_files_in_return_package": false,
+    "caveat": "Receipt/source identity and executed catalogue/traces are checked; local state.pt bytes are not loaded because the returned package intentionally excludes weights."
+  },
+  "independent_all_fresh_full_trace_scan": {
+    "interpreter": "D:/miniconda3/python.exe",
+    "exit_code": 0,
+    "episodes": 1680,
+    "transitions": 64219,
+    "errors": 0,
+    "checks_against_reference_bank": ["task payload", "obstacle geometry", "reset seed", "repeat", "initial hash", "bank hash"],
+    "checks_on_all_headers": ["use_base_policy is false", "fresh runtime identity hash"],
+    "checks_on_all_transitions": ["action seed equals canonical hash of policy-sample-v1/task/repeat/decision", "full16/policy8/exec4 lengths", "executed_action_4x11 equals policy_action_8x11 first4", "planned H8 path has9 points", "candidate H4 path has5 points"],
+    "terminate_at_space_limits_header_present": 0,
+    "bank_hash": "863bf1fb2a41c991b73cc92493aa7d8732c711b4e48c6a8d063bd2dd8c59996a",
+    "bank_controls": {"H_exec": 4, "policy_steps": 8, "full_steps": 16, "max_decisions": 60, "goal_radius": 0.5, "traj_dt": 0.3}
+  },
+  "actual_space_termination": {
+    "first_event_source_sha256": "883b6609b29d9ff0777199b75b46018a361839b3907269342b6058614547c1c7",
+    "environment_source_sha256": "5a6c3ba3a2e35bfe0e71f145203a80fddfd682aece378cf6ad3499f0628ab8ae",
+    "both_hashes_match_evaluation_sources_and_training_source_snapshot": true,
+    "first_event_source": "wsl_snapshot/routea_r1_seed203_fresh384_v1_train/source_snapshot/diffusion_policy_3d/env/reward_v2_support/first_event.py:81,108-115",
+    "environment_call_source": "wsl_snapshot/routea_r1_seed203_fresh384_v1_train/source_snapshot/diffusion_policy_3d/env/reward_v2_support/environment.py:63-74",
+    "rules": "No terminate_at_space_limits parameter exists in this source. It directly generates xy +-30m and z_max+1m boundary events; task z_max=5m yields the artificial 6m altitude boundary.",
+    "fresh_out_of_bounds_episodes": 5,
+    "fresh_altitude_exceed_episodes": 0,
+    "affected_policy": "rl_2f3f9914db78_u384",
+    "affected_task_id": "routeA_rl_v1__dense_recovery__rl_train__bottleneck_corridor__000026__dev20261009__cfg02",
+    "decision_count": 34,
+    "terminal_reward": -50.0,
+    "terminal_positions_by_repeat": {
+      "1": [30.0, 14.94587516784668, 4.459307670593262],
+      "2": [30.0, 14.995903968811035, 4.489414691925049],
+      "3": [30.0, 15.162191390991211, 4.468164443969727],
+      "4": [30.0, 15.051937103271484, 4.4626383781433105],
+      "5": [30.0, 15.069866180419922, 4.482549667358398]
+    }
+  },
+  "fresh_results_under_original_bounded_protocol": {
+    "u32": {"reached": 125, "collision": 158, "time_limit": 137, "out_of_bounds": 0, "altitude_exceed": 0},
+    "u128": {"reached": 59, "collision": 185, "time_limit": 176, "out_of_bounds": 0, "altitude_exceed": 0},
+    "u256": {"reached": 43, "collision": 144, "time_limit": 233, "out_of_bounds": 0, "altitude_exceed": 0},
+    "u384": {"reached": 16, "collision": 190, "time_limit": 209, "out_of_bounds": 5, "altitude_exceed": 0}
+  },
+  "interpretation": {
+    "collection_under_old_section7": "complete",
+    "fresh_four_checkpoint_source_binding": "verified against returned identity receipts and trace headers",
+    "latest_v3_space_protocol": "not executed",
+    "capability_acceptance_under_new_allowed_space": "pending",
+    "bounded_protocol_trend": "125 -> 59 -> 43 -> 16 safe arrivals on the same420 conditions. Artificial space termination affected only5 u384 episodes. Even if all5 eventually arrived, u384 would have21/420, so the boundary alone cannot explain the whole decline. This conditional upper bound is not a new measured arrival rate.",
+    "minimum_full_v3_protocol_completion": "Use already delivered11 modified source files and the same unified entry; rerun all14 selected policies on original420 conditions:5880 full,52 smoke,0 independent anchors,84 figures,reference_full=0. No retraining is required. Preserve these original bounded traces; do not relabel or extend them synthetically."
+  }
+}

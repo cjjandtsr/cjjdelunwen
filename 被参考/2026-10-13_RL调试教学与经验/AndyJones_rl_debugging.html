@@ -1,0 +1,475 @@
+<!doctype HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Andy Jones">
+    <meta name="format-detection" content="telephone=no">
+
+    <link rel="icon" href="/favicon.ico">
+
+    <style>
+      :root {
+        --tone: #6d2e98;
+        --grey: #444;
+        --white: #f8f8f8;
+      }
+
+      html {
+          height: 100%;
+          width: 100%;
+      }
+
+      body {
+          display: flex;
+          flex-direction: column;
+          background: var(--tone);
+          color: #F8F8F8;
+          width: 100%;
+          font-family: sans-serif;
+          margin: 0px;
+          text-align: justify;
+      }
+
+      a:visited {
+          color: var(--tone);
+      }
+
+      .tinted {
+          color: #444;
+          background: #f8f8f8;
+          text-decoration: none;
+      }
+
+      #banner a {
+          color: #F8F8F8;
+          text-decoration: none;
+      }
+
+      #footer a {
+          color: #F8F8F8;
+          text-decoration: none;
+      }
+
+      .column {
+          max-width: min(100%, 960px);
+          margin: auto;
+          padding: 5px;
+      }
+
+      #banner {
+          padding: 10px;
+          font-size: large;
+          display: flex;
+          vertical-align: middle;
+          justify-content: space-between;
+      }
+
+      #title {
+          font-weight: 700;
+      }
+
+      #social img {
+          filter: invert();
+          height: 20px;
+          width: 20px;
+          padding-left: 2px;
+          padding-right: 2px;
+      }
+
+      .sep {
+          margin-left: 10px;
+          margin-right: 10px;
+      }
+
+
+      #content {
+          margin-bottom: 5px;
+          margin: auto;
+      }
+
+      #date {
+          margin: auto;
+      }
+
+      code {
+          font-family: "Lucida Console", monospace;
+          word-wrap: break-word;
+      }
+
+      pre {
+          font-family: "Lucida Console", monospace;
+          background-color: #EEE;
+          padding: 10px;
+
+          white-space: pre-wrap;
+          word-wrap: break-word;
+      }
+
+      sup {
+          font-size: x-small;
+      }
+
+      hr {
+          border-color: var(--tone);
+      }
+
+      #content img {
+          display: block;
+          margin: auto;
+          max-width: 100%;
+      }
+
+      #footer {
+          padding: 5px;
+          font-size: x-small;
+          vertical-align: middle;
+          margin: auto;
+          text-align: center;
+      }
+
+    pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.hll { background-color: #ffffcc }
+.c { color: #3D7B7B; font-style: italic } /* Comment */
+.err { border: 1px solid #FF0000 } /* Error */
+.k { color: #008000; font-weight: bold } /* Keyword */
+.o { color: #666666 } /* Operator */
+.ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.cp { color: #9C6500 } /* Comment.Preproc */
+.cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.gd { color: #A00000 } /* Generic.Deleted */
+.ge { font-style: italic } /* Generic.Emph */
+.gr { color: #E40000 } /* Generic.Error */
+.gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.gi { color: #008400 } /* Generic.Inserted */
+.go { color: #717171 } /* Generic.Output */
+.gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.gs { font-weight: bold } /* Generic.Strong */
+.gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.gt { color: #0044DD } /* Generic.Traceback */
+.kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.kp { color: #008000 } /* Keyword.Pseudo */
+.kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.kt { color: #B00040 } /* Keyword.Type */
+.m { color: #666666 } /* Literal.Number */
+.s { color: #BA2121 } /* Literal.String */
+.na { color: #687822 } /* Name.Attribute */
+.nb { color: #008000 } /* Name.Builtin */
+.nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.no { color: #880000 } /* Name.Constant */
+.nd { color: #AA22FF } /* Name.Decorator */
+.ni { color: #717171; font-weight: bold } /* Name.Entity */
+.ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.nf { color: #0000FF } /* Name.Function */
+.nl { color: #767600 } /* Name.Label */
+.nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.nt { color: #008000; font-weight: bold } /* Name.Tag */
+.nv { color: #19177C } /* Name.Variable */
+.ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.w { color: #bbbbbb } /* Text.Whitespace */
+.mb { color: #666666 } /* Literal.Number.Bin */
+.mf { color: #666666 } /* Literal.Number.Float */
+.mh { color: #666666 } /* Literal.Number.Hex */
+.mi { color: #666666 } /* Literal.Number.Integer */
+.mo { color: #666666 } /* Literal.Number.Oct */
+.sa { color: #BA2121 } /* Literal.String.Affix */
+.sb { color: #BA2121 } /* Literal.String.Backtick */
+.sc { color: #BA2121 } /* Literal.String.Char */
+.dl { color: #BA2121 } /* Literal.String.Delimiter */
+.sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.s2 { color: #BA2121 } /* Literal.String.Double */
+.se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.sh { color: #BA2121 } /* Literal.String.Heredoc */
+.si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.sx { color: #008000 } /* Literal.String.Other */
+.sr { color: #A45A77 } /* Literal.String.Regex */
+.s1 { color: #BA2121 } /* Literal.String.Single */
+.ss { color: #19177C } /* Literal.String.Symbol */
+.bp { color: #008000 } /* Name.Builtin.Pseudo */
+.fm { color: #0000FF } /* Name.Function.Magic */
+.vc { color: #19177C } /* Name.Variable.Class */
+.vg { color: #19177C } /* Name.Variable.Global */
+.vi { color: #19177C } /* Name.Variable.Instance */
+.vm { color: #19177C } /* Name.Variable.Magic */
+.il { color: #666666 } /* Literal.Number.Integer.Long */
+    </style>
+
+    <meta property="og:title" content="Debugging Reinforcement Learning Systems">
+    <meta property="og:description" content="Debugging reinforcement learning implementations, without the agonizing pain.">
+    <meta property="og:image" content="https://andyljones.com/icons/robot-solid.png">
+    <meta property="og:image:height" content="512">
+    <meta property="og:image:width" content="512">
+    
+    <meta name="twitter:card" content="summary">
+
+    <title>Debugging Reinforcement Learning Systems</title>
+  </head>
+  <body>
+    <div>
+      <div id="banner" class="column">
+        <div id="title"><a href="/">andy jones</a></div>
+        <div id="social">
+          <a href="/rss.xml"><img src='/icons/rss-solid.svg' alt='RSS'></a>
+          <span class='sep'></span>
+          <a href="mailto:me@andyljones.com"><img src='/icons/at-solid.svg' alt='Email'></a>
+          <span class='sep'></span>
+          <a href="https://scholar.google.com/citations?user=wjU_zmMAAAAJ"><img src='/icons/scholar-brands.svg' alt='Scholar'></a>
+          <a href="https://github.com/andyljones"><img src='/icons/github-brands.svg' alt='Github'></a>
+          <a href="https://www.linkedin.com/in/andyjonescs"><img src='/icons/linkedin-in-brands.svg' alt='LinkedIn'></a>
+          <span class='sep'></span>
+          <a href="https://twitter.com/andy_l_jones"><img src='/icons/twitter-brands.svg' alt='Twitter'></a>
+          <a href="https://www.reddit.com/u/bluecoffee"><img src='/icons/reddit-brands.svg' alt='Reddit'></a>
+          <a href="https://stackoverflow.com/users/2565457/andy-jones"><img src='/icons/stack-overflow-brands.svg' alt='StackOverflow'></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tinted">
+      <div id="content" class="column">
+        <h1>Debugging RL, Without the Agonizing Pain</h1>
+<p>Debugging reinforcement learning systems combines the pain of debugging distributed systems with the pain of debugging numerical optimizers. Which is to say, it <em>sucks</em>. If this is your first time, you might have a few hundred lines of code that you <em>think</em> are correct in an hour, and a system that's <em>actually</em> correct two months later. <a href="https://news.ycombinator.com/item?id=13519044">Here's the head of Tesla AI having just that experience</a>.</p>
+<p>This is a collection of debugging advice that has served me well over the past few years. It was formed both from my personal experiences, and from several months of helping people out in the <a href="https://discord.com/invite/xhfNqQv">RL Discord</a>. It is intended as compliment to the <a href="https://github.com/andyljones/reinforcement-learning-discord-wiki/wiki#debugging-advice">other excellent articles on debugging RL that can be found elsewhere</a>. I recommend you read all of them; each one has their own unique set of bugbears to warn you away from.</p>
+<p>There are three sections: one on <a href="#theory">theory</a>, one on <a href="#fixes">common fixes</a>, and one on <a href="#tactics">practical advice</a>. Things flow a little better if you read them in order, but you can skip on ahead if you wish.</p>
+<h1>Theory <br id="theory"></h1>
+<h2>Why is debugging RL so hard?</h2>
+<p>A combination of issues. These issues show up in debugging any kind of system, but in RL they're more common, and they'll show up starting with the first system you ever write.</p>
+<h3>Feedback is poor</h3>
+<p><strong>Errors aren't local</strong>: The vast majority of the bugs you'll make are the 'doing the wrong calculation' sort. Because information in an RL system flows in a loop - actor to learner and then back to actor - a numerical error in one spot gets smeared throughout the system in seconds, poisoning everything. This means that most numerical errors manifest as <em>all</em> your metrics going weird at the same time; your loss exploding, your KL div collapsing, your rewards oscillating. From the outside, you can tell something is wrong but you've no idea <em>what</em> is wrong or where to start looking.</p>
+<p>To my mind this is the single biggest issue with debugging RL systems, and much of the advice below is about how to better-localise errors.</p>
+<p><strong>Performance is noisy</strong>: The ultimate arbiter of an RL system - how good it is at collecting reward - is only weakly related to how good of an implementation you've written. You could write a bug-free implementation the first time and other factors (like hyperparameters, architecture or your environment) could sabotage performance. In the worst case, your evaluation run could just get an unlucky seed. Conversely, you could write a bug-laden implementation and it might seem to work! After all, bugs are just one more source of noise and your neural net is going to <a href="https://twitter.com/gwern/status/1014978860369182722">try its damnedest</a> to pull the signal out of that mess you're feeding it.</p>
+<p>The real kicker though is that because run-to-run variability is so high, it's very easy to fix - or introduce - a bug and then see no change in performance at all.</p>
+<h3>Simplifying is hard</h3>
+<p><strong>There're few narrow interfaces</strong>: Smart software development involves splitting the system up into components so that each component only talks to the others through a narrow interface. This way you can easily pinch a component off from the the rest of the system, feed it some mock inputs and see if it gives the correct answers.</p>
+<p>This is difficult in RL systems. In RL systems, each component typically consumes a large number of mega- or gigabyte arrays and returns the same. The components are also unavoidably stateful, with the principal two components - the actor and learner - hefting around the state of the environnment and the network weights respectively. State can be thought of an interface with the own component's past, and in RL this interface is <em>huge</em>.</p>
+<p>Consequently while you <em>can</em> isolate components in RL (and we'll talk about how to below), it's much more painful to do than it is in other kinds of software.</p>
+<p><strong>There are few black boxes</strong>: A black box is a component that works in a complex way, but which you can reason about in a simple way. Another name for a black box would be 'a good abstraction'. The prototypical example is your computer: there's a hierarchy of concepts in there, from doped silicon through to operating systems, but as far as you the programmer are concerned it's all about for loops and function calls.</p>
+<p>RL has surprisingly few of these black boxes. You're required to know how your environment works, how your network works, how your optimizer works, how backprop works, how multiprocessing works, how stat collection and logging work. How GPUs work! There are <a href="https://docs.ray.io/en/latest/rllib.html">lots</a> of <a href="https://github.com/thu-ml/tianshou">attempts</a> at <a href="https://github.com/deepmind/acme">writing</a> black-box <a href="https://github.com/astooke/rlpyt">RL</a> libraries, but as of Jan 2021 my experience has been that these libraries have yet to be both flexible <em>and</em> easy-to-use. This might be a symptom of my odd strand of research, but I've heard several other researchers echo my frustrations.</p>
+<h3>We're bad at writing RL systems</h3>
+<p><strong>Your expectations suck</strong>: In any domain, problems evaporate as you get used to them. The first stack trace you see in your life is a nightmare; the millionth a triviality. All of the problems with RL listed above are only really problems because people new to the field expect something much more refined and reliable, as they've come to expect from other fields of programming and numerical research. If instead you arrive in RL expecting a garbage fire, you might just stay zen throughout.</p>
+<p>Obviously though, this begs the question of <em>why</em> RL development is a garbage fire.</p>
+<p><strong>The community is young</strong>: While reinforcement learning as a field stretches back decades, it has <em>exploded</em> in the past few years and continues apace today. Finding good abstractions requires in part that the userbase's requirements stabilize, and that just isn't the case yet. Some of that is because it's very much a community of researchers rather than a community of practitioners, and the terrible thing about researchers it that they're very keen on doing new and different things. Maybe it'll be different once someone figures out how to turn RL into an industry.</p>
+<p><strong>The community has other priorities</strong>: Again, the community is a community of researchers. The population sets the priorities, and the priority is publication. Reliable, reproducible research contributes to publishing high-impact papers, but it also costs time and effort that is arguably better spent working on something <em>new</em>. And, well, it's hard to argue with the results: the current standards of RL development have carried us <a href="https://deepmind.com/blog/article/muzero-mastering-go-chess-shogi-and-atari-without-rules">a</a> <a href="https://openai.com/blog/learning-dexterity/">long</a> <a href="https://deepmind.com/blog/article/AlphaStar-Grandmaster-level-in-StarCraft-II-using-multi-agent-reinforcement-learning">way</a>.</p>
+<p>Don't take this as a clarion call for better practices, nor a stalwart defense of practices as they are. It's not a hill I wish to die on. I'm only giving an explanation for why things are the way they are, rather than a justification for it. My preferences are towards improved practices, but I can see the sense in the other side's position.</p>
+<h2>Debugging Strategies</h2>
+<p>With all that in mind, here are some broad strategies to keep in mind when chasing a bug.</p>
+<h3>Design reliable tests</h3>
+<p>Write tests that either clearly pass or clearly fail. There's some amount of true randomness in RL, but most of that can be controlled with a seed. What's harder to deal with is psuedorandomness such that on one seed a test might pass and another seed the test might fail. This is <em>awful</em> to deal with, and you should go out of your way to avoid it.</p>
+<p>While the ideal is a test that is guaranteed to cleanly pass or fail, a good fallback is one that is simply <em>overwhelmingly likely</em> to pass or fail. Typically, this means substituting out environments or algorithms with simpler ones that behave more predictably, and which you can run through your implementation with some massive batch size that'll suppress a lot of the wackiness that you might otherwise suffer.</p>
+<h3>Design <em>fast</em> tests</h3>
+<p>Iteration speed is a huge determinant of debugging speed. Running a test should take at most as long as it takes you to make a potential fix, which is to say 'a few seconds'.</p>
+<p>This means: don't try to debug your implementation by just running it on your full task. That might take days! That way madness lies. Instead, design setups that can execute more quickly, but still exercise the code you're looking at. For specific tips, look at the <a href="#probe">probe environments</a> section below.</p>
+<h3>Localise errors</h3>
+<p>Write test code that'll tell you the most about where the error is. The classic example of this is binary search: if you're looking for an specific item in a sorted list, then taking a look at the middle item tells you a <em>lot</em> more about where your target item is than looking at the first item.</p>
+<p>Similarly, when debugging RL systems try to find tests that cut your system in half in some way, and tell you which half the problem is in. Incrementally testing every.single.chunk of code - well, sometimes that's what it comes down to! But it's something to try and avoid.</p>
+<h3>Be Bayesian</h3>
+<p>But sometimes you can't avoid it! Binary search wouldn't have been much help in <a href="https://en.wikipedia.org/wiki/USS_Scorpion_%28SSN-589%29">finding the wreck of the USS Scorpion</a>. There they had to do a location-by-location search, and the key turned out to be prioritising the areas where</p>
+<ul>
+<li>the Scorpion was likely to be and</li>
+<li>where it was likely to be <em>spotted</em>.</li>
+</ul>
+<p>This kind of thinking isn't so critical in traditional software development because isolating components is much easier, so you can do the sort of binary search I mentioned previously. But in RL, well, sometimes you just can't untangle something. Then you should reflect on which bits of your code are most likely to <em>contain</em> bugs, and which bits of your code you're going to be able to <em>easily spot</em> those bugs in. Prioritise looking in those places!</p>
+<p>As an aside, the <a href="https://en.wikipedia.org/wiki/Streetlight_effect">parable of the drunk and his keys</a> has always confused me: I don't know if it's saying the wise thing to do is to look under the streetlight, or to look in the dark. Best moral I've heard for it is 'it depends'.</p>
+<h3>Pursue Anomalies</h3>
+<p>If you ever see a plot or a behaviour that just <em>seems weird</em>, chase right after it! Do not - do <em>not</em> - just 'hope it goes away'. Chasing anomalies is one of the most powerful ways to debug your system, because if you've noticed a problem without having had to go look for it, that means it's a <em>really big problem</em>.</p>
+<p>This takes quite a bit of a mindset change though. It's really tempting to think that the cool extra functionality you were planning to write today - a tournament, adaptive reward scaling, a transformer - might just magically fix this anomalous behaviour.</p>
+<p>It won't.</p>
+<p>Give up on your plan for the day and chase the anomaly instead.</p>
+<h1>Common Fixes <br id="fixes"></h1>
+<p>These are specific things that frequently trip people up.</p>
+<h2>Hand-tune your reward scale</h2>
+<p>The single most common issue for newbies writing custom RL implementations is that the targets arriving at their neural net aren't [-1, +1]. Actually, anything [-.1, +.1]ish to [-10, +10]ish is good. The point is to have rewards that generate 'sensible' targets for your network. The hyperparameters you've pulled from the literature are adapted to work with these nicely-scaled targets, but lots of envs don't natively provide rewards of the right size so as to generate these nicely-scaled targets.</p>
+<p>Having read that, you might be tempted to write some adaptive scheme to scale your rewards for you. Don't: it's an extra bit of nonstationarity that'll make life more difficult. Just hand-scale, hand-clip the rewards from your env so that the targets passed to your network are sensible. When everything else is working, you can come back and replace this with something less artificial.</p>
+<h2>Use a really large batch size</h2>
+<p>One of the most reliable ways to make life easier in RL is to use a really large batch size. A <em>really</em> large batch size. There's an <a href="https://arxiv.org/abs/1812.06162">excellent paper on picking batch sizes</a>, and to pull some examples from there:</p>
+<ul>
+<li>Pong: ~1k batch size</li>
+<li>Space Invaders: ~10k batch size</li>
+<li>1v1 Dota: ~100k batch size</li>
+</ul>
+<p>The idea behind this is that with small batches and complex envs, it's easy for your learner to end up with a batch that represents some weird idiosyncratic part of the problem. Big batches do a lot to suppress this.</p>
+<h2>Use a really small network</h2>
+<p>Hand in hand with really large batch sizes is really small networks. When you use really large batches, your binding constraint is likely to be the memory it takes to hold the forward pass activations on your GPU. By making the network smaller, you can fit bigger batches! And frankly, small networks can accomplish a <em>lot</em>. In my <a href="https://andyljones.com/boardlaw/">boardlaw</a> project, I found that a fully connected network with 4 layers of 256 neurons was enough to learn perfect play on a 9x9 board. Perfect play! That's really complex!</p>
+<h2>Avoid pixels</h2>
+<p>And hand-in-hand with 'use a small network' is: <em>avoid pixels</em>. Especially if you're an independent researcher with hardware constraints, just... don't work on environments with hefty, expensive-to-ingest observations like Atari. Pixel-based observations mean that before it does anything interesting, your agent has to learn to <em>see</em>. From sparse rewards! That's hard, and it's compute-intensive, and it's <em>boring</em>. If you've got any choice in the matter, pick the simplest env that will be able to generate the behaviour you're after. For example:</p>
+<ul>
+<li>Gridworlds like <a href="https://github.com/Bam4d/Griddly">Griddly</a> and <a href="https://github.com/maximecb/gym-minigrid">minigrid</a>. Gridworlds can support most of the interesting behaviours you'd find in a continuous environment, but are much more resource-efficient. If you've just graduated out of <a href="https://gym.openai.com/envs/#classic_control">the Gym envs</a>, gridworlds are an excellent next step.</li>
+<li>Multi-agent setups like the boardgames from <a href="https://openspiel.readthedocs.io/en/latest/games.html">OpenSpiel</a>, <a href="https://github.com/santiontanon/microrts">microRTS</a> or <a href="https://github.com/jsuarez5341/neural-mmo">Neural MMO</a>. A multi-agent env shouldn't be your <em>first</em> foray into RL - they're substantially more complex than the single-agent case - but competition and cooperation can generate a lot of complexity from very lightweight environments.</li>
+<li>Unusual envs like <a href="https://github.com/minqi/wordcraft">WordCraft</a>. WordCraft is unique in that it isolates learning about the real world from actually having to model the real world! But again, possibly not the best choice for a first RL project; I've included it here as an example of how powerful simple environments can be.</li>
+</ul>
+<p>In all, fast environments with small networks and big batches are far easier to debug than slow environments with big networks and small batches. Make sure you can walk before you try running.</p>
+<h2>Mix your vectorized envs</h2>
+<p>If you've got a long-lived env and you're simulating a lot of them in parallel, you might find that your system behaves a bit strangely at the start of training. One common issue is that if all your envs start from the same state, then your learner gets passed very highly-correlated samples, and so it tries to optimise for, say, steps 0-10 of the env in the first batch, then 10-20 in the second batch, etc. You can avoid this by '<a href="https://en.wikipedia.org/wiki/Markov_chain_mixing_time">mixing</a>' your envs: taking enough random steps in the env that they become uncorrelated with one another. A good way to check that things are well-mixed is to look at the number of resets at each timestep: if they look pretty uniform, things are well-mixed. If they all cluster on a specific timestep, you need to take some more random actions.</p>
+<h1>Practical Advice <br id="tactics"></h1>
+<p>This advice sits somewhere between the 'common mistakes' and the more general 'theory' we discussed earlier.</p>
+<h2>Work from a reference implementation</h2>
+<p><em>If you're new to reinforcement learning, writing things from scratch is the most catastrophically self-sabotaging thing you can do.</em></p>
+<p>There is an alluring masochism in writing things from scratch. There's concrete value in it too: by writing things from scratch, you're both forced to fully understand what you're doing and you're more likely to come up with a fresh perspective. In many other fields of software development these benefits would be worth the slow-down you suffer from having to work everything out yourself.</p>
+<p>In reinforcement learning, these benefits are not worth it. At all. As discussed <a href="#theory">above</a>, the nature of RL work makes it extremely hard for you to self-correct.</p>
+<p>When I say 'use a reference implementation', there are several interpretations you can take depending on your risk tolerance.</p>
+<ul>
+<li>The safest thing to do is to use a reference implementation out-of-the-box. Check that it works on your task, then repeatedly make a small change and check that it works as it did before.</li>
+<li>Less safe is to just use the reference implementation as a source of reliable components. Work to the same API, and check that giving your version of a component and their version give the same outputs.</li>
+<li>Least safe (but still dramatically better than going in blind) is to have one eye on the reference implementation while you write your own. Copy their hyperparameters, copy their discounting code, copy how they handle termination and invalid actions and a hundred other little things that you're likely to muck up otherwise.</li>
+</ul>
+<p>Here are some excellent reference implementations to choose from:</p>
+<ul>
+<li><a href="https://github.com/openai/spinningup">spinning-up</a> has been written by OpenAI, and has a <a href="https://spinningup.openai.com/">short course to go along with it</a>.</li>
+<li><a href="https://github.com/DLR-RM/stable-baselines3">stable-baselines3</a> is based on an older set of OpenAI implementations, but cleaned up and actively maintained.</li>
+<li><a href="https://github.com/vwxyzjn/cleanrl/tree/master/cleanrl">cleanrl</a> isolates every algorithm in its own file.</li>
+<li><a href="https://github.com/deepmind/open_spiel">OpenSpiel</a> is DeepMind's multi-agent reinforcement learning library. They provide both Python and C++ implementations of many algorithms - you'll probably want the Python ones.</li>
+</ul>
+<h2>Assume you have a bug</h2>
+<p>When their RL implementation doesn't work, people are often keen to either (a) adjust their network architecture or (b) adjust their hyperparameters. On the other hand, they're reluctant to say they've got a bug.</p>
+<p>Most often, it turns out they've got a bug.</p>
+<p>Why bugs are so much more common in RL code is discussed <a href="#theory">above</a>, but there's another advantage to assuming you've got a bug: bugs are a damn sight faster to find and fix than validating that your new architecture is an improvement over the old one.</p>
+<p>Now having said that you should assume you have a bug, it's worth mentioning that sometimes - rarely - you don't have a bug. What I'm advocating for here is not a blind faith in the buginess of your code, but for dramatically raising the threshold at which you start thinking 'OK, I think this is correct.'</p>
+<h2>Loss curves are a red herring</h2>
+<p>When someone's RL implementation isn't working, they <em>luuuuuurv</em> to copy-paste a screenshot of their loss curve to you. They do this because they know they want a pretty, exponentially-decaying loss curve, and they know what they have <em>isn't that</em>.</p>
+<p>The problem with using the loss curve as an indicator of correctness is somewhat that it's not reliable, but mostly because it doesn't localise errors. The shape of your loss curve says very little about where in your code you've messed up, and so says very little about what you need to change to get things working.</p>
+<p>As in the previous section, my sweeping proclamation comes with some qualifiers. Once you have a semi-functional implementation and you've exhausted other, better methods of error localisation (as documented in the rest of this post), there <em>is</em> valuable information in a loss curve. If nothing else, being able to split a model's performance into 'how fast it learns' and 'where it plateaus' is a useful way to think about the next improvement you might want to make. But because it only offers <em>global</em> information about the performance of your implementation, it makes for a really poor debugging tool.</p>
+<h2>Unit test the tricky bits</h2>
+<p>Most of the bugs in a typical attempt at an RL implementation turn up in the same few places. Some of the usual suspects are</p>
+<ul>
+<li>reward discounting, especially around episode resets</li>
+<li>advantage calculations, again especially around resets</li>
+<li>buffering and batching, especially pairing the wrong rewards with the wrong observations</li>
+</ul>
+<p>Fortunately, these components are all really easy to test! They've got none of the issues that validating RL algorithms as a whole has. These components are deterministic, they're easy to factor out, and they're fast. Checking you've got the termination right on your reward discounting is <a href="https://github.com/andyljones/megastep/blob/master/megastep/demo/learning.py#L134-L159">a few lines</a>.</p>
+<p>What's even better is that most of the time, <em>as you write these things</em> you know you're messing them up. If you're not certain whether you've just accumulated the reward on one side of the reset or the other, <em>put a test in</em>.</p>
+<h2>Use probe environments. <br id="probe"></h2>
+<p>The usual advice to people writing RL algorithms is to use a simple environment like the <a href="https://gym.openai.com/envs/#classic_control">classic control ones from the Gym</a>.</p>
+<p>Thing is, these envs have the same problem as looking at loss curves: at best they give you a noisy indicator, and if the noisy indicator looks poor you don't know <em>why</em> it looks poor. They don't localise errors.</p>
+<p>Instead, construct environments that <em>do</em> localise errors. In a recent project, I used</p>
+<ol>
+<li><strong>One action, zero observation, one timestep long, +1 reward every timestep</strong>: This isolates the value network. If my agent can't learn that the value of the only observation it ever sees it 1, there's a problem with the value loss calculation or the optimizer.</li>
+<li><strong>One action, random +1/-1 observation, one timestep long, obs-dependent +1/-1 reward every time</strong>: If my agent can learn the value in (1.) but not this one - meaning it can learn a constant reward but not a predictable one! - it must be that backpropagation through my network is broken.</li>
+<li><strong>One action, zero-then-one observation, <em>two</em> timesteps long, +1 reward at the end</strong>: If my agent can learn the value in (2.) but not this one, it must be that my reward discounting is broken.</li>
+<li><strong>Two actions, zero observation, one timestep long, action-dependent +1/-1 reward</strong>: The first env to exercise the policy! If my agent can't learn to pick the better action, there's something wrong with either my advantage calculations, my policy loss or my policy update. That's three things, but it's easy to work out by hand the expected values for each one and check that the values produced by your actual code line up with them.</li>
+<li><strong>Two actions, random +1/-1 observation, one timestep long, action-and-obs dependent +1/-1 reward</strong>: Now we've got a dependence on both obs and action. The policy and value networks interact here, so there's a couple of things to verify: that the policy network learns to pick the right action in each of the two states, and that the value network learns that the value of each state is +1. If everything's worked up until now, then if - for example - the value network fails to learn here, it likely means your batching process is feeding the value network stale experience.</li>
+<li>Etc.</li>
+</ol>
+<p>You get the idea: (1.) is the simplest possible environment, and each new env adds the smallest possible bit of functionality. If the old env works but the successor doesn't, that gives you a <em>lot</em> of information about where the problem is.</p>
+<p>Even better, these environments are extraordinarily fast. When you've a correct implementation, it should only take a second or two to learn them. And they're <em>decisive</em>: if your value network in (1.) ends up more than an epsilon away from the correct value, it means you've got a bug.</p>
+<h2>Use probe agents.</h2>
+<p>In much the same way that you can simplify your environments to localise errors, you can do the same with your agents too.</p>
+<p><em>Cheat</em> agents are ones that you leak extra information to. For example, if I'm writing an agent to navigate to a goal, then slipping the agent an extra vector saying which direction the goal is in should help a <em>lot</em>. My agent should be able to solve this problem <em>much</em> faster, and if it can't then how the heck can I expect it to solve the original problem?</p>
+<p><em>Automatons</em> are agents that don't use a neural network at all. Instead, they're hand-written algorithms. The point of writing something like this is to check that your environment is actually solvable. On an navigation environment I wrote once, I set up a room with a red post behind the agent. Then I wrote an automaton which would just turn left until a block of red was in the middle of it's view. Shocker: my automaton couldn't solve this task, because it turned out I'd mucked up the observation generation on odd-numbered environments.</p>
+<p>It's worth keeping in mind that automatons can be handed cheat information too! Combining automatons and progressively more cheat information is a powerful way to debug an environment.</p>
+<p><em>Tabular</em> agents a good match for probe environments. If you've set up a real simple environment and <em>still</em> nothing works, then replacing your NN with a far-easier-to-interpret lookup table of state values is a great way to figure out what you're missing. Be aware that it might take some time with a pen and paper to check that the values that you're seeing in the table are the ones you expect, but it's a hard setup to fool.</p>
+<h2>Use adaptive network definitions</h2>
+<p>One of the issues with probe environments and probe agents is that every time you swap out your environment or agent, you'll find yourself having to rewrite the interface of the network with the rest of the world. By 'interface' I mean 'the bit that eats the observation and the bit that spits out the action'.</p>
+<p>One way to avoid this is to write a function that takes the observation space and action space of the environment, and generates 'heads' for the network that convert the observation into a fixed-width vector, and which convert a fixed-width vector to the action. Then you can hand-implement <em>just</em> the body of the net that converts the intake vector to the output vector, and the rest will be slotted in by your function based on the env it has to work with.</p>
+<p>You can see <a href="https://github.com/andyljones/megastep/blob/master/megastep/demo/heads.py">one</a> <a href="https://github.com/andyljones/megastep/blob/master/megastep/demo/__init__.py#L17-L26">implementation</a> of this in my <a href="https://andyljones.com/megastep/">megastep</a> work, but it's an idea that's been independently developed a few times. I haven't yet seen a general library for it.</p>
+<h2>Log excessively.</h2>
+<p>The last few sections have involved controlled experiments of a sort, where you place your components in a known setup and see how they act. The complement to a controlled experiment is an observational study: watching your system in its natural habitat <em>very carefully</em> and seeing if you can spot anything anomalous.</p>
+<p>In reinforcement learning, watching your system carefully means logging. Lots of logging. Below are some of the logs I've found particularly useful.</p>
+<h3>Relative policy entropy</h3>
+<p>The entropy of your policy network's outputs, relative to the maximum possible entropy. It'll usually start near 1, then rapidly fall for a while, then flatten out for the rest of training.</p>
+<p>If it stays very near 1, your agent is failing to learn any policy at all. You should check that your policy targets are being computed correctly, that the gradient's being backpropagated correctly, and - if you've defined a custom environment - then your environment is actually correct!</p>
+<p>If it drops to zero or close to zero, then your agent has 'collapsed' into some - likely myopic - policy, and isn't exploring any more. This is usually because you'v either forgotten to include an exploration mechanism of some sort (like epsilon-greedy actions or an entropy term in the loss), or because your rewards are much larger than whatever you're using to encourage exploration.</p>
+<p>Sometimes it'll go up for a while; don't stress about that unless it's a large, permanent increase. If it <em>is</em> a large permanent increase and the minimum was very early in training, that can be an indicator that your policy fell into some myopic obviously-good behaviour that it's having to gradually climb back out of. It might help to turn up the exploration incentives.</p>
+<p>If the entropy oscillates wildly, that usually means your learning rate is too high.</p>
+<h3>Kullback-Leibler divergence</h3>
+<p>The KL div between the policy that was used to collect the experience in the batch, and the policy that your learner's just generated for the same batch. This should be small but positive.</p>
+<p>If it's very large then your agent is having to learn from experience that's very different to the current policy. In some algorithms - like those with a replay buffer - that's expected, and all that's important is the KL div is stable. In other algorithms (like PPO), a very large KL div is an indicator that the experience reaching your network is 'stale', and that'll slow down training.</p>
+<p>If it's very low then that suggests your network hasn't changed much in the time since the experience was generated, and you can probably get away with turning the learning rate up.</p>
+<p>If it's growing steadily over time, that means you're probably feeding the same experience from early on in training back into the network again and again. Check your buffering system.</p>
+<p>If it's negative - that shouldn't happen, and it means you're likely calculating the KL div incorrectly (probably by not handling invalid actions).</p>
+<h3>Residual variance</h3>
+<p>The variance of (target values - network values), divided by the variance of the target values.</p>
+<p>Like the policy entropy, this should start close to 1, fall very rapidly early on, and then decrease more gradually over the course of training.</p>
+<p>If it stays near 1, your value network isn't learning to predict the rewards. Check that your rewards are what you think they are, and check that your value loss and backprop through the value net are all working correctly.</p>
+<p>If it drops to zero, that's usually because the policy entropy has dropped to zero too, the policy has collapsed into some deterministic behaviour, and the value network has learned the rewards it is collecting perfectly. Another common reason is that some scenarios are generating vastly larger returns than the others, and the value net's learned to identify when that happens.</p>
+<p>If the residual variance oscillates wildly, that usually means your learning rate is too high.</p>
+<h3>Terminal correlation</h3>
+<p>The correlation between the value in the final state and the reward in the final step. This is only useful when there's lots of reward in the final step (like in boardgames).</p>
+<p>It should start near zero, rise rapidly, then plateau near 1.</p>
+<p>If it stays near zero but all the other value-related logs look good, then check that your reward-to-gos are being calculated correctly near termination!</p>
+<p>If reward is more evenly distributed through the episode, you could write a version of this that looks at the correlation of (next state's value - this state's value) with the reward in that step. I haven't used this myself though, so can't offer commentary.</p>
+<h3>Penultimate terminal correlation</h3>
+<p>The correlation between the value in the penultimate step and the final reward. Again, only useful when there's lots of reward at the end of the episode. If terminal correlation is high but penultimate terminal correlation is low, that's a strong indicator that your reward-to-gos aren't being carried backwards properly.</p>
+<h3>Value target distribution</h3>
+<p>Either plot a histogram, or the min/max/mean/std. The plots should indicate 'reasonable' value targets in the range [-10, +10] (and ideally  [-3, +3]).</p>
+<p>If they're larger than that, make your rewards proportionately smaller; if they're  smaller than that, make your rewards larger.</p>
+<p>If they blow up, check that your reward discounting is correct, and possibly make your discount rate smaller.</p>
+<p>If they're blowing up but you're insistent on leaving the discount rate where it is, one alternative is to increase the number of steps used to bootstrap the value targets. In PPO, this'd mean using longer chunks. Longer chunks mean that the values used for bootstrapping get shrunk more before they're fed back to the value net as targets, increasing the stability. You could also consider annealing the discount factor from a smaller value up towards 1.</p>
+<h3>Reward distribution</h3>
+<p>Again, as a histogram or min/max/mean/std. What a reasonable reward distribution is depends on the environment; some envs have a few large rewards, while others have lots of small rewards. Either way, if it doesn't match your expectations then you should investigate.</p>
+<h3>Value distribution</h3>
+<p>Again, as a histogram or min/max/mean/std. This is a complement to the previous two distributions and <em>should</em> closely match the value target distribution. If it doesn't, and it stays different from the value target distribution, that's an indicator that your value network is having trouble learning.</p>
+<p>It's also worth keeping an eye on the sign of the distribution. If your env only produces positive rewards but there are persistently negatives values in the value target distribution, that suggests your reward-to-go mechanism is badly broken or your value network is failing to learn.</p>
+<h3>Advantage distribution</h3>
+<p>Again, as a histogram or min/max/mean/std. As with the value targets, these should be in the range [-10, +10] (and ideally [-3, +3]).</p>
+<p>Advantages should also be approximately mean-zero due to how they're constructed; if they're persistently not then you've messed up your advantage calculations.</p>
+<h3>Episode length distribution</h3>
+<p>Again, as a histogram or a min/max/mean/std. As with the reward distribution, interpreting this depends on the environment. If your environment should have arbitrary-length episodes, but you're seeing that every episode here is length 7, that indicates your environment is broken or your network's fallen into some degenerate behaviour.</p>
+<h3>Sample staleness</h3>
+<p>Sample staleness is the number of learner steps between the network used to generate a sample, and the network currently learning from that sample. You can generate this by setting an 'age' attribute on the network, and incrementing it at every learner step. Then when a sample arrives at the learner, diff it against the learner's current age.</p>
+<p>How to interpret this depends on the algorithm, but it should generally stay at a steady value throughout training. In on-policy algorithms, lower sample stalenesses are better; in off-policy algorithms it's a tradeoff between fresh samples that let the network bootstrap quickly, and aged samples that stabilise things.</p>
+<h3>Step statistics</h3>
+<p>Step statistics are the abs-max and mean-square-value of the difference between the network's parameters when it enters the learner, and the network's parameters when it leaves the learner.</p>
+<p>Interpreting this depends on a whole bunch of things, but the mean-square value should typically be very small (1e-3 in my current training run with a LR of 1e-2), while the abs-max should small yet substantially larger than the mean-square-value.</p>
+<p>If the statistics are much smaller than that, you might be able to increase your learning rate; if they're much larger than that then be on the lookout for instability in your training.</p>
+<h3>Gradient statistics</h3>
+<p>Gradient statistics re the abs-max and mean-square-value of the gradient. In the age of Adam and other quasi-Newton optimizers, this isn't as informative as it once was, because normalising by the curvature estimates can dramatically inflate or collapse the gradient.</p>
+<p>That said, if the step statistics are looking strange, this can help diagnose whether the problem is with the gradient calculation or with Adam's second-order magic.</p>
+<h3>Gradient noise</h3>
+<p>This is from <a href="https://arxiv.org/abs/1812.06162">McCandlish and Kaplan</a>, and it's intended to help you choose your batch size. Unfortunately it's <em>spectacularly</em> noisy, to the point where you likely want to average over all steps in your run.</p>
+<p>I've been thinking that it might be possible to get more stable estimates of the gradient noise from Adam's moment estimates, but that's decidedly on the to-do list.</p>
+<h3>Component throughput</h3>
+<p>At the least, keep track of the actor throughput and learner throughput in terms of samples per second, and steps per second.</p>
+<p>Typically the actor should be generating <em>at most</em> as many samples as the learner is consuming. If the actor is generating excess samples there are weak reasons that might be a good thing - it'll refresh the replay buffer more rapidly - but typically it's considered a waste of compute.</p>
+<p>More generally, you want to see these remain stable throughout training. If your throughputs gradually decay, you're accumulating some costly state somewhere in your system.</p>
+<p>(For me, problems with gradually-slowing-down systems have always turned out to be with stats and logging, but I suspect that's because I've rolled my own stats and logging systems)</p>
+<h3>Value trace</h3>
+<p>The trace of the value over a random episode from recent history, plotted together with the rewards. This can be useful if you suspect your value function or rewards of 'being weird' in some way; the value trace should typically be a collection of exponentially-increasing curves leading up to rewards, followed by vertical drops as the agent collects those rewards.</p>
+<h3>GPU stats</h3>
+<p>There are several GPU-related stats that are worth tracking. First are the memory stats, which in PyTorch include</p>
+<ul>
+<li>the <em>memory allocation</em>, as reported by <code>torch.cuda.max_memory_allocated</code>. This is how much memory has actually been <em>used</em> by your computations,</li>
+<li>the <em>memory reserve</em>, as reported by <code>torch.cuda.max_memory_reserved</code>. This is how much memory PyTorch has <em>set aside</em> for your computations,</li>
+<li>the <em>memory gross</em>, as reported by <code>nvidia-smi</code>. This is how much memory PyTorch is using overall, <a href="https://github.com/pytorch/pytorch/issues/20532#issuecomment-540628939">including the ~gigabyte it needs for its own kernels</a>. It's this figure that'll crash your program if it hits the GPU's memory limit.</li>
+</ul>
+<p>Keeping track of all three is useful for diagnosing memory issues: figuring out if it's you that's hanging onto too many tensors, or PyTorch that's being too aggressive with its caching.</p>
+<p>If you're running out of memory and you can't immediately figure out why, <a href="https://github.com/Stonesjtu/pytorch_memlab#memory-profiler">memlab</a> can help a lot. Disclosure: I wrote the frontend.</p>
+<p>As well as the memory stats, it's also useful to track the utilization, fan speed and temperature reported by <code>nvidia-smi</code>. You can get these values in <a href="https://github.com/andyljones/megastep/blob/master/rebar/stats/gpu.py#L17-L29">machine-readable form</a>.</p>
+<p>In particular, if the utilization is persistently low then you should profile your code. Make sure to set <code>CUDA_LAUNCH_BLOCKING=1</code> before importing your tensor library, and then use <a href="https://jiffyclub.github.io/snakeviz/">snakeviz</a> or <a href="https://github.com/nschloe/tuna">tuna</a> to profile things in a broad way. If that's not enough detail, you can dig into things further with <a href="https://developer.nvidia.com/nsight-systems">nsight</a>.</p>
+<h3>Traditional metrics</h3>
+<p>As well as the above, I also plot some other things out of habit</p>
+<ul>
+<li><p><strong>Reward per trajectory</strong>: should increase dramatically at the start of training. This is, usually, what you care about. Unfortunately it's incredibly noisy and does little to localise errors. Closely related is the <strong>reward per step</strong>, which is typically what you care about in infinite environments.</p>
+</li>
+<li><p><strong>Mean value</strong>: is (if your value network is working well) a less-noisy proxy for the reward per trajectory. If your trajectories are particularly long compared to your reward discount factor however, this can be dramatically different from the reward per trajectory.</p>
+</li>
+<li><p><strong>Policy and value losses</strong>: should fall dramatically at the start of training, then level out.</p>
+</li>
+</ul>
+<h2>Credit</h2>
+<ul>
+<li><strong>kfir.b.y</strong>, for spotting an error in my description of the probe environments.</li>
+</ul>
+
+      </div>
+      <div class="column">
+        <small>2021/01/01</small>
+      </div>
+    </div>
+
+
+    <div>
+      <div id="footer" class="column">
+        <a href="https://fontawesome.com/license">icons by dave gandy</a>, theme by <a title="i have never been funny" href="https://color-hex.org/color/6d2e98">#6d2e98</a>
+      </div>
+    </div>
+  </body>
+
+</html>

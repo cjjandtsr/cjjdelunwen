@@ -1,0 +1,1966 @@
+===== PDF PAGE 1 =====
+Evolving Curricula with Regret-Based Environment Design
+
+
+
+
+        Jack Parker-Holder∗                 Minqi Jiang∗         Michael Dennis          Mikayel Samvelyan
+  University of Oxford, Meta AI            UCL, Meta AI            UC Berkeley              UCL, Meta AI
+
+             Jakob Foerster                    Edward Grefenstette                   Tim Rockt¨aschel
+          University of Oxford                     UCL, Meta AI                        UCL, Meta AI
+
+
+                                                   Abstract
+
+          Itremainsasigniﬁcantchallengetotraingenerallycapableagentswithreinforce-
+          mentlearning(RL).ApromisingavenueforimprovingtherobustnessofRLagents
+          is through the use of curricula.  One such class of methods frame environment
+          design as a game between a student and a teacher, using regret-based objectives to
+          produceenvironmentinstantiations(orlevels)atthefrontierofthestudentagent’s
+          capabilities. Thesemethodsbeneﬁtfromtheirgenerality,withtheoreticalguaran-
+          tees at equilibrium, yet they often struggle to ﬁnd effective levels in challenging
+          design spaces. By contrast, evolutionary approaches seek to incrementally alter
+          environmentcomplexity,resultinginpotentiallyopen-endedlearning,butoftenrely
+          on domain-speciﬁc heuristics and vast amounts of computational resources. In this
+          paper we propose to harness the power of evolution in a principled, regret-based
+          curriculum. Ourapproach, whichwe callAdversariallyCompounding Complexity
+          byEditing Levels(ACCEL), seeksto constantlyproduce levels atthe frontierof an
+          agent’scapabilities,resultingincurriculathatstartsimplebutbecomeincreasingly
+          complex. ACCELmaintains the theoreticalbeneﬁts of priorregret-based methods,
+          while providing signiﬁcant empirical gains in a diverse set of environments.
+          An interactive version of the paper is available ataccelagent.github.io.
+
+1   Introduction
+
+ReinforcementLearning (RL,Sutton andBarto(1998)) considersthe problemofan agentlearning
+through experience to maximize reward in a given environment. The past decade has seen a surge
+of interest in RL, with high proﬁle successes in games (Vinyals et al.,2019;Berner et al.,2019;
+Silver et al.,2016;Mnih et al.,2013;Hu and Foerster,2020) and robotics (OpenAI et al.,2019;
+Andrychowicz et al.,2020), with some believing RL may be sufﬁcient for producing generally
+capable agents (Silver et al.,2021). Despite the promise of RL, it is often a challenge to train agents
+capable of systematic generalization (Kirk et al.,2021).
+This work focuses on the use of adaptive curricula for training more generally-capable agents. By
+adapting the training distribution over the parameters of an environment, adaptive curricula have
+beenshown toproduce morerobustpolicies infewertraining steps(Portelas et al.,2019;Jianget al.,
+2021b). Forexample,theseparametersmaycorrespondtofrictioncoefﬁcientsinaroboticssimulator
+ormazelayoutsfor anavigationtask. Each concrete settingofparametersresultsinan environment
+instance called a level. Indeed, adaptive curricula have played a key role in many prominent RL
+success, either over opponents (Vinyals et al.,2019), game levels (Team et al.,2021), or parameters
+of a simulator (OpenAI et al.,2019;Andrychowicz et al.,2020).
+Unsupervised Environment Design (UED,Dennis et al.(2020)) formalizes the problem of ﬁnding
+adaptivecurricula,wherebyateacheragentdesignslevelsusingfeedbackfromastudent,whichseeks
+
+   ∗Equal contribution. Correspondence tojackph@robots.ox.ac.ukandmsj@fb.com.
+
+
+Preprint. Under review.
+
+===== PDF PAGE 2 =====
+Figure1: Theevolutionof alevelinthree differentenvironments: MiniHack lavagrids, MiniGrid
+mazesand BipedalWalker terrains. Ineach case,the far leftshows a baselevel,acting asa parent
+for subsequent edited levels to the right. Each level along the evolutionary path has a high regret
+for the student agent at that point in time.  Thus the level difﬁculty co-evolves with the agent’s
+capabilities. Ineach environment, we see thatdespite starting withsimple levels, the pursuitof high
+regret leads to increasingly complex challenges. This complexity emerges entirely without relying
+on any environment-speciﬁc exploration heuristics. Note that since the agent canmovediagonally
+in the lava environment, the ﬁnal level is solvable.
+
+tosolve them. Whenusing regret asfeedback,Denniset al.(2020) showed thatif thesystem reaches
+equilibrium,thenthestudentmustfollowaminimaxregretstrategy,i.e. thestudentwouldbecapable
+of solving all solvable environments. Empirically, this approach produces student policies exhibiting
+impressivezero-shottransfertochallenginghumandesignedenvironments(Dennisetal.,2020;Jiang
+etal.,2021a;Guretal.,2021). However,trainingsuchanadversarialteacherremainsachallenge,and
+so far, the strongest empirical results come from curating randomly sampled levels for high-regret,
+ratherthan learningto directlydesign suchlevels(Jiang etal.,2021a). Sucha curationalapproach is
+unable totake advantage of any previously discovered level structures, andits performance canbe
+expected to degrade as the size of the design space grows.
+Animportantbeneﬁtofadaptivecurriculaisthepossibilityofopen-endedlearning(SorosandStanley,
+2014), given the curriculum can be steered toward constantly designing novel tasks for the agent to
+solve. While generating truly open-ended learning remains a grand challenge (Stanley et al.,2017),
+recent works in the evolutionary community have taken the ﬁrst steps in this direction, through
+methods such as Minimal Criteria Coevolution (MCC,Brant and Stanley(2017)) and POET (Wang
+etal.,2019,2020). Theseapproachesshowthatevolvinglevelscaneffectivelyproduceagentscapable
+ofsolvingadiverserangeofchallengingtasks. IncontrasttopriorUEDworks,theseevolutionary
+methods directly take advantage of the most useful structures found so far in a constant process of
+mutation and selection.  However, the key drawback of these methods is the reliance on domain
+speciﬁcheuristics,whilealsorequiringvastcomputationalresources,makingitchallengingforthe
+community to make further progress in this direction.
+In this work, we seek to harness the power and potential open-endedness of evolution in a princi-
+pled regret-based curriculum. We introduce a new algorithm, called Adversarially Compounding
+ComplexitybyEditingLevels,orACCEL.ACCELevolvesacurriculumbymakingsmalledits(e.g.
+mutations)to previouslyhigh-regretlevels, thusconstantlyproducing newlevels atthefrontier ofthe
+studentagent’scapabilities(see: Figure2). LevelsgeneratedbyACCELbeginsimplebutquickly
+becomemorecomplex. Thisbeneﬁtsboththebeginningoftraining(BerthouzeandLungarella,2004;
+Schmidhuber,2013),wherethestudent beginslearningmuchfaster,whilerapidlyco-evolvingthe
+policy with the environment to solve increasingly complex levels (see Figure1).
+We believe ACCEL provides the best of both worlds: an evolutionary approach that can generate
+increasingly complex environments, combined with a regret-based curator that reduces the need for
+domain-speciﬁc heuristics and provides theoretical robustness guarantees in equilibrium. ACCEL
+leads to strong empirical gains in both sparse navigation tasks and a 2D bipedal locomotion task
+overchallenging terrain. Inboth domains, ACCEL demonstrates the abilityto rapidly increases level
+complexitywhileproducinghighlycapableagents. ACCELproducesandsolveshighlychallenging
+levels withafractionofthe computeofprevious approaches,reachingcomparableperformanceto
+POET while training on less than 0.05% of the total number of samples on a single GPU.
+
+
+                                                          2
+
+===== PDF PAGE 3 =====
+2   Background
+
+2.1   From MDPs to Underspeciﬁed POMDPs
+
+AMarkovDecisionProcess(MDP)isdeﬁnedasatuple⟨S,A,T,R,γ⟩whereS andAstandforthe
+setsofstatesandactionsrespectivelyandT  :S×A→∆(S) isatransitionfunctionrepresenting
+theprobabilitythatthesystem/agenttransitionsfromastatest∈S tost+1∈S givenactionat∈A.
+Eachtransitioninducesanassociatedrewardrt,generatedbyarewardfunctionR :S→R,andγ is
+a discount factor. Given an MDP, the goal of ReinforcementLearning (RL,Sutton and Barto(1998))
+is to learn a policyπ that maximizes expected discounted reward, i.e.E[∑Ti=0rtγt].
+Despite its generality, the MDP framework is often an unrealistic model for real-world environments.
+First,itassumesfullobservabilityofthestate,whichisoftenimpossibleinpractice. Thislimitation
+is addressed by partially observable MDPs (POMDPs), which include an observation function
+I :S→O mapping the true state (which is unknown to the agent) to a (potentially noisy) set of
+observationsO. Secondly, the traditional MDP framework assumes a single reward and transition
+function, which are ﬁxed throughout training. Instead, in the real world, agents may experience
+variations not seen during training, making robust transfer crucial in practice.
+To address these issues, we use the recently introduced Underspeciﬁed POMDP, or UPOMDP
+(Dennisetal.,2020),givenby   M =⟨A,O,Θ,SM,TM,IM,RM,γ⟩. Thisdeﬁnitionisidentical
+to a POMDP with the addition of Θ to represent the free parameters of the environment, similar
+to the context in a Contextual MDP (Modi et al.,2017). These parameters can be distinct at every
+timestepandincorporatedintothetransitionfunctionTM :S×A×Θ→∆(S). FollowingJiang
+et al.(2021a) we deﬁne a               levelMθ as an environment resulting from a ﬁxedθ∈ Θ. We deﬁne
+thevalueofπ inMθ tobeVθ(π) =E[∑Ti=0rtγt] wherert aretherewardsachievedbyπ inMθ.
+UPOMDPs beneﬁt from their generality, sinceΘ can represent possible transition dynamics (for
+example in sim2real (Peng et al.,2017;OpenAI et al.,2019;Andrychowicz et al.,2020)), changes in
+observations,different rewardfunctions, orworld topologyin procedurallygenerated environments.
+
+2.2   Methods for Unsupervised Environment Design
+
+UnsupervisedEnvironmentDesign(UED,Dennisetal.(2020))seekstoproduceaseriesoflevels
+that form a curriculum for a student agent, such that the student agent is capable of systematic
+generalization across all possible levels. UED typically views levels as produced by a generator (or
+teacher) maximizing some utility function,Ut(π,θ). For example DR corresponds to a teacher with
+a constant utility function, for any constantC:
+                                                UUt (π,θ) =C.                                                              (1)
+RecentUEDmethodsuseteacherthatmaximizeregret,deﬁnedasthedifferencebetweentheexpected
+return of the current policy and the optimal policy. The teacher’s utility is then deﬁned as
+                                 URt (π,θ) = argmax
+                                                  π∗∈Π{REGRETθ(π,π∗)}                                           (2)
+                                             = argmax
+                                                  π∗∈Π{Vθ(π∗)−Vθ(π)}.                                         (3)
+Regret-based objectives are desirable, as they have been shown to promote the simplest possible
+levelsthatthestudentcannotcurrentlysolve(Dennisetal.,2020). Moreformally,if     St = Πisthe
+strategyset ofthestudent andSt = Θ isthe strategysetof theteacher, thenifthe learningprocess
+reaches a Nash equilibrium, the resulting student policyπ provably converges to a minimax regret
+policy, deﬁned as
+                              π = argmin      θ,πB∈Θ,Π{REGRETθ(πA,πB)}}.                                     (4)
+                                     πA∈Π{   max
+However, without access toπ∗, UED algorithms must approximate the regret. PAIRED estimates
+regretasthedifferenceinreturnattainedbythemainstudentagentandasecondagent. Bymaximizing
+this difference, the teacher maximizes an approximation of the student’s regret. Furthermore, multi-
+agent learning systems may not always converge in practice (Mazumdar et al.,2020). Indeed, the
+Achilles’heelofpriorUEDmethods,likePAIRED(Dennisetal.,2020),isthedifﬁcultyoftraining
+theteacher,typicallyentailinganRLproblemwithsparserewardsandlong-horizoncreditassignment.
+Analternativeregret-basedUEDapproachisPrioritizedLevelReplay(PLR,Jiangetal.(2021b,a)).
+
+
+                                                        3
+
+===== PDF PAGE 4 =====
+PLR trains the student on challenging levels found by curating a rolling buffer of the highest-regret
+levelssurfacedthrough randomsearchover possible levelconﬁgurations. Inpractice, PLRhasbeen
+found to outperform other UED methods that directly train a teacher. PLR approximates regret using
+the positive value loss, given by:
+                                            T∑        (T∑                   )
+                                        1       max         (γλ)k−tδk,0                                           (5)
+                                        T  t=0          k=t
+
+whereλ andγ are theGeneralized Advantage Estimation(GAE,Schulman etal.(2016)) andMDP
+discount factors respectively, andδt, the TD-error at timestept.  Equipped with this method for
+approximatingregret,Corollary1 inJiangetal.(2021a)ﬁnds thatifthestudentagentonly trainson
+curated levels, then it will follow a minimax regret strategy at equilibrium. Thus, counterintuitively,
+the student learns more effectively by training on less data.
+Empirically PLR has been shown to produce policies with strong generalization capabilities, but
+remains limited in being able to only curate randomly sampled levels. PLR’s inability to build off
+ofpreviouslydiscoveredstructuresmaymakeitchallengingtosamplecomplexstructureswiththe
+frequencyrequiredtotrainagentscapableofsolvingthem. Further,randomsearchwillsufferfrom
+thecurse-of-dimensionalityinhigher-dimensionaldesignspaces,whererandomlyencounteringlevels
+at the frontier of the agent’s current capabilities can be highly unlikely.
+
+3   Adversarially Compounding Complexity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 2: An overview of ACCEL. Levels are randomly sampled from a generator and evaluated,
+with high-regret levels added to the level replay buffer. The curator selects levels to replay, and the
+studentonly trainson replaylevels. Aftertraining, thereplayedlevelsare editedandevaluatedagain
+to compute regret for level replay.
+
+In this section we introduce a new algorithm for UED, combining an evolutionary environment
+generator with a principled regret-based curator.  Unlike PLR which relies on random sampling
+to produce new batches of training levels, we instead propose to make edits (e.g.  mutations) to
+previously curated ones.  Evolutionary methods have been effective in a variety of challenging
+optimization problems (Stanley et al.,2019;Pugh et al.,2016), yet typically rely on handcrafted,
+domain-speciﬁc rules. For example, POET manually ﬁlters BipedalWalker levels to have a return in
+the range[50,300]. The key insight in this work is that regret serves as a domain-agnostic ﬁtness
+function for evolution, making it possible to consistently produce batches of levels at the frontier of
+agent capabilities across domains. Indeed, by iteratively editing and curating the resulting levels,
+the levels in the level replay buffer quickly increase in complexity. As such, we call our method
+Adversarially Compounding Complexity by Editing Levels, or ACCEL.
+ACCELdoesnotrely onaspeciﬁc editingmechanism,which couldbeanymutation processusedin
+other open-ended evolutionary approaches (Soros and Stanley,2014). In this paper, editing involves
+makingahandfulofchanges(e.g. addingorremovingobstaclesinamaze),whichcanoperatedirectly
+on environment elements within the level or on a more indirect encoding such as the latent-space
+representation of the level under a generative model of the environment. In general, editing may rely
+
+
+                                                          4
+
+===== PDF PAGE 5 =====
+onmoreadvancedmechanisms,suchas search-basedmethods,but inthisworkwe predominantly
+makeuseofsimple,randommutations. ACCELmakesthekeyassumptionthatregretvariessmoothly
+with the environment parameters Θ, such that the regret of a level is close to the regret of others
+within a small edit distance. If this is the case, then small edits to a single high-regret level should
+leadtothediscoveryofentirebatchesofhigh-regretlevels—whichcouldbeanotherwisechallenging
+task in high-dimensional design spaces.
+FollowingPLR(Jiangetal.,2021a),wedonotimmediatelytrainoneditedlevels. Instead,weﬁrst
+evaluate them and only add them to the level replay buffer if they have high regret, estimated by
+positivevalueloss(Equation5). Weconsidertwodifferentcriteriaforselectingwhichreplayedlevels
+to edit: Under the “easy” criterion, weedit those levelswhich the agent can currentlysolve with low
+regret,approximatedastheagent’sreturnminusitsregret. Underthe“batch”criterion,wesimply
+edit the entire batch of replayed levels. The full procedure is shown in Algorithm1.
+
+Algorithm 1ACCEL
+Input: Buffer sizeK, initial ﬁll ratioρ, level generator.
+Initialize: Initialize policyπ(φ), level bufferΛ.
+# Initial Data Collection
+SampleK∗ρ initial levels.
+# Main Training Loop
+while not converged do
+    Sample replay decisiond∼PD(d)
+    ifd = 0 then
+         # Evaluate DR levels but do not update
+         Sample levelθ from level generator
+         Collectπ’s trajectoryτ onθ, with a stop-gradientφ⊥
+         Compute approximate regretS, using Equation5
+    elseAddθ toΛ if scoreS meets threshold
+         # Train student agent on curated high regret levels
+         Sample a replay level,θ∼Λ
+         Collect policy trajectoryτ onθ
+         Updateπ with rewardsR(τ)
+         # Edit previously high regret levels and evaluate
+         Editθ to produceθ′
+         Collectπ’s trajectoryτ onθ′, with a stop-gradientφ⊥
+         Compute approximate regretS, using Equation5
+        Addθ′ toΛ if scoreS meets threshold
+        (Optionally) Update Editor using scoreS
+    end
+end
+
+ACCEL can beseen as aUED algorithm taking astep towards open-ended evolution(Stanley et al.,
+2017), where the evolutionary ﬁtness is estimated regret, as levels only stay in the “population” (that
+is,thelevelreplaybuffer)iftheymeetthehigh-regretcriterionforcuration. However,ACCELavoids
+some important weaknesses of evolutionary algorithms such as POET: First, ACCEL maintains a
+population of levels, but not a population of agents. Thus, ACCEL requires only a single desktop
+GPU for training. In contrast, evolutionary approaches typically require aCPU cluster. Moreoever,
+forgoinganagentpopulationallowsACCELtoavoidtheagentselectionproblem. Instead, ACCEL
+directlytrainsasinglegenerally-capableagent. Finally,sinceACCELusesaminimaxregretobjective
+(rather than minimax as in POET), it naturally promotes levels at the frontier of agent’s capabilities,
+withoutrelyingondomain-speciﬁcknowledge(suchasrewardranges). Trainingonhighregretlevels
+alsomeans thatACCELinherits therobustness guaranteesin equilbriumfrom PLR(Corollary 1in
+Jiang et al.(2021a)):
+Remark1. IfACCELreachesaNashequilibrium,thenthestudentfollowsaminimaxregretstrategy.
+
+In stark contrast, other evolutionary approaches primarily justify their applicability solely via empiri-
+calresultsonspeciﬁcdomains. Aswewillshownext,akeystrengthofACCELisitsgenerality,asit
+can produce highly capable agents in a diverse range of environments, without domain knowledge.
+
+
+                                                         5
+
+===== PDF PAGE 6 =====
+4   Experiments
+
+InourexperimentsweseektocompareagentstrainedwithACCELwithseveralofthebest-performing
+UED baselines.  In all cases, we train a student agent via Proximal Policy Optimization (PPO,
+Schulmanetal.(2018)). Toevaluatethequalityoftheresultingcurricula,weshowallperformance
+with respect to the number of gradient updates for the student policy, as opposed to total number of
+environmentinteractions,whichis,inanycase,oftencomparableforPLRandACCEL(seeTable10).
+ForafulllistofhyperparametersforeachexperimentpleaseseeTable11inSectionB.3. Ourprimary
+baseline is Robust PLR (Jiang et al.,2021a), which combines the random generator with a regret-
+basedcurationmechanism. Theotherbaselinesaredomainrandomization(DR),PAIRED(Dennis
+etal.,2020),andaminimaxadversarialteacher. Theminimaxbaselinecorrespondstotheobjective
+used in POET without the hand-coded constraints. We leave the comparison to population-based
+methods to future work due to the computational expense required. We report results in a consistent
+manner across environments—in each case, we show the emergent complexity during training an
+reporttestperformanceintermsoftheaggregateinter-quartilemean(IQM)andoptimalitygapusing
+the recently introducedrliablelibrary (Agarwal et al.,2021b).
+We begin with a simple proof-of-concept environment, where a large proportion of levels are not
+conducive to learning. We then scale to a larger partially-observable navigation environment, where
+wetestouragentsonchallengingout-of-distributionenvironments. Finally,wecompareeachmethod
+on the continuous-control environment fromWang et al.(2019), featuring a highly challenging
+distribution of training levels that requires the agent to master multiple behaviors to achieve strong
+performance.
+
+4.1   Learning with Lava
+
+We begin with a simple proof of concept: a grid environment, where the agent must navigate to a
+goalin thepresenceof lava blocks. Thegrid isonly7×7,butremainschallenging astheepisode
+terminates with zero reward if the agent touches the lava. This dynamic makes exploration more
+difﬁcult by penalizing random actions. While toy, such challenges may be relevant in real-world,
+safety-critical settings, where agents may wish to avoid events causing early termination during
+training. ForDRandPLR,therandomgeneratorsamplesthenumberoflavatilestoplacefromthe
+range [0,20]. ForACCEL, we usea generatorthat producesempty roomsand then proceedsto edit
+thelevelsbyaddingorremovinglavatiles. TheenvironmentisbuiltwithMiniHack(Samvelyanetal.,
+2021),in whichtheagenthas full observability withahighdimensional input. The fullenvironment
+details are provided in AppendixB.1).
+Figure3showstheresultsofrunningeachmethodover5randomseeds. Despitestartingwithempty
+rooms ACCEL quickly produces levels with more lava than theother methods, while also attaining
+highertrainingreturns,reachingnear-perfectperformanceonitstrainingdistribution. Thisbehavior
+isentirelydrivenbythepursuitofhigh-regretlevels,whichconstantlyseeksthefrontieroftheagent’s
+capabilities. PLRis abletoproducea similartrainingproﬁleto ACCEL,but achieveslowervalues
+for each complexity metric.
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 3: Training return and emergent complexity in Lava Grid. The plots report the mean and
+standard error over 5 seeds.
+
+We evaluate each agent on a series of test levels after 1000 PPO updates (approximately 20M
+timesteps), and report the aggregate results in Figure4, where we see that ACCEL is the best
+performing method. Extended results are shown in AppendixA.3). This experiment demonstrates
+
+
+                                                        6
+
+===== PDF PAGE 7 =====
+thatACCELcanfacilitatelearninginsettingswherethestudentagentislikelytosuffer frominstant
+death, and therefore struggle to learn, in a high proportion of training levels.
+
+
+
+
+
+
+
+
+                             Figure 4: Lava Grid aggregate test performance.
+
+4.2   Partially Observable Navigation
+
+We now scale ACCEL to a maze navigation environment based on MiniGrid (Chevalier-Boisvert
+et al.,2018), originally introduced inDennis et al.(2020).  Despite being a conceptually simple
+environment, training robust agents in this domain requires a large-scale experiment: Our agents
+train for 20k updates (≈350M steps, see Table10), learning an LSTM-based policy with a 147-
+dimensional partially-observable observation. Our DR baseline samples between 0 and 60 blocks to
+place,providingasufﬁcientrangeforPLRtoformacurriculum. ForACCELwebeginwithempty
+rooms and randomly edit the block locations (by adding or removing blocks), as well as the goal
+location. Afterreplay,weeditlevelsselectedviathe“easy”criterion—essentiallymovinglevelsback
+tothelearningfrontieroncetheirlearningpotentialhasbeen reduced. InFigure5,wereporttraining
+performanceandcomplexitymetrics. WeseethatACCELrapidlycompoundscomplexity,leadingto
+training levels with signiﬁcantly higher block count and longer solution paths than other methods.
+
+
+
+
+
+
+
+
+
+
+
+
+Figure5: Emergentcomplexitymetricsformazenavigationlevelsduringtraining. Plotsshowthe
+mean and standard error across 5 training seeds.
+
+
+
+
+
+
+
+
+
+               Figure 6: Aggregate test performance on maze navigation environments.
+
+We evaluate the zero-shot transfer performance of each method on a series of held-out test envi-
+ronments, as done in prior works. For DR, PLR, and ACCEL, evaluation occurs after 20k student
+PPO updates, focusing the comparison on the effect of the curriculum. The minimax and PAIRED
+results are those reported inJiang et al.(2021a) at 250M training steps (    ≈30k updates).  As we
+see,ACCELperformsatleastaswellasthenextbestmethodinalmostalltestenvironments,with
+particularlystrongperformanceinLabyrinthandMaze. AsreportedinFigure6,ACCELachieves
+drasticallystrongerperformancethanallothermethodsinaggregateacrossalltestenvironments: its
+IQMapproachesaperfectsolvedratecomparedtobelow80%forthenextbestmethod,PLR,with
+an80.2% probabilityofimprovement overPLR.Detailed, perenvironmenttest resultsareprovided
+in Figures23) and26in AppendixA.3. Example levels generated by each method are shown in
+Figure7, where we see ACCEL produces more structured mazes than the baselines.
+
+
+                                                        7
+
+===== PDF PAGE 8 =====
+Figure 8: Zero-shot performance on a large procedurally-generated maze environment. The bars
+show mean and standard error over 5 training seeds, each evaluated over 100 episodes. ACCEL
+achievesoverdoublethesuccessrateofthenextbestmethod,despitebeginningwithemptyrooms.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    Figure 7: Example levels generated by DR, PLR and ACCEL.
+
+Next, we consideran evenmore challengingsetting—we use alargerversionof “PerfectMaze”,a
+procedurally-generatedmazeenvironment,showninFigure8. Eachrandomly-generatedmazehas
+51×51tiles,anorderofmagnitudelargerthantraininglevels,withamaximumepisodelengthofover
+5ksteps. Weevaluateeachagentsforeachtrainingseedfor100episodes,usingthesamecheckpoints
+usedtoproduceFigure6. TheevaluationresultsinFigure8showACCELsigniﬁcantlyoutperforms
+allbaselines,achievingasuccessrateof53%comparedtothenextbestmethod,PLR,whichattains
+asuccessrateof25%,whileallothermethodsfail. Notably,ACCELlearnstoapproximatelyfollow
+the “left-hand” rule for solving single-component mazes.
+We seektounderstand thekey driversofACCEL’soutperformance: Incremental changesto alevel
+can lead to a diverse batch of new ones (Sturtevant et al.,2020), which may move those that are
+currently too hard or too easy towards the frontier of the agent’s capabilities. This diversity may
+prevent overﬁtting.  For example, in Figure9, we see three edits of the same level produced by
+ACCEL.Eachhasasimilarinitialobservation,yetrequirestheagenttoexploreindifferentdirections
+toreachthegoal,therebypressuringtheagenttoactivelyexploretheenvironment. Makingeditssuch
+astheseoutsideofthedirecttrajectoryoftheagentcanalsobeseenasaformofdataaugmentation
+thatchanges theobservation but nottheoptimal policy. Suchdata augmentationshave beenshownto
+improve sampleefﬁciency androbustnessin RL(Laskinetal.,2020;Kostrikovet al.,2021;Raileanu
+et al.,2020).
+
+
+
+
+
+
+
+Figure 9: Despite sharing a common ancestor, each of these levels require different behaviors to
+solve. Left: theagentcangouporleftandreach thegoal. Middle: thegoal isontheleft,whileon
+the right the left path is blocked.
+
+
+                                                       8
+
+===== PDF PAGE 9 =====
+4.3   Walking in Challenging Terrain
+
+Finally,weevaluateourapproachonacontinuous-controlenvironmentwithdenserewards,using
+the BipedalWalker environment fromWang et al.(2019).  As inWang et al.(2019) we use a
+modiﬁed version of theBipedalWalkerHardcore environment from OpenAI Gym (Brockman
+et al.,2016). We include all eight parameters in the design space, rather than the subset used in
+Wang et al.(2019), making more complex.  This environment is detailed at length in Appendix
+B.1. Werunallbaselinesfrompreviousexperiments,alongsideanadditionalbaseline,ALP-GMM
+(Portelas et al.,2019), which was originally tested on BipedalWalker.  We train agents for 30k
+studentupdates,equivalenttobetween1Bto2Btotalenvironmentsteps,dependingonthemethod
+(see Table10). During training we evaluate agents on both the simple           BipedalWalker and more
+challengingBipedalWalker-Hardcoreenvironments,inadditiontofourenvironmentstestingthe
+agent’s effectiveness against speciﬁc, isolated challenges otherwise present to varying degrees in
+training levels:{Stump,PitGap,Stairs,Roughness}, shown in Figure10.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure10: Top: ExamplesofthefourindividualchallengesinBipedalWalker,Bottom: Performance
+onBipedalWalkertestenvironmentsduringtraining. Resultsshowmeanandstandarderror. Returns
+below zero are omitted.
+
+
+                                                       9
+
+===== PDF PAGE 10 =====
+             Figure 11: Aggregate performance across BipedalWalker test environments.
+
+After 30k PPO updates, we conduct a more rigorous evaluation, using 100 test episodes in each
+test environment, and report the aggregate results in Figure11(normalized assuming a return range
+of{0,300}).  ACCEL signiﬁcantly outperforms all baselines, achieving close to 75% of optimal
+performance, almost three times the next best baseline (PLR). All other baselines struggle, likely
+dueto thechallengingenvironment design spacecontaininga high proportionoflevelsthatarenot
+conducive tolearning. Facedwithsuchchallenging levels,agentsmay learntoresortto thelocally
+optimal behavior of preventing itself from falling (avoiding a -100 penalty), rather than attempt
+forward locomotion. Finally,we see ALP-GMM was unableto perform well when thedesign space
+was increased from 2D (as inPortelas et al.(2019)) to 8D.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 12:  Emergent Complexity in BipedalWalker.  Top:  Rose plot of complexity metrics of
+BipedalWalker levels discovered by PLR and ACCEL. Each line represents a solved level from
+the associated checkpoint.  All levels are among the top-100 highest regret levels for the given
+checkpoint. Bottom: Two levels created and solved by ACCEL.
+
+
+Next we seek to understand the properties of the evolving distribution high regret levels. We include
+allsolvedlevelsfromthetop100regretlevelsafter10k,20kand30kstudentupdates. Foreachlevel
+we show all eight parameters in Figure12(top), with the PLR agent as a comparison. As we see,
+ACCEL solves a vast quantity of difﬁcult levels, of comparable difﬁculty with other methods such as
+POET, but using a fraction of the compute. For comparison, ACCEL used 2.07B timesteps to get
+to 30k student updates, which is less than 0.5% of what is used inWang et al.(2019). In the next
+section we seek a more direct comparison with results from POET.
+
+
+                                                         10
+
+===== PDF PAGE 11 =====
+                              4.4   POET Comparison
+
+                              For a more direct comparison with POET, we ran an experiment using the smaller 5D BipedalWalker
+                              environment encoding used inWang et al.(2019). We train each method for ten independent runs
+                              for 50k student PPO updates. For evaluating the difﬁculty of generated levels, we use the thresholds
+                              providedinWanget al.(2019), summarizedinTable1. Alevelmeeting noneof thesethresholdsis
+                              considered“Easy”, while meetingone, two or threeis considered“Challenging”, “VeryChallenging”
+                              or “Extremely Challenging” respectively.
+
+                                                     Table 1: Environment encoding thresholds for 5D BipedalWalker.
+
+
+
+
+                              In Figure13, weshow the composition of the ACCEL levelreplay buffer duringtraining. As we see,
+                              ACCEL produces an increasing number of “Extremely Challenging” levels as training progresses.
+                              This is asigniﬁcant achievement giventhatWang etal.(2019) showed it was not possible to create
+                              levelsinthiscategorywiththeirevolutionarycurriculum,withoutincludingacomplexsteppingstone
+                              procedure. We thus see regret-based UED offers a computationally cheaper alternative to producing
+                              suchlevels. Moreover,POETexplicitlyencouragestheenvironmentparameterstoreach highvalues
+                              through an explicit novelty bonus, whereas the complexity discovered by ACCEL is completely
+                              emergent, arising purely through the pursuit of high-regret levels.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              Figure 13:  Percentage of the ACCEL level replay buffer falling into each difﬁculty category.  Note the
+                              complexity is purely emergent in the pursuit of high-regret levels.
+
+                              We further evaluate agents trained in the 5D BipedalWalker environment on the settings outlined
+                              in Figure10, and report the results in Table2. Note that the                       Stairs environment is now out-of-
+                              distribution,astheagentneverexperiencesstairsduringtraining. Aswesawinthehigherdimensional
+                              setting, the ACCEL agent is able to perform well across all settings, outperforming both baselines.
+                              Table 2: Test solved rate after 50k updates: all ten runs of each method are evaluated on held out
+                              environments for 100 episodes. Extremely Challenging evaluations use 1000 episodes due to the
+                              diversity of the levels produced. Mean and sem shown. Bold indicates within a standard error of the
+                              best mean.
+
+
+
+
+
+
+
+
+
+
+                              Takingourevaluationonestepfurther,wealsotestallmethodsonaheldoutdistributionof“Extremely
+                              Challenging” levels. In this case, each time the environment is reset we resample the parameters,
+
+
+                                                                                       11
+                   PLR          ALP-GMM        ACCEL
+Stump          0.04±0.02    0.07±0.02    0.44±0.08
+PitGap         0.2±0.09    0.58±0.08   0.61±0.08
+StumpHeight(High)    PitGap(High)    GroundRoughness
+Roughness   0.23±0.04    0.13±0.03    0.73±0.03
+Stairs         0.02±0.0      0.01±0.0    0.12±0.02≥2.4     ≥6     ≥4.5
+Hardcore     0.21±0.04     0.2±0.04    0.65±0.02
+Extreme       0.01±0.01    0.02±0.01    0.12±0.02
+
+===== PDF PAGE 12 =====
+such that they meet all three criteria in Table1.  This inevitably leads to a highly diverse set of
+testlevels. Tomitigatetheriskofstochasticityinﬂuencingtheoutcome,weevaluateeachmethod
+for 1000 episodes. We compare the solved rate for each method in Table2. Finally, we seek to
+evaluateouragentsonspeciﬁclevelsproducedbyPOET.WeusedtheroseplotsinWangetal.(2019)
+to create six “Extremely Challenging” environments, each solved by one of the three POET runs.
+Unsurprisingly ouragents foundthese levels challenging,with low success rates. Wenote thatthis is
+notaperfectcomparison—POETﬁxestheenvironmentseed,therebysolvingonelevelfromeach
+parameterization,whilewerepeatedlysamplefromthesamedistribution. However,despitethis,9
+out of10 ofour independentruns solved atleast oneof thesix environments atleast onceout of100
+trials per run. See the Appendix (Table7) for more detail on this experiment.
+Tosummarize,webelieveACCELiscapableofproducinglevelsofcomparablecomplexitytoPOET,
+without a novelty bonus or handcoded heuristics, and using a fraction of the computational cost.
+Moreover,we trainasingleagentthatis robustacrossenvironmentchallenges,while POETselects
+multiple agents, each tailored to individual challenges. Therefore, we believe our method produces
+agents that are more robust, and thus, more generally capable.
+
+
+
+
+
+
+
+
+
+
+Figure 14: Aggregate returns for Editing ablations in MiniGrid and BipedalWalker.  E=editing,
+S=start simple.
+
+
+Do we need to start simple? To provide a better understanding of ACCEL, we conduct a simple
+ablation study to test the importance of the editing mechanism and the inductive bias of starting
+simple. In Figure14we show the performance of three approaches: PLR (sample and replay DR
+levels), PLR+E (sample, replay and edit DR levels) and ﬁnally PLR+E+S (i.e. ACCEL). As we
+see, editing levels leads to improved performance, while starting simple is more important in the
+BipedalWalker environment.
+
+4.5   Discussion and Limitations
+
+InourexperimentswehavedemonstratedthatACCELiscapableofforminghighlyeffectivecurricula
+in three challenging and diverse environments.  In the lava experiment, we showed ACCEL can
+facilitatelearninginadesignspacewithahighproportionofhardlevels,whichcouldhaveanimpact
+inimprovingexplorationinsafety-criticalsettings. InMiniGrid,weshoweditispossibletoproduce
+complexmazeswhichfacilitatezero-shottransfertohuman-designedones,scalingtoenvironments
+an order of magnitude larger than the training environment. Finally in the BipedalWalker setting
+we were able to match the complexity of POET using a single agent, with a small fraction of the
+computational cost. We thus believe we have shown evidence that ACCEL would be an effective
+method for training agents in more open-ended UED design spaces.
+Importantly,thegoalofourworkdiffersfromWangetal.(2019). TheprimarymotivationofACCEL
+istoproduceasinglerobustagentthatcansolveawiderangeofchallenges. ACCEL’sregret-based
+curriculum shouldprioritize thesimplest levels theagent cannot currently solve. Incontrast, POET
+co-evolvesagent-environmentpairsinordertoﬁndspecializedpoliciesforsolvingasinglehighly
+specialized task.  POET’s specialized agents may likely learn to solve challenging environments
+outside the capabilitiesof ACCEL’sgeneralist agents, but atthe cost of potentiallyoverﬁtting to their
+paired levels. Thus, unlike ACCEL, the policies produced by POET should not be expected to be
+robust acrossthe fulldistribution oflevels. Therelative merits ofPOET andACCEL thushighlight
+an important trade-off between specialization and generalization.
+While ACCEL’s strength is its simplicity, it may be the case that when we scale to larger problems
+wemayfaceadditionalchallenges. Itispossiblethatlargescalesettingswillrequiretoolssuchas
+
+
+                                                       12
+
+===== PDF PAGE 13 =====
+                               actively encouraging diversity in the level space. Inaddition, ACCELincludes an inductive bias with
+                               theabilitytobeginwithasimplebasecase(e.g. anemptyroom). Thismaynotalwaysbepossiblein
+                               practice, while in some settings the simplest example (in terms of entities placed in the environment)
+                               may actually be a more difﬁcult environment to solve (for example in a Hide and Seek game).
+
+                               5   Related Work
+
+                               In thissection wediscuss related work, with asummary of themost closelyrelated methods inTable
+                               3. Ourpaperfocusesontestingagentsondistributionsofenvironments,whichhaslongbeenknown
+                               to be crucial to evaluate the generalization capability of RL agents (Whiteson et al.,2009). The
+                               failure of agents in this setting has recently drawn considerable attention (Packer et al.,2019;Igl
+                               et al.,2019;Cobbe et al.,2020;Agarwal et al.,2021a;Zhang et al.,2018b;Ghosh et al.,2021), with
+                               policies often failing to adapt tochanges in the observation (Song et al.,2020), dynamics(Ball et al.,
+                               2021) or reward (Zhang et al.,2018a). In this work, we seek to provide agents with a set of training
+                               levels to produce a policy that is robust to these variations.
+                               In particular, we focus on the Unsupervised Environment Design (UED,Dennis et al.(2020))
+                               paradigm,which shiftsfromdesigning agentsthatcan generalizefroma ﬁxeddistributionofenvi-
+                               ronments towards designing the environments themselves. The most popular method for UED is
+                               Domain Randomization (DR,Jakobi(1997);Sadeghi and Levine(2017)) which has been particularly
+                               successful in areas such as robotics (Tobin et al.,2017;James et al.,2017;Andrychowicz et al.,
+                               2020;OpenAI et al.,2019), with extensions proposing to actively update the DR distribution (Mehta
+                               et al.,2020;Raparthy et al.,2020). This paper directly extends                           Prioritized Level Replay (PLR,Jiang
+                               et al.(2021b,a)), a methodfor curating DRlevels such that thosewith high learningpotential can be
+                               replayed astudent agent. PLR isrelated toTSCL (Matiisenet al.,2020),self-paced learning(Klink
+                               et al.,2019;Eimer et al.,2021) and ALP-GMM (Portelas et al.,2019), which seek to maintain and
+                               update distributions over environment parameterizations. It has also been shown that with a smooth
+                               taskspace, amethod similartoPLR iscapable ofproducing generallycapableagents ina simulated
+                               game world (Team et al.,2021).
+
+                               Table3: The components ofrelatedapproaches. LikePOET,we evolvelevels,butuseasingleagent
+                               ratherthanapopulation,whilealsousingaminimaxregretobjective,whichensurestheenvironments
+                               generatedaresolvable. PAIREDusesminimaxregretforthegenerator,whichisoftenchallenging
+                               to optimize, whileit does not replay levels so may suffer fromcycling. Finally,PLR curates levels
+                               using minimax regret, but relies solely on domain randomization for generation.
+
+
+
+
+
+
+
+
+
+                               Dennisetal.(2020)introducedthePAIREDalgorithm,anapproachforUEDwherebyanenvironment
+                               adversary optimizes for minimax regret (Savage,1951), deﬁned as the difference in performance
+                               betweenanantagonistagent(colludingwiththeadversary)andtheprotagonist. Thisguaranteesthe
+                               adversaryproduces solvable mazes,which allows theprotagonistto transferto unseenenvironments
+                               andevenlearntonavigatetheweb(Guretal.,2021). Adversarialobjectiveshavealsobeenconsidered
+                               in robotics (Pinto et al.,2017) and to attack policies (Everett et al.,2019). POET (Wang et al.,2019,
+                               2020)considersevolvinga        populationofenvironments,eachpairedwithanagent,usinganobjective
+                               similartominimaxadversarial,whichneedstobecombinedwithdomain-speciﬁcrulestoprevent
+                               unsolvable environments from beingproposed. We take inspiration from theevolutionarynature of
+                               POET but traina single agent, whichis beneﬁcialas it takes signiﬁcantly fewer resources,while also
+                               removing the agent selection problem.
+                               UED is inherently related to the ﬁeld ofAutomatic Curriculum Learning (ACL,Portelas et al.
+                               (2020);Florensaet al.(2017);Baranes andOudeyer(2009)),which seeks toprovide acurriculum of
+                               increasingly challenging tasks orgoals given a(typically) ﬁxedenvironment(Andrychowiczet al.,
+                               2017). Asymmetric Self Play (Sukhbaatar et al.,2018) takes the form of one agent proposing goals
+
+
+                                                                                          13
+
+         Algorithm                  GenerationStrategy      GeneratorObj     CurationObj            Setting
+PAIRED(Dennisetal.,2020POET(Wangetal.,2019)                Evolution                  Minimax                MCC           Population-Based)   ReinforcementLearning   MinimaxRegret           None              SingleAgent
+
+ PLR(Jiangetal.,2021b,a)                Random                     None           MinimaxRegret       SingleAgent
+           ACCEL                    Random+Evolution      MinimaxRegret   MinimaxRegret       SingleAgent
+
+===== PDF PAGE 14 =====
+for another, which was shown to be effective for challenging robotic manipulation tasks (OpenAI
+etal.,2021). AMIGo(Campero etal.,2021)and APT-Gen(Fangetal.,2021)providesolutions to
+problems where the target task is known, providing a curriculum of increasing difﬁculty. Indeed,
+many ACL methods emphasize learning to reach goals or states with high uncertainty (Racaniere
+etal.,2020;Pongetal.,2020;Zhangetal.,2020),eitherusinggenerative(Florensaetal.,2018)or
+world models (Mendonca et al.,2021). Unlike these methods, UED approaches seek to               fully specify
+environments, rather than just goals within a ﬁxed environment.
+EnvironmentdesignhasbeenconsideredinthesymbolicAIcommunity,asameanstoinﬂuencean
+agent’s decisions (Zhang and Parkes,2008;Zhang et al.,2009). This was extended with automated
+design(Kerenetal.,2017,2019),whichseekstoredesignenvironmentstoimproveagents. Unlike
+theseworks,ACCELautomaticallydesignsenvironmentstoproduceacurriculumforastudentagent.
+Ourworkdeeplyrelatestotheﬁeldofproceduralcontentgeneration(PCG,RisiandTogelius(2020);
+Justesen et al.(2018)), which seeks to algorithmically generate a large diversity of levels. Popular
+PCG environments used in RL include the Procgen Benchmark (Cobbe et al.,2020), MiniGrid
+(Chevalier-Boisvert et al.,2018), Obstacle Tower (Juliani et al.,2019), GVGAI (Perez-Liebana et al.,
+2019) and the NetHack Learning Environment (K         ¨uttler et al.,2020). This work uses the recently
+proposedMiniHackenvironment(Samvelyanetal.,2021),whichprovidesaﬂexibleframeworkfor
+creating diverse environments. Within the PCG community, automaticallygenerating game levels
+has been of interest for more than a decade (Togelius and Schmidhuber,2008), with recent methods
+makinguseofmachinelearning(Summervilleetal.,2018;Bhaumik etal.,2020;Liuetal.,2021).
+PCGRL(Khalifaetal.,2020;Earleetal.,2021a)framedleveldesignasanRLproblem,designing
+environments bymaking incrementalchanges. Unlike ACCEL,it makesuseof hand-designeddense
+rewards, andfocuses onthe designof levels forhuman players,rather than asan avenueto training
+highly-robust agents.
+
+6   Conclusion and Future Work
+
+In this paper we proposed a new method for Unsupervised Environment Design (UED), ACCEL,
+whichevolvesacurriculumbyeditingpreviouslycuratedlevels. Thismakesitpossibletogenerate
+a wide variety of environments at the frontier of the agent’s capabilities, producing curricula that
+start simple and quickly compound. We believe ACCEL offers the best of both worlds: a principled
+regret-based curriculum that does not require domain-speciﬁc heuristics, alongside an evolutionary
+process thatproduces a broad spectrumof complexity cateringto the agent’scurrent capabilities. In
+ourexperimentsweshowedthatACCELiscapableoftrainingrobustagentsinaseriesofchallenging
+design spaces, outperforming competitive baselines.
+GiventhegeneralityandsimplicityofACCEL,weareparticularlyexcitedbypossibleextensions.
+Indeed,theeditingmechanismcouldencompassawidevarietyofapproaches,suchasNeuralCellular
+Automata(Earleetal.,2021b),usingcontrollableeditors(Earleetal.,2021a),orperturbingthelatent
+spaceofagenerativemodel. Wedidnotexploremethodstoencouragelevelstobediverse,butthis
+would likely be important for larger-scale experiments. It remains an open question whether this
+would require a population, for example using the more general diversity inducing approaches in
+Enhanced POET (Wang et al.,2020). Another possibilityis to actively seek levels whichare likely to
+produce useful levels in the future (Gajewski et al.,2019). This could be increased by introducing
+so-called“extinctionevents”(Raup,1986;Lehman andMiikkulainen,2015)whichare believedto
+play a crucial role in naturalevolution. Equipped withsome of these ideas, we could go signiﬁcantly
+furthertowardsopen-endedness(Stanleyetal.,2017). Forexample,itmaybepossibletoincreasethe
+searchspacesuchthatMiniHackcanmakebroaderuseoftherichnessoftheNetHackworld. Finally,
+wenotethatwhileACCELmaybeaneffectiveapproachforautomaticallygeneratinganeffective
+curriculum,itmaybenecessarytoalsoadapttheagent(Parker-Holderetal.,2022)toproduceagents
+that can effectively scale in open-ended environments.
+
+Acknowledgements
+
+We thank Kenneth Stanley, Alessandro Lazaric, Ian Fox and Iryna Korshunova for useful discussions
+on this work, as well as the anonymous reviewers for their feedback that has helped improve the
+paper. This work was funded by Meta AI.
+
+
+                                                        14
+
+===== PDF PAGE 15 =====
+References
+Agarwal, R.,Machado,M. C.,Castro, P.S.,and Bellemare,M. G.(2021a). Contrastivebehavioral
+  similarityembeddings forgeneralizationin reinforcementlearning. In InternationalConference
+  on Learning Representations.
+Agarwal, R., Schwarzer, M., Castro, P. S., Courville, A., and Bellemare, M. G. (2021b).  Deep
+  reinforcement learning at the edge of the statistical precipice. In Advances in Neural Information
+  Processing Systems.
+Andrychowicz,M., Crow, D.,Ray, A.,Schneider,J., Fong,R.,Welinder, P.,McGrew,B.,Tobin,J.,
+  Abbeel, P., and Zaremba, W. (2017). Hindsight experience replay. In Guyon, I., von Luxburg, U.,
+  Bengio,S.,Wallach,H.M.,Fergus,R.,Vishwanathan,S.V.N.,andGarnett,R.,editors,Advances
+  in Neural Information Processing Systems 30.
+Andrychowicz, O. M., Baker, B., Chociej, M., J´ozefowicz, R., McGrew, B., Pachocki, J., Petron,
+  A., Plappert, M., Powell, G., Ray, A., Schneider, J., Sidor, S., Tobin, J., Welinder, P., Weng, L.,
+  andZaremba,W.(2020). Learningdexterousin-handmanipulation. TheInternationalJournalof
+  Robotics Research, 39(1):3–20.
+Ball,P.J.,Lu,C.,Parker-Holder,J.,andRoberts,S.J.(2021).Augmentedworldmodelsfacilitatezero-
+  shotdynamicsgeneralizationfromasingleofﬂineenvironment. In TheInternationalConference
+  on Machine Learning.
+Baranes,A.andOudeyer,P.-Y.(2009). Robustintrinsicallymotivatedexplorationandactivelearning.
+  pages 1 – 6.
+Berner, C., Brockman, G., Chan, B., Cheung, V., Debiak, P., Dennison, C., Farhi, D., Fischer,
+  Q., Hashme, S., Hesse, C., J´ozefowicz, R., Gray, S., Olsson, C., Pachocki, J., Petrov, M.,
+  deOliveira Pinto,H.P.,Raiman, J.,Salimans,T.,Schlatter, J.,Schneider,J., Sidor,S., Sutskever,
+  I.,Tang,J.,Wolski,F.,andZhang,S.(2019). Dota2withlargescaledeepreinforcementlearning.
+  CoRR, abs/1912.06680.
+Berthouze,L.andLungarella,M.(2004). Motorskillacquisitionunderenvironmentalperturbations:
+  Onthenecessityofalternatefreezingandfreeingofdegreesoffreedom. Adapt.Behav.,12(1):47–
+  64.
+Bhaumik, D., Khalifa, A., Green, M. C., and Togelius, J. (2020). Tree search versus optimization
+  approaches for map generation. InAAAI 2020.
+Brant,J.C.andStanley,K.O.(2017). Minimalcriterioncoevolution: Anewapproachtoopen-ended
+  search. In Proceedingsofthe Geneticand EvolutionaryComputationConference,GECCO ’17,
+  page 67–74, New York, NY, USA. Association for Computing Machinery.
+Brockman, G., Cheung, V., Pettersson, L., Schneider, J., Schulman, J., Tang, J., and Zaremba, W.
+  (2016). OpenAI Gym.
+Campero,A.,Raileanu,R.,Kuttler,H.,Tenenbaum,J.B.,Rockt¨aschel,T.,andGrefenstette,E.(2021).
+  Learning with AMIGo: Adversarially motivated intrinsic goals. In International Conference on
+  Learning Representations.
+Chevalier-Boisvert, M., Willems, L., and Pal, S. (2018). Minimalistic gridworld environment for
+  OpenAI Gym. https://github.com/maximecb/gym-minigrid.
+Cobbe, K., Hesse, C., Hilton, J., and Schulman, J. (2020).  Leveraging procedural generation to
+  benchmark reinforcement learning.  In Proceedings of the 37th International Conference on
+  Machine Learning, pages 2048–2056.
+Dennis, M., Jaques, N., Vinitsky, E., Bayen, A., Russell, S., Critch, A., and Levine, S. (2020).
+  Emergent complexity and zero-shot transfer via unsupervised environment design. In Advances in
+  Neural Information Processing Systems, volume 33.
+Earle, S., Edwards, M., Khalifa, A., Bontrager,P., andTogelius, J.(2021a). Learning controllable
+  content generators. InIEEE Conference on Games (CoG).
+
+
+                                                       15
+
+===== PDF PAGE 16 =====
+Earle, S., Snider, J., Fontaine, M. C.,Nikolaidis, S., andTogelius, J.(2021b). Illuminating diverse
+  neural cellular automata for level generation.
+Eimer, T., Biedenkapp, A., Hutter, F., and Lindauer, M. (2021). Self-paced context evaluation for
+  contextual reinforcement learning. InThe International Conference on Machine Learning.
+Everett, R., Cobb, A., Markham, A., and Roberts, S. (2019).  Optimising worlds to evaluate and
+  inﬂuence reinforcement learningagents. In Proceedings of the 18th InternationalConferenceon
+  Autonomous Agents and MultiAgent Systems, AAMAS ’19.
+Fang, K., Zhu, Y., Savarese, S., and Li, F.-F. (2021).  Adaptive procedural task generation for
+  hard-exploration problems. InInternational Conference on Learning Representations.
+Florensa,C.,Held,D.,Geng,X.,andAbbeel,P.(2018). Automaticgoalgenerationforreinforcement
+  learningagents. InDy,J.andKrause,A.,editors,Proceedingsofthe35thInternationalConference
+  onMachineLearning,volume80ofProceedingsofMachineLearningResearch,pages1515–1528.
+  PMLR.
+Florensa, C., Held, D., Wulfmeier, M., Zhang, M., and Abbeel, P. (2017).  Reverse curriculum
+  generationforreinforcementlearning. In1stAnnualConferenceonRobotLearning,CoRL2017,
+  MountainView,California,USA,November13-15,2017,Proceedings,volume78ofProceedings
+  of Machine Learning Research, pages 482–495. PMLR.
+Gajewski, A., Clune, J., Stanley, K. O., and Lehman, J. (2019).  Evolvability ES: Scalable and
+  directoptimizationofevolvability. InProceedingsoftheGeneticandEvolutionaryComputation
+  Conference, GECCO ’19, pages 107–115, New York, NY, USA. ACM.
+Ghosh, D., Rahme, J., Kumar, A., Zhang, A., Adams, R. P., and Levine, S. (2021).  Why gener-
+  alization in rl is difﬁcult: Epistemic pomdps and implicit partial observability. arXiv preprint
+  arXiv:2107.06277.
+Gur, I.,Jaques, N., Malta, K.,Tiwari, M., Lee, H.,and Faust, A. (2021). Adversarialenvironment
+  generation for learning to navigate the web.
+Hu, H. and Foerster, J. N. (2020).  Simpliﬁed action decoder for deep multi-agent reinforcement
+  learning. In8thInternationalConferenceonLearningRepresentations,ICLR2020,AddisAbaba,
+  Ethiopia, April 26-30, 2020. OpenReview.net.
+Igl, M., Ciosek, K., Li, Y., Tschiatschek, S., Zhang, C., Devlin, S., and Hofmann, K. (2019).
+  Generalization inreinforcement learningwith selective noise injectionand informationbottleneck.
+  InAdvances in Neural Information Processing Systems.
+Jakobi, N. (1997). Evolutionary robotics and the radical envelope-of-noise hypothesis. Adaptive
+  Behavior, 6(2):325–368.
+James, S., Davison, A. J., and Johns, E. (2017). Transferring end-to-end visuomotor control from
+  simulation to real world for a multi-stage task. In1st Conference on Robot Learning.
+Jiang,M.,Dennis,M.,Parker-Holder,J.,Foerster,J.,Grefenstette,E.,andRockt¨aschel,T.(2021a).
+  Replay-guided adversarial environment design. In Advances in Neural Information Processing
+  Systems.
+Jiang,M.,Grefenstette,E.,andRockt¨aschel,T.(2021b). Prioritizedlevelreplay. InTheInternational
+  Conference on Machine Learning.
+Juliani, A., Khalifa, A., Berges, V., Harper, J., Teng, E., Henry, H., Crespi, A., Togelius, J., and
+  Lange, D. (2019). Obstacle Tower: A Generalization Challenge in Vision, Control, and Planning.
+  InIJCAI.
+Justesen, N.,Torrado, R. R.,Bontrager, P., Khalifa, A.,Togelius, J., andRisi, S. (2018). Procedural
+  level generation improves generality of deep reinforcement learning. CoRR, abs/1806.10729.
+Keren, S., Pineda, L., Gal, A., Karpas, E., and Zilberstein, S. (2017). Equi-reward utility maximizing
+  designinstochasticenvironments. InProceedingsoftheInternationalConferenceonAutomated
+  Planning and Scheduling.
+
+
+                                                        16
+
+===== PDF PAGE 17 =====
+Keren,S.,Pineda,L.,Gal,A.,Karpas,E.,andZilberstein,S.(2019). Efﬁcientheuristicsearchfor
+  optimal environment redesign.  In Proceedings of the International Conference on Automated
+  Planning and Scheduling, volume 29, pages 246–254.
+
+Khalifa, A., Bontrager, P., Earle, S., and Togelius, J. (2020). Pcgrl: Procedural content generation
+  via reinforcement learning. Proceedings of the AAAI Conference on Artiﬁcial Intelligence and
+  Interactive Digital Entertainment, 16(1):95–101.
+
+Kirk, R., Zhang, A., Grefenstette, E., and Rockt¨aschel, T. (2021). A survey of generalisation in deep
+  reinforcement learning. CoRR, abs/2111.09794.
+
+Klink, P., Abdulsamad, H., Belousov, B., and Peters, J. (2019). Self-paced contextual reinforcement
+  learning. In Conference on Robot Learning.
+
+Kostrikov, I. (2018).  Pytorch implementations of reinforcement learning algorithms.  https://
+  github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail.
+
+Kostrikov,I.,Yarats,D.,andFergus,R.(2021). Imageaugmentationisallyouneed: Regularizing
+  deepreinforcementlearningfrompixels. InInternationalConferenceonLearningRepresentations.
+
+K¨uttler, H., Nardelli, N., Miller, A. H., Raileanu, R., Selvatici, M., Grefenstette, E., and Rockt¨aschel,
+  T. (2020).  The NetHack Learning Environment.  In Proceedings of the Conference on Neural
+  Information Processing Systems (NeurIPS).
+
+Laskin, M., Lee, K., Stooke, A., Pinto, L., Abbeel, P., and Srinivas, A. (2020).  Reinforcement
+  learming with augmented data. InAdvances in Neural Information Processing Systems 33.
+
+Lehman, J. and Miikkulainen, R. (2015).  Extinction events can accelerate evolution.  PloS one,
+  10(8):e0132886.
+
+Liu,J.,Snodgrass,S.,Khalifa,A.,Risi,S.,Yannakakis,G.N.,andTogelius,J.(2021). Deeplearning
+  for procedural content generation. Neural Comput. Appl., 33(1):19–37.
+
+Matiisen, T., Oliver, A., Cohen, T., and Schulman, J. (2020). Teacher-student curriculum learning.
+  IEEE Trans. Neural Networks Learn. Syst., 31(9):3732–3740.
+
+Mazumdar, E., Ratliff, L. J., and Sastry, S. S. (2020).  On gradient-based learning in continuous
+  games. SIAM J. Math. Data Sci., 2(1):103–131.
+
+Mehta,B.,Diaz,M.,Golemo,F.,Pal,C.J.,andPaull,L.(2020). Activedomainrandomization. In
+  Proceedings of the Conference on Robot Learning.
+
+Mendonca, R., Rybkin, O., Daniilidis, K., Hafner, D., and Pathak, D. (2021).  Discovering and
+  achieving goals via world models.
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Graves, A., Antonoglou, I., Wierstra, D., and Riedmiller,
+  M. A. (2013). Playing atari with deep reinforcement learning. ArXiv, abs/1312.5602.
+
+Modi,A.,Jiang, N.,Singh,S.,andTewari,A.(2017). Markov decisionprocesseswithcontinuous
+  side information. InAlgorithmic Learning Theory.
+
+OpenAI, Akkaya, I., Andrychowicz, M., Chociej, M., Litwin, M., McGrew, B., Petron, A., Paino,
+  A.,Plappert, M.,Powell, G.,Ribas,R., Schneider, J.,Tezak, N.,Tworek,J.,Welinder, P., Weng,
+  L.,Yuan, Q.,Zaremba, W., andZhang, L.(2019). Solvingrubik’scube witha robothand. CoRR,
+  abs/1910.07113.
+
+OpenAI, O., Plappert, M., Sampedro, R., Xu, T., Akkaya, I., Kosaraju, V., Welinder, P., D’Sa, R.,
+  Petron, A., de Oliveira Pinto, H. P., Paino, A., Noh, H., Weng, L., Yuan, Q., Chu, C., and Zaremba,
+  W. (2021). Asymmetric self-play for automatic goal discovery in robotic manipulation.
+
+Packer,C.,Gao,K.,Kos,J.,Krahenbuhl,P.,Koltun,V.,andSong,D.(2019). Assessinggeneralization
+  in deep reinforcement learning.
+
+
+                                                        17
+
+===== PDF PAGE 18 =====
+Parker-Holder, J.,Rajan, R.,Song,X., Biedenkapp,A., Miao,Y.,Eimer, T.,Zhang, B.,Nguyen, V.,
+  Calandra, R.,Faust,A., Hutter, F., andLindauer, M. (2022). Automated reinforcement learning
+  (autorl): A survey and open problems. CoRR, abs/2201.03916.
+Peng,X.B.,Andrychowicz,M.,Zaremba,W.,andAbbeel,P.(2017). Sim-to-realtransferofrobotic
+  control with dynamics randomization. CoRR, abs/1710.06537.
+Perez-Liebana,D.,Liu,J.,Khalifa,A.,Gaina,R.D.,Togelius,J.,andLucas,S.M.(2019). General
+  video game ai: A multitrack framework for evaluating agents, games, and content generation
+  algorithms. IEEE Transactions on Games, 11(3):195–214.
+Pinto, L., Davidson, J., and Gupta, A. (2017). Supervision via competition: Robot adversaries for
+  learningtasks. In2017IEEEInternationalConferenceonRoboticsandAutomation(ICRA),pages
+  1601–1608.
+Pong, V., Dalal, M., Lin, S., Nair, A., Bahl, S., and Levine, S. (2020).  Skew-ﬁt: State-covering
+  self-supervisedreinforcementlearning. In Proceedingsofthe37thInternationalConferenceon
+  Machine Learning, pages 7783–7792.
+Portelas, R., Colas, C., Hofmann, K., and Oudeyer, P. (2019). Teacher algorithms for curriculum
+  learningofdeepRLincontinuouslyparameterizedenvironments. InKaelbling,L.P.,Kragic,D.,
+  andSugiura,K.,editors,3rdAnnualConferenceonRobotLearning,CoRL2019,Osaka,Japan,
+  October30-November1,2019,Proceedings,volume 100ofProceedingsofMachineLearning
+  Research, pages 835–853. PMLR.
+Portelas, R., Colas, C., Weng, L., Hofmann, K., and Oudeyer, P.-Y. (2020). Automatic curriculum
+  learning for deep rl: A short survey. arXiv preprint arXiv:2003.04664.
+Pugh,J.K.,Soros,L.B.,andStanley,K.O.(2016). Qualitydiversity: Anewfrontierforevolutionary
+  computation. Frontiers in Robotics and AI, 3:40.
+Racaniere,S.,Lampinen,A.,Santoro,A.,Reichert,D.,Firoiu,V.,andLillicrap,T.(2020). Automated
+  curriculum generation through setter-solver interactions. In International Conference on Learning
+  Representations.
+Raileanu, R., Goldstein, M., Yarats, D., Kostrikov, I., and Fergus, R. (2020).   Automatic data
+  augmentation for generalization in deep reinforcement learning. CoRR, abs/2006.12862.
+Raparthy, S. C., Mehta, B., Golemo, F., and Paull, L. (2020). Generating automatic curricula via
+  self-supervised active domain randomization. CoRR, abs/2002.07911.
+Raup, D. M. (1986). Biological extinction in earth history. Science, 231(4745):1528–1533.
+Risi,S.andTogelius,J.(2020). Increasinggeneralityinmachinelearningthroughproceduralcontent
+  generation. Nature Machine Intelligence, 2.
+Sadeghi,F.and Levine, S.(2017). CAD2RL:real single-imageﬂightwithouta singlerealimage. In
+  Amato, N. M., Srinivasa, S. S., Ayanian, N., and Kuindersma, S., editors, Robotics: Science and
+  SystemsXIII, MassachusettsInstitute ofTechnology, Cambridge,Massachusetts, USA,July 12-16,
+  2017.
+Samvelyan, M., Kirk, R., Kurin, V., Parker-Holder, J., Jiang, M., Hambro, E., Petroni, F., Kuttler,
+  H., Grefenstette, E., and Rockt¨aschel, T. (2021). Minihack the planet: A sandbox for open-ended
+  reinforcement learning research.  In Thirty-ﬁfth Conference on Neural Information Processing
+  Systems Datasets and Benchmarks Track.
+Savage,L.J.(1951). Thetheoryofstatisticaldecision. JournaloftheAmericanStatisticalassociation.
+Schmidhuber, J. (2013). Powerplay: Training an increasingly general problem solver by continually
+  searching for the simplest still unsolvable problem. Frontiers in Psychology, 4:313.
+Schulman,J.,Moritz,P.,Levine,S.,Jordan,M.,andAbbeel,P.(2016). High-dimensionalcontinuous
+  controlusinggeneralizedadvantageestimation. InProceedingsoftheInternationalConferenceon
+  Learning Representations (ICLR).
+
+
+                                                        18
+
+===== PDF PAGE 19 =====
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. (2016-2018). Proximalpolicy
+  optimization algorithms. arXiv preprint arXiv:1707.06347.
+Silver, D., Huang, A., Maddison, C. J., Guez, A., Sifre, L., van den Driessche, G., Schrittwieser, J.,
+  Antonoglou,I.,Panneershelvam,V.,Lanctot,M.,Dieleman,S.,Grewe,D.,Nham,J.,Kalchbrenner,
+  N.,Sutskever,I.,Lillicrap,T.P.,Leach,M.,Kavukcuoglu,K.,Graepel,T.,andHassabis,D.(2016).
+  Mastering the game of Go with deep neural networks and tree search. Nature, 529:484–489.
+Silver,D.,Singh,S.,Precup,D.,andSutton,R.S.(2021). Rewardisenough. ArtiﬁcialIntelligence,
+  299:103535.
+Song, X., Jiang, Y., Tu, S., Du, Y., and Neyshabur, B. (2020). Observational overﬁtting in reinforce-
+  mentlearning. In8thInternationalConferenceonLearningRepresentations,ICLR2020,Addis
+  Ababa, Ethiopia, April 26-30, 2020. OpenReview.net.
+Soros,L.andStanley,K.(2014). Identifyingnecessaryconditionsforopen-endedevolutionthrough
+  the artiﬁcial life world of chromaria.Artiﬁcial Life Conference Proceedings, (26):793–800.
+Stanley, K., Clune, J., Lehman, J., and Miikkulainen, R. (2019). Designing neural networks through
+  neuroevolution. Nature Machine Intelligence, 1.
+Stanley, K. O., Lehman, J., and Soros, L. (2017). Open-endedness: The last grand challenge you’ve
+  never heard of. While open-endedness could be a force for discovering intelligence, it could also
+  be a component of AI itself.
+Sturtevant,N., Decroocq,N.,Tripodi,A., andGuzdial,M.(2020). Theunexpectedconsequence of
+  incremental design changes. In Proceedings of the AAAI Conference on Artiﬁcial Intelligence and
+  Interactive Digital Entertainment, volume 16, pages 130–136.
+Sukhbaatar, S., Lin, Z., Kostrikov, I., Synnaeve, G., Szlam, A., and Fergus, R. (2018).  Intrinsic
+  motivation and automatic curricula via asymmetric self-play.  In International Conference on
+  Learning Representations.
+Summerville, A., Snodgrass, S., Guzdial, M.,Holmg˚ard, C., Hoover, A.K., Isaksen, A., Nealen, A.,
+  and Togelius, J. (2018). Procedural content generation via machine learning (PCGML). IEEE
+  Trans. Games, 10(3):257–270.
+Sutton,R.S.andBarto,A.G.(1998). IntroductiontoReinforcementLearning. MITPress,Cambridge,
+  MA, USA, 1st edition.
+Team, O.E.L., Stooke,A., Mahajan,A., Barros,C., Deck,C., Bauer, J.,Sygnowski,J., Trebacz, M.,
+  Jaderberg,M.,Mathieu,M.,McAleese,N.,Bradley-Schmieg,N.,Wong,N.,Porcel,N.,Raileanu,
+  R., Hughes-Fitt, S., Dalibard, V., and Czarnecki, W. M. (2021). Open-ended learning leads to
+  generally capable agents. CoRR, abs/2107.12808.
+Tobin,J.,Fong,R.,Ray,A.,Schneider,J.,Zaremba,W.,andAbbeel,P.(2017).Domainrandomization
+  for transferring deep neural networks from simulation to the real world.  In 2017 IEEE/RSJ
+  International Conference on Intelligent Robots and Systems, IROS 2017, Vancouver, BC, Canada,
+  September 24-28, 2017, pages 23–30. IEEE.
+Togelius, J. and Schmidhuber, J. (2008). An experiment in automatic game design. In 2008 IEEE
+  Symposium On Computational Intelligence and Games, pages 111–118.
+Vinyals, O., Babuschkin, I., Czarnecki, W. M., Mathieu, M., Dudzik, A., Chung, J., Choi, D. H.,
+  Powell,R.,Ewalds,T.,Georgiev,P.,Oh,J.,Horgan,D.,Kroiss,M.,Danihelka,I.,Huang,A.,Sifre,
+  L., Cai, T.,Agapiou, J. P., Jaderberg, M., Vezhnevets, A. S., Leblond, R., Pohlen, T., Dalibard, V.,
+  Budden, D.,Sulsky, Y., Molloy, J., Paine, T.L., G¨ulc¸ehre,C¸., Wang, Z., Pfaff, T.,Wu, Y.,Ring, R.,
+  Yogatama,D.,W¨unsch,D.,McKinney,K.,Smith,O.,Schaul,T.,Lillicrap,T.P.,Kavukcuoglu,K.,
+  Hassabis,D.,Apps,C.,andSilver,D.(2019). GrandmasterlevelinstarcraftIIusingmulti-agent
+  reinforcement learning. Nat., 575(7782):350–354.
+Wang,R.,Lehman,J.,Clune,J.,andStanley,K.O.(2019). Pairedopen-endedtrailblazer(POET):
+  endlessly generating increasingly complex and diverse learning environments and their solutions.
+  CoRR, abs/1901.01753.
+
+
+                                                        19
+
+===== PDF PAGE 20 =====
+Wang, R., Lehman, J., Rawal, A., Zhi, J., Li, Y., Clune, J., and Stanley, K. (2020). Enhanced POET:
+  Open-ended reinforcement learning through unbounded invention of learning challenges and their
+  solutions. InIII,H.D.andSingh,A.,editors,Proceedingsofthe37thInternationalConferenceon
+  MachineLearning, volume 119of Proceedingsof Machine Learning Research, pages9940–9951.
+  PMLR.
+Whiteson, S., Tanner, B., Taylor, M. E., and Stone, P. (2009). Generalized domains for empirical
+  evaluations in reinforcement learning.
+Zhang, A., Ballas, N., and Pineau, J. (2018a).  A dissection of overﬁtting and generalization in
+  continuous reinforcement learning. CoRR, abs/1806.07937.
+Zhang, C., Vinyals, O., Munos, R., and Bengio, S. (2018b). A study on overﬁtting in deep reinforce-
+  ment learning. CoRR, abs/1804.06893.
+Zhang, H., Chen, Y., and Parkes, D. (2009). A general approach to environment design with one
+  agent. InProceedingsofthe21stInternationalJontConferenceonArtiﬁcalIntelligence,IJCAI’09,
+  page 2002–2008.
+Zhang, H. and Parkes, D. (2008). Value-based policy teaching with active indirect elicitation. In
+  Proceedings ofthe 23rd National Conference onArtiﬁcial Intelligence- Volume 1, AAAI’08,page
+  208–214. AAAI Press.
+Zhang, Y., Abbeel, P., and Pinto, L. (2020). Automatic curriculum learning through value disagree-
+  ment. InLarochelle,H.,Ranzato,M.,Hadsell,R.,Balcan,M.F.,andLin,H.,editors,Advancesin
+  Neural Information Processing Systems, volume 33, pages 7648–7659. Curran Associates, Inc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        20
+
+===== PDF PAGE 21 =====
+A   Additional Experimental Results
+
+
+
+A.1   Level Evolution
+
+
+InFig15and16andweshowlevelsproducedbyACCELfortheMiniHacklavaenvironmentand
+MiniGrid mazes respectively. Each step along the evolutionary process produces a level that has high
+learning potentialat that point in time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure15: LevelsgeneratedbyACCEL.Eachlevelalongtheevolutionarypathisatthefrontierfor
+the studentagent at that stage oftraining. Aswe can see,the edits compoundto producea series of
+challenges: intheﬁrstlevelthelavagraduallysurroundstheagent,suchthattheycaninitiallyexplore
+inmultiple directionsbutat theend thetask canonly besolved bygoing down andto theright. In
+the middle row we see a level where the agent always has a direct run at the goal, but a corridor is
+evolvedovertimetobecomeincreasinglynarrow,beforebeingﬁlledinsotheagenthastogoaround.
+Finallyinthebottomrowthelevelbeginswithsimpleaugmentationsbeforemovingtheagentbehind
+abarrier, which resultsinachallengingtaskwheretheagenthasto moveinadiagonaldirectionto
+escape the lava.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure16: AsinglelevelevolvedintheMiniGridenvironment,startingfromtopleft,endingbottom
+right. Throughout the process the agent experiences a diverse set of challenges.
+
+
+
+
+
+                                                      21
+
+===== PDF PAGE 22 =====
+Figure 17: Maze evolution. Top shows startinglevels,originally includedin the replay bufferdue to
+havinghighpositivevalueloss. Aftermanyedits(upto40),theyproducethebottomrow,which
+were all chosento be in thehighest 50 replay scoresafter 10k gradient steps. As we see,the same
+level can produce distinct future levels, in some cases multiple high regret levels.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure18: levelscreatedandsolvedbyACCELintheBipedalWalkerenvironment. Atthebeginning
+(top row) levels are initialized with low values for each parameter. After several edits, we end up
+with challenging scenarios like steep staircases or high stumps. By the end of training, we see a
+diverse combination of multiple challenges.
+
+
+
+
+
+
+
+
+                                                         22
+
+===== PDF PAGE 23 =====
+A.2   The Expanding Frontier
+
+Here we analyze the performance of agents on levels produced by ACCEL. We have four agent
+checkpoints, from 5k, 10k, 15k and 20k student gradient updates.  In Figure19we show four
+generations of a level, where we see that the later generations become harder for the 5k checkpoint,
+while the 20k checkpoint gets the highest learning signal (Positive Value Loss) from Generation 63.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 19:  The Evolving Frontier.  The top row shows four levels from the same lineage, at
+generations 27, 45, 53 and 63.  Underneath each is a bar plot showing the Return and Positive
+Value Loss(PVL) for four different ACCEL policies, saved after 5k,10k, 15k and 20k updates. At
+generation27,allfourcheckpointscansolvethelevel,butthe5kcheckpointhasthehighestlearning
+potential(PVL).Ontherightweseethatbygeneration63,onlythe15kand20kcheckpointsare
+able to achieve a high return on the level.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure20: Aggregatemetricsforeachbandofgenerations. Forexample,“30-45”referstoallthe
+levelsbetweengeneration30-45. Thelatergenerationlevelsareharderfortheearlyagentstosolve,
+while the early agents have higher return and PVL for the earlier levels.
+
+InFigure20weshowallgenerationsforthelevelincludedinFigure19,groupedbygeneration. We
+thenshowthemeanReturnandPositiveValueloss(PVL)forallfouragentcheckpoints. Itisclear
+to seethat the latergenerations have the highestlearning potential forthe 20k checkpoint,with the
+lowest return for the 5k checkpoint.
+Next in Figure21we show data for all generations of 20 levels, chosen as those which were present
+in the 20k checkpoint replay buffer but also had ancestors in the 5k checkpoint buffer. For each
+checkpoint weplot alllevels alongthe dimensions ofNumber ofBlocks and Shortest Path, withthe
+colorcorrespondingtothesolvedrate. Ontheleft,the5kcheckpointagentcanonlyrepeatedlysolve
+theshorterpathlevelswithlowblockcount. Lateron,the20kcheckpointagentperformswellacross
+the entire space.
+
+
+
+
+
+
+
+
+                                                        23
+
+===== PDF PAGE 24 =====
+                               Figure 21: How do complexity metrics relate to difﬁculty? The plot shows the block count and
+                               shortest path length. From left to right we evaluate the agents at four checkpoints: 5k, 10k, 15k,
+                               20kPPOupdates. Thecolorrepresentsthesolvedrate. Aswesee,the5kagentisunabletosolve
+                               the levels with higher block count and longer paths to the goal, while the 20k agent is able to solve
+                               almost all levels.
+
+
+                              A.3   Full Experimental Results
+
+                              Lava Grid Extended ResultsInTable4andFigure22weinclude thefullresultsfor theMiniHack
+                              lava experiments. The ﬁrst three (Empty, 10 Tiles and 20 Tiles) evaluate the performance of the
+                              agent within itstraining distribution, whilewe also include a held-outhuman designed environment,
+                              LavaCrossing S9N1, ported from MiniGrid (Chevalier-Boisvert et al.,2018). As we see, ACCEL
+                              performs best on all of the in sample environments, while also being only one of two approaches to
+                              get meaningfully above zero in the human designed task.
+
+
+
+
+
+
+
+
+
+
+                               Figure22: Testperformance,bothindistribution(Empty,10and20Tiles)andoutofdistribution
+                               (Crossing S9N1). Each evaluation is conducted for 100 trials. Plots show the mean and standard
+                               error across ﬁve runs.
+
+                              Table 4: Test performance in four environments. Each data point corresponds to the mean (and stan-
+                              dard error) of ﬁve independent runs, where each run is evaluated for 100 trials on each environment.
+                              † indicates the generator distribution is a Binomial, whereby the generator can place 20 blocks, each
+                              is either a lava tile or empty.‡ indicates the generator ﬁrst samples the number of lava tiles to place,
+                              between zero and 20, then places that many. Bold indicates being within one standard error of the
+                              best mean.
+
+
+
+
+
+
+
+
+                              Partially-Observable Navigation Next weshow theextended results forthe MiniGrid experiments.
+                              We use a series of challenging zero-shot environments (see Figure23), introduced in the UED
+                              literature(Dennisetal.,2020;Jiangetal.,2021a). WeincludethefullresultsinTable5andbarplots
+                              of the same data in Figure26.
+                              We also include an additional version of ACCEL using a the same generator as the DR and PLR
+                              baselines, thus editing more complex base levels.  This removes the prior that it is beneﬁcial to
+                              begin with simpleempty rooms. Aswe see, both versions of ACCEL signiﬁcantly outperformsthe
+
+
+                                                                                         24
+
+
+TestEnvironment        PAIRED       Minimax         DR†            PLR†            DR‡            PLR‡          ACCEL
+Empty                0.77±0.03   0.76±0.02   0.81±0.03   0.97±0.03   0.89±0.05   0.96±0.04    1.0±0.0
+10Tiles              0.12±0.03   0.05±0.01   0.12±0.02   0.35±0.18   0.33±0.15    0.3±0.05   0.49±0.07
+20Tiles              0.06±0.01   0.11±0.04   0.06±0.01   0.15±0.09   0.23±0.12   0.25±0.06  0.35±0.08
+LavaCrossingS9N1      0.0±0.0      0.0±0.0      0.0±0.0    0.01±0.01  0.05±0.05    0.01±0.0   0.05±0.04
+
+===== PDF PAGE 25 =====
+                             baselines. ParticularlyinthemorecomplexenvironmentslikeLabyrinthweseelargegainsvs. the
+                             baselines. Also note that PLR outperforms all other baselines, and ACCEL outperforms PLR. We
+                             show this in the Table with a statistically signiﬁcant point estimate, but also using the more robust
+                             metricsinrliable(Agarwaletal.,2021b),forexamplethe“probabilityofimprovement”shownin
+                             Figure25.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              Figure23: MiniGridZero-ShotEnvironments. Thosewithanasteriskareprocedurallygenerated:
+                              For Small and Large Corridor, the position of the goal can be in any of the corridors, for Simple-
+                              CrossingandFourRoomsseeChevalier-Boisvertetal.(2018)andforPerfectMazeseeJiangetal.
+                              (2021a).
+
+
+
+
+
+
+
+
+
+
+                              Figure24: Zero-shot transferresults. Agentsare evaluatedfor 100episodes ona seriesof human
+                              designed mazes, plots show mean and standard error for each environment, across ﬁve runs.
+
+
+
+                             Table 5: Zero-Shot transfer to human-designed environments. Each data point corresponds to the
+                             mean(andstandarderror)ofﬁveindependentruns,whereeachrunisevaluatedfor100trialsoneach
+                             environment.† indicates the generator ﬁrstsamples the number of blocks to place, between zero and
+                             sixty,thenplacesthatmany.‡indicatesthegeneratorproducesemptyrooms. Boldindicatesbeing
+                             within onestandard error ofthe best mean.⋆ indicatesp< 0.05 in Welch’st-test against PLR.Note
+                             that all methods are evaluated after 20k student updates, aside from PAIRED and Minimax which
+                             have 30k updates.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Environment          PAIRED        Minimax          DR†              PLR†            ACCEL†          ACCEL‡
+16Rooms             0.63±0.14   0.01±0.01   0.87±0.06    0.95±0.03     1.0±0.0      1.0±0.025
+16Rooms2            0.53±0.15     0.0±0.0     0.53±0.18    0.49±0.17     0.62±0.22    0.92±0.06
+SimpleCrossing      0.55±0.11   0.11±0.04   0.57±0.15   0.87±0.05   0.92±0.08   0.84±0.16
+FourRooms           0.46±0.06   0.14±0.03    0.77±0.1     0.64±0.04     0.9±0.08     0.72±0.07
+SmallCorridor       0.37±0.09   0.14±0.09    1.0±0.0     0.89±0.05     0.88±0.11     1.0±0.0
+LargeCorridor       0.27±0.08   0.14±0.09   0.64±0.05    0.79±0.13     0.94±0.05     1.0±0.0
+Labyrinth           0.45±0.14     0.0±0.0     0.45±0.23    0.55±0.23    0.97±0.03     0.86±0.14
+Labyrinth2          0.38±0.12     0.0±0.0     0.54±0.18    0.66±0.18     1.0±0.01      1.0±0.0
+Maze                0.02±0.01     0.0±0.0     0.43±0.23   0.54±0.19   0.52±0.26   0.72±0.24
+Maze2               0.37±0.13     0.0±0.0     0.49±0.16    0.74±0.13     0.93±0.04     1.0±0.0
+Maze3               0.3±0.12     0.0±0.0     0.69±0.19    0.75±0.12    0.94±0.06      0.8±0.1
+PerfectMaze(M)      0.32±0.06    0.01±0.0     0.45±0.1     0.62±0.09    0.88±0.12   0.93±0.07
+Mean                0.39±0.03   0.05±0.01   0.62±0.05    0.71±0.04   0.88±0.04⋆   0.9±0.03⋆
+
+===== PDF PAGE 26 =====
+                               Figure 25: Probability of improvement of ACCEL vs. PLR across all the benchmark environments
+                               in Figure23, using the open source notebook fromAgarwal et al.(2021b).  The probability of
+                               improvement represents theprobability that Algorithm Xoutperforms Algorithm Yon a new task
+                               from the same distribution.
+
+                              BipedalWalker For the BipedalWalker environment we test agents on each of the individual chal-
+                              lenges from the environment parameterization. Concretely, we use the following four environments:
+                                •  Stairs: the stair height parameters are set to [2,2] with the number of steps set to 5.
+                                •  PitGap: the PitGap parameter is set to [5,5].
+                                •  Stump: the Stump parameter is set to [2,2].
+                                •  Roughness: the Roughness parameter is set to 5.
+                              Each of these is visualized in the main body of the paper, in Figure10. We also test agents on the
+                              simpleBipedalWalker-v3environment andthe more challengingBipedalWalkerHardcore-v3
+                              environment.  For the “Hardcore” version, we note that none of our agents  ofﬁcially solve the
+                              environment,whichisconsideredtobearewardover300for100independentevaluations. Totest
+                              whetherit ispossible withour setup,we trainedan identicalPPO agentdirectly onthe environment
+                              for 1B steps. The reward achieved was 239—indistinguishable from what is achieved by ACCEL
+                              using a far more challenging design space. In addition, the ACCEL agent is robust to individual
+                              challenges.
+                              Table 6: Test performance on a variety of challenges.  Each data point corresponds to the mean
+                              (and standard error) of ten independent runs, where each run is evaluated for 100 trials on each
+                              environment.† indicates the generator ﬁrstsamples the number of blocks to place, between zero and
+                              sixty,thenplacesthatmany.‡ indicatesusingthelowvaluegenerator. Boldindicatesbeingwithin
+                              one standard error of the best mean. All methods are evaluated after 30k updates.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               Figure26: Testresults. Agentsareevaluatedfor100episodesonaseriesofindividualchallenges,
+                               plots show mean and standard error for each environment, across ten runs.
+
+
+
+
+
+                                                                                         26
+Environment      PAIRED         Minimax       ALP-GMM          DR†             PLR†          ACCEL†         ACCEL‡
+Basic          206.5±30.3    154.3±59.2    301.5±11.6   261.9±19.3   304.1±1.8    316.9±2.1    318.1±1.0
+Hardcore       −47.2±10.6 −44.3±1.6     29.7±9.9      23.8±8.3     82.6±8.5    163.3±30.9   236.0±8.9
+Stairs         −27.4±12.1 −2.6±2.6      22.1±6.3      23.3±4.4     48.0±4.3     59.4±10.5    91.7±8.9
+PitGap         −68.2±9.7 −79.3±0.5   98.8±24.9     11.0±7.6     46.2±11.3    49.6±12.6   133.3±39.1
+Stump          −76.0±10.3−65.0±18.4−22.4±17.2 −5.4±5.5      7.5±6.4     44.6±49.8   188.8±10.9
+Roughness      −5.1±25.9 −1.2±7.7     44.7±11.6     52.3±9.0     126.7±7.3   211.7±21.5  248.9±12.3
+Mean           −2.9±14.5 −6.3±24.6    79.1±17.5    61.1±12.6   102.5±13.0   140.9±23.0  202.8±13.6
+
+===== PDF PAGE 27 =====
+                            POET Generated LevelsWe also evaluated ouragents on thesix “Extremely Challenging”environ-
+                            mentshighlightedintheoriginalPOETpaper. Theserepresentsomeofthemostdifﬁcultenvironment
+                            parameterizations produced by POET. Since each run of POET has a population of 20 agents, it is
+                            not clear if a single agent from any of their runs can solve more than one of these challenges. In
+                            addition,POET onlysolvesasingle ﬁxedseedof theseenvironments. Instead, wereportthemean
+                            performance over a hundred random samples for each given parameterization, for all ten runs of
+                            ACCEL with the mean and max performance (across seeds) shown in Table7.
+
+                            Table7: TestperformanceonlevelsproducedbyPOET.Ineachcasewerun100trialswithdifferent
+                            random seeds. Mean shows the mean performance across all ten ACCEL runs. Max shows the best
+                            from the ten runs per environment.
+
+
+
+
+
+
+
+                            A.4   Testing the Limits of Current Approaches
+
+                            Inthe experimentalsection weshowed theresultsfor alarge procedurallygeneratedmaze, ofsize
+                            51x51.  ACCEL averaged a 53% and 52% success rate when using the empty or DR generator
+                            respectively, vs. a next best PLR with 25%. Now we consider going even further. We tested both
+                            versions ofACCEL,as wellas DRand PLR,on anevenlarger maze,this time101x101, shown in
+                            Figure27. Notethatthiswouldbechallengingevenforhumanplayers,sincetheagenthasapartially
+                            observableview. Theperformanceofallmethodsissigniﬁcantlyweaker,withDRandPLRachieving
+                            a meanof 4%success rate. However, ACCEL still outperforms,achieving 7% and8% successrate
+                            with the DR and empty generators respectively. We believe at this point the bottleneck for further
+                            improvementmaynotbethecurriculum,butinsteadtheLSTM-basedpolicywhichhastoremember
+                            all previous paths, to solve the maze in the allotted 20,402 steps.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                             Figure27: PerfectMazesXL.A101x101procedurally-generatedMiniGridenvironment. Theagents
+                             havetotransferzero-shotfromtrainingina15x15grid. Thisenvironmentischallengingevenfor
+                             humans, since the agent only has a partially observable view, it requires memorizing the current
+                             location at all times to ensure exploring all corners of the grid.
+
+
+                                                                                    27
+
+
+          1a      1b      2a      2b      3a      3b
+Mean     0.01   0.01   0.00   0.03   0.01   0.12
+Max      0.03   0.05   0.00   0.08   0.03   0.31
+
+===== PDF PAGE 28 =====
+                              A.5   Additional Experiments
+
+                              InthissectionweshowaseriesofadditionalexperimentstounderstandtheperformanceofACCEL.
+                             Ablation Studies To investigate the designchoices thatled tothe successof ACCEL,we considera
+                              variety of ablations:
+                               •  ACCEL Using the DR generator.
+                               •  Edit Batch The same ACCEL algorithm but editing the entire replay batch rather than the “easy”
+                                  levels from the batch.
+                               •  Learned Editor The same algorithm changing only the editor, which is optimized for positive
+                                  value loss.
+                               •  No Editor This is an ablation on the algorithm structure, we use Algorithm1but sample more
+                                  DR levels instead of editing.
+
+                             Table 8: Zero-Shot transfer to human-designed environments. Each data point corresponds to the
+                              mean(andstandarderror)ofﬁveindependentruns,whereeachrunisevaluatedfor100trialsoneach
+                              environment. All methods use a DR generator which places between zero and sixty blocks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                              Each of these uses the same exact structure, sampling levels from the DR distribution 10% of the
+                              time,andeditinglevelsafterreplayingfromthecurator. Fortheﬁrst, weedittheentirereplaybatch,
+                              rather than just the top four easiest (high return minus positive value loss) that we use in the main
+                              experiments. Theresultsafter 10kupdates areshownin Table8. As wesee, Editingthebatch levels
+                              performsslightlyworsethaneasy,whilethereisalsoadecreaseinperformanceforthelearnededitor.
+                              Notehoweverthatalloftheseablationsstilloutperformthenextbestbaseline(PLR,mean=0.69).
+                              Finally, the ablation using additional DR levels instead of edited ones performs poorly, showing the
+                              strong performance for ACCEL comes from editing rather than the structure of the algorithm.
+
+
+
+
+
+
+
+
+
+
+                              Figure 28: Replay buffer diversity vs. return in the lava environment. On the left we show the
+                              concentration of thereplay buffer, measured asthe percentage of the top 100high-regret levels that
+                              can be produced by just ten parents. On the right we compare the average return on ten-tile test
+                              environments. “Small”correspondstoabufferofsize4k,withnogenerator,while“Large”indicates
+                              a buffer of size 10k, using a generator 10% of the time.
+
+                              Diversity of the Level Buffer we compare a buffer of size 4k with no DR sampling against our
+                              method with a buffer size of 10k and 10% sampling.  The plots show the proportion of the top
+                              200 levels produced by just ten initial generator levels, with a signiﬁcant increase for the smaller
+TestEnvironment         ACCEL       EditBatch    LearnedEditor     NoEditor
+16Rooms                1.0±0.0     0.76±0.19      0.9±0.07      0.84±0.06              28
+16Rooms2              0.51±0.28   0.23±0.16     0.41±0.19     0.68±0.18
+SimpleCrossing        0.8±0.05     1.0±0.0        0.9±0.1       0.75±0.05
+FourRooms             0.85±0.05   0.85±0.06     0.88±0.04     0.88±0.05
+SmallCorridor         0.72±0.1     0.74±0.1       0.6±0.17       0.7±0.18
+LargeCorridor         0.91±0.05   0.75±0.08     0.56±0.18     0.63±0.18
+Labyrinth             0.98±0.02   0.85±0.11     0.99±0.01     0.67±0.19
+Labyrinth2            0.97±0.03   0.83±0.11      0.7±0.15       0.48±0.2
+Maze                  0.78±0.21   0.87±0.05     0.57±0.18     0.15±0.08
+Maze2                 0.5±0.24    0.67±0.18     0.65±0.15     0.23±0.15
+Maze3                 0.79±0.14    0.9±0.08      0.95±0.05     0.56±0.17
+Mean                  0.79±0.04   0.76±0.04     0.74±0.04     0.58±0.05
+
+===== PDF PAGE 29 =====
+                             buffer. Wealsocomparetheperformanceofthetwoagentsontestlevelswithtentiles,showingclear
+                             outperformanceforthelowerconcentrationagent. Itis likely thathyperparametersalonewillnotbe
+                             sufﬁcientif wewantto scale ACCELtomore open-endedproblems,which weleavetofuture work.
+
+                             B   Implementation Details
+
+                             In this section we detail the training procedure for all our experiments. Training for all methods is
+                             conductedonasingleV100GPU,usingtenCPUs. Thecodebaseisbuiltontopofopensourcerepos.
+                             ForPAIREDandMinimaxinthe partially-observablenavigation environmentweuse resultsfrom
+                             the authors ofJiang et al.(2021a).
+
+                             B.1   Environment Details
+
+                             Learning with Lava The MiniHack environment is an open-source Gym (Brockman et al.,2016)
+                             environmentwhichprovidesawrapperaroundthefullgameofNetHackviatheNetHackLearning
+                             Environment (K ¨uttler et al.,2020). MiniHack allows users (or agents) the ability the fully specify
+                             environments leveraging the full game engine from NetHack. For our experiments we use a simple
+                             7x7grid,andallowtheagenttoplacelavatilesinanylocationoftheirchoice. TheDRagentsamples
+                             the number of blocks between[0,20] The reward is sparse, with the agent receiving +1 for reaching
+                             the goal, with a per timestep penalty of 0.01.
+                             Partially-ObservableNavigationEachmazeconsistsofa15×15grid,whereeachcellcancontain
+                             a wall, the goal, the agent, or navigable space. The student agent receives a reward of1−T/Tmax
+                             uponreachingthe goal,whereT istheepisode lengthandTmax isthemaximum episodelength(set
+                             to 250). Otherwise, the agent receives a reward of 0 if it fails to reach the goal.
+                             BipedalWalker  The  BipedalWalker  environment  we  use  is  a  modiﬁed  version  of  the
+                             BipedalWalkerHardcore environment from OpenAI Gym.  The agent learns from a proprio-
+                             ceptivestatewith24dimensionsconsistingoflidarsensors,anglesandcontactsbutnotablytheagent
+                             does nothave accessto itsmap coordinates. Theaction spaceis fourcontinuous valuescontrolling
+                             thetorquesofits4motors. TheenvironmentdesignspaceisshowninTable9,whereweshowthe
+                             value of the initialization for ACCEL, the edit size, and the maximum values. DR levels are sampled
+                             betweenzeroandthemaximumvalue. ForPLR,wecombinetheenvironmentparameterizationwith
+                             thespeciﬁcseedofthesampledlevel,makingthereplaydeterministic. ForACCELwemakeanedit
+                             byrandomlysamplingoneoftheeightparametersandthenaddingorsubtractingthequantityshown
+                             in the “Edit Size” row of Table9.
+
+                             Table 9: Environment design spacefor theBipedalWalker environment. Where valuesare shownas
+                             ranges,boththelowandhighendoftherangearelearnedparameters,andwhentheleveliscreated
+                             each obstacle size is sampled from the range.
+
+
+
+
+
+
+
+
+                              Table 10: Total number of environment interactions for a given number of student PPO updates.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                     29
+
+Environment     PPOUpdatesStumpHeight    StairHeight    StairSteps    Roughness    PitGapPLR     ACCEL
+EasyInit             [0,0.4]               [0,0.4]                 1              Unif(0.6)       [0,0.8]
+MiniGrid            20k                327M      369M
+EditSize                0.2                     0.2                    1              Unif(0.6)          0.4
+BipedalWalker    30k                   1.96B      2.07B
+MaxValue            [5,5]                  [5,5]                  9                   10            [10,10]
+
+===== PDF PAGE 30 =====
+B.2   Environment Design Procedure
+
+Theenvironmentdesignprocedureworksasfollows: ateachtimesteptheadversaryagentreceivesan
+observationconsistingofamapoftheentirelevelandthentakesatwodimensionalaction,consisting
+ofanobjectandalocation,whichcanbeanywhereinthegrid. Thisissimilartoseveralrecentworks
+(Dennisetal.,2020;Jiangetal.,2021b,a;Khalifaetal.,2020). For MiniGridtheobjectisalways a
+wall. For both methods, the goal and agent location are placed in the ﬁnal two steps.
+Whenediting,theeditorhasﬁvestepstoaltertheenvironment. Forthelavaenvironmentweonlyedit
+to add or remove lava tiles, while for MiniGrid we allow the editor to also change the goal location.
+If lava or walls (or lava) are placedin the currentlocation of the goalor agent, thenthese replace the
+goaloragent,whichmustthenberelocatedintheﬁnaltwostepsoftheeditingepisode. Iftheeditor
+attempts to remove the goal or agent location in the ﬁnal two steps then the action is void.
+
+B.3   Hyperparameters
+
+The majorityof ourhyperparameters areinherited fromprevious workssuch as(Dennis et al.,2020;
+Jiangetal.,2021b,a),withafewsmallchanges. ForthelavagridinMiniHackweusetheagentmodel
+from theNetHack paper (K ¨uttler etal.,2020), using the             glyphs andblstats as observations. The
+agent has botha global and alocally cropped view(produced using the coordinatesin theblstats).
+For MiniHack we conduct a grid search across the level replay buffer size{4000,10000} for both
+PLRandACCEL,andforACCELwesweepacrosstheeditmethodfrom{random,positivevalue
+loss} where positive value loss equates to a learned editor. For MiniGrid we maintain the replay
+buffersize fromJianget al.(2021a) andonly conduct theACCELgrid search over the editobjective,
+again running both{random, positive value loss}, as well as the levels to edit from{easy, batch}
+and replay rate from{0.8, 0.9}. For MiniGrid, we follow the protocol fromJiang et al.(2021a) and
+select the best hyperparameters using the validation levels{16Rooms, Labyrinth, Maze}. The ﬁnal
+hyperparameters chosen are shown in Table11.
+For BipedalWalker we used the continuous control policy from the open source implementation
+of PPO fromKostrikov(2018), as well as many of the hyperparameters used in the recommended
+settings for MuJoCo. This involves a simple feedforward neural network with two hidden layers
+of size 64 and Tanh activations. We tuned the hyperparameters for our base agent using domain
+randomization, and conducted a sweep over the learning rate{3e-4, 3e-5}, PPO epochs{5,20},
+entropycoefﬁcient{0,1e-3}andnumberofminibatches{4,32},usingthevalidationperformance
+on BipedalWalkerHardcore. We then used these base agent conﬁgurations for all UED algorithms.
+ForPLR wefurther conductedasweep overthebuffer size{1000,5000}, replayrate{0,9, 0.5} and
+stalenesscoefﬁcient{0.3,0.5,0.7},using thesame settingsfoundfor bothPLRand ACCEL.Finally,
+for ACCEL we tuned both the number of edits{1, 2, 3, 4} and whether to edit the easy or batch
+levels.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        30
+
+===== PDF PAGE 31 =====
+                                         Table 11: Hyperparameters used for training each method in the maze and car racing environments.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Parameter                             MiniHack(Lava)           MiniGrid            BipedalWalker
+PPO
+γ                                                   0.995                      0.995                      0.99
+λGAE                                               0.95                       0.95                        0.9
+PPOrolloutlength                            256                        256                       2000
+PPOepochs                                       5                            5                            5
+PPOminibatchesperepoch                 1                            1                           32
+PPOcliprange                                  0.2                         0.2                         0.2
+PPOnumberofworkers                     32                          32                          16
+Adamlearningrate                           1e-4                       1e-4                       3e-4
+Adamϵ                                           1e-5                       1e-5                       1e-5
+PPOmaxgradientnorm                     0.5                         0.5                         0.531
+PPOvalueclipping                            yes                         yes                         no
+returnnormalization                           no                          no                         yes
+valuelosscoefﬁcient                         0.5                         0.5                         0.5
+studententropycoefﬁcient                  0.0                         0.0                        1e-3
+generatorentropycoefﬁcient              0.0                         0.0                         0.0
+
+ACCEL
+Editrate,q                                        1.0                         1.0                         1.0
+Replayrate,p                                   0.9                         0.8                         0.9
+Buffersize,K                                 10000                      4000                      1000
+Scoringfunction                     positivevalueloss    positivevalueloss    positivevalueloss
+Editmethod                           positivevalueloss           random                   random
+Levelsedited                                   batch                       easy                       easy
+Prioritization                                   rank                       rank                       rank
+Temperature,β                                 0.3                         0.3                         0.1
+Stalenesscoefﬁcient,ρ                       0.5                         0.5                         0.5
+
+PLR
+Scoringfunction                     positivevalueloss    positivevalueloss    positivevalueloss
+Replayrate,p                                   0.5                         0.5                         0.5
+Buffersize,K                                 10000                      4000                      1000

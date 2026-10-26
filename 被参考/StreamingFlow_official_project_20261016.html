@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+
+<!-- CSS -->
+<link rel="stylesheet" href="https://siddancha.github.io/fonts/fonts.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<link rel="stylesheet" href="https://siddancha.github.io/projects/template/static/css/project-page.css" type="text/css">
+
+<!-- from Nerfies -->
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js"></script>
+
+<link rel="stylesheet" href="https://siddancha.github.io/projects/template/static/css/bulma.min.css">
+<link rel="stylesheet" href="https://siddancha.github.io/projects/template/static/css/bulma-carousel.min.css">
+<link rel="stylesheet" href="https://siddancha.github.io/projects/template/static/css/bulma-slider.min.css">
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+<link rel="stylesheet" href="https://siddancha.github.io/projects/template/static/css/index.css">
+<link rel="icon" href="https://siddancha.github.io/projects/template/static/images/favicon.svg">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://siddancha.github.io/projects/template/static/js/bulma-carousel.min.js"></script>
+<script src="https://siddancha.github.io/projects/template/static/js/bulma-slider.min.js"></script>
+<script src="https://siddancha.github.io/projects/template/static/js/index.js"></script>
+
+<!-- MathJax for LaTeX -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+<style>
+body,td,th {
+    font-family: 'Avenir';
+    font-size: 16px;
+    color: black;
+    overflow-x: hidden;
+}
+
+:root {
+    --epsilon-shape: "Ɛ";
+    --three-shape: "3";
+}
+
+.shape-epsilon {
+    font-size: 18px;
+    color: blue;
+    font-weight: bold;
+}
+
+.shape-three {
+    font-size: 18px;
+    color: red;
+    font-weight: bold;
+}
+
+.canvas {
+    border: 1px solid black;
+}
+
+.tooltip {
+    font-family: 'Avenir';
+    position: absolute;
+    white-space: nowrap;
+    display: block;
+    font-size: small;
+    background: #ffffcc;
+    border: 1px solid black;
+    padding: 3px;
+    z-index: 1000;
+    color: black;
+    visibility: hidden;
+}
+
+.table-like {
+    display: flex;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+    justify-content: center;
+    color: black
+  }
+
+div.video-caption {
+    display: inline-block;
+    text-align: center;
+    width: 322px;
+    padding: 0px;
+    margin: 0px;
+    color: black
+}
+
+div.author {
+    font-size: 22px;
+    font-weight: 500;
+    justify-content: center;
+    width: 206px;
+    margin-left: 0px;
+    margin-right: 0px;
+    color: #4169E1;
+}
+div.affiliation {
+    margin: 0px;
+    padding: 0px;
+    font-size: 19px;
+    color: black
+}
+div.mono-affiliation {
+    font-weight: 500;
+    justify-content: center;
+    margin: 0px;
+    padding: 0px;
+    font-size: 20px;
+    color: black
+}
+
+figcaption.video-caption {
+    width: 975px;
+    display: inline-block;
+    vertical-align: bottom;
+    text-align: center;
+    color: black
+}
+
+video.header-vid {
+    height: 140px;
+    border: 1px solid black;
+    border-radius: 10px ;
+    -moz-border-radius: 10px ;
+    -webkit-border-radius: 10px ;
+}
+
+video {
+    width: 100%;
+    max-width: 975px !important;
+}
+
+span.highlight {
+    color: red;
+    font-weight: bold;
+}
+
+ul, ol {
+    display: table;
+    margin: 0;
+    text-align: center;
+}
+
+li {
+    padding-left: 10px;
+    padding-bottom: 10px;
+    text-align: left;
+    font-size: 22;
+}
+
+.instructions {
+    display: inline-block;
+    width: 500px;
+    border: 2px solid black;
+    margin-left: 10px;
+}
+.instructions p {
+    width: 500px;
+    text-align: left;
+    padding-left: 10px;
+    margin: 0px;
+    color: blue;
+    font-size: large;
+}
+
+.cover-spin {
+    position: fixed;
+    width: 100%;
+    left:0; right:0; top:0; bottom:0;
+    background-color: rgba(255,255,255,0.9);
+    z-index: 9999;
+    display: block;
+}
+
+a.foxglove {
+    font-size: 22px;
+    color:#6f3be8;
+    text-decoration: none
+}
+
+a.nav-link {
+    font-size: 20px;
+    font-weight: bold;
+    color: rgb(215, 215, 215) !important;
+}
+a.nav-link:hover {
+    /* https://xmple.com/color/4369dd/ */
+    color: orange !important;
+}
+a.nav-link.active {
+    color: red !important;
+}
+
+.navbar {
+    min-height: 35px;
+    max-height: 35px;
+    height: 35px;
+    padding-top: 10px !important;
+    padding-bottom: 0 !important;
+}
+
+.container { 
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    width: 975px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    flex-flow: row wrap;
+}
+
+section {
+    position: relative;
+    padding-top: 22px;
+    padding-bottom: 30px;
+}
+
+section:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 2px;
+    width: 100%;
+    max-width: 1100px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1.0), rgba(0, 0, 0, 0)); /* Tapered effect */
+}
+
+section .container {
+    width: 100%;
+    max-width: 975px !important;
+    margin: 0 auto;
+}
+
+section .container.is-max-desktop {
+    max-width: 975px !important;
+    margin: 0 auto;
+}
+
+section.is-light {
+    background-color: rgb(255, 255, 255, 1);
+}
+
+section.is-dark {
+    background-color: rgb(235, 235, 235, 1);
+}
+
+section.is-colorful {
+    background-color: rgb(235, 235, 235, 1);
+    background: linear-gradient(135deg, rgb(255, 0, 0, 0.2), rgb(65, 105, 225, 0.1), rgb(255, 0, 0, 0.05), rgb(65, 105, 225, 0.4));
+}
+
+p.inner-text {
+    width: 100%;
+    max-width: 975px;
+    font-size: 17px;
+    text-align: center;
+}
+p.inner-text.left {
+    text-align: left;
+}
+
+.medium-bold {
+    font-weight: 500;
+}
+
+/* https://stackoverflow.com/a/13555927 */
+.nav-anchor {
+    display: block;
+    position: absolute;
+    width: 0;
+    height: 0;
+    z-index: -1;
+    top: -38px;
+    left: 0;
+    visibility: hidden;
+}
+
+div.bibtex {
+    font-size: 17px;
+    margin-left: 30px;
+}
+
+pre {
+    width: auto;
+    overflow-x: auto;
+    border: solid;
+    border-width: 1px;
+    padding: 5px;
+}
+
+iframe.code-box {
+    position: relative;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 900px;
+    width: 100%;
+}
+
+/* For gradient in the title */
+.main-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    /* margin-right: 10px; */
+    /* font-style: italic; */
+    background: linear-gradient(45deg, red, #4169E1, #FF4500, #4169E1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 300% 300%;
+    animation: gradient-shift 5s ease infinite;
+}
+
+.colorful-text {
+    background: linear-gradient(45deg, red, #4169E1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 5s ease infinite;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+button.nav-button {
+    border-width: 2px;
+    border-color: black;
+}
+button.nav-button.is-focused {
+    color: black;
+    background-color: #4169e113;
+    border-color: #4169E1;
+    /* background-color: #4169e113; */
+}
+
+.back-to-top-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    /* font-weight: bold; */
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.back-to-top-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+
+/* From https://ziyc.github.io/omnire/ */
+.highlighted-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.highlighted-link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+.highlighted-link .icon {
+    margin-right: 8px;
+    font-size: 20px;
+}
+.colab-link {
+    background: linear-gradient(45deg, #2196F3, red);
+}
+.arxiv-link {
+    background: linear-gradient(45deg, #FFB74D, #FFA726);
+}
+.pulse {
+    animation: pulse 1.0s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(33, 150, 243, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+    }
+}
+
+figcaption.carousel-image-caption {
+    font-size: 19px;
+    margin: 0 auto;
+}
+
+figcaption.carousel-text-caption {
+    display: inline-block;
+    font-size: 18px;
+    color: black;
+    width: 100%;
+    max-width: 900px;
+    height: 78px;
+    align-self: center;
+    align-content: center;
+}
+
+
+/* Custom CSS for Bulma Carousel */
+div.slider-pagination {
+    margin-bottom: 3px;
+}
+div.slider-navigation-next {
+    margin-top: 0px;
+    border: 1px solid gray;
+}
+div.slider-navigation-previous {
+    margin-top: 0px;
+    border: 1px solid gray;
+}
+
+/* Different offsets for land videos */
+div.land-videos-carousel .slider-pagination {
+    margin-bottom: 138px;
+}
+div.land-videos-carousel .slider-navigation-next {
+    margin-top: -70px !important;
+    border: 1px solid gray;
+}
+div.land-videos-carousel .slider-navigation-previous {
+    margin-top: -70px !important;
+    border: 1px solid gray;
+}
+
+/* Different offsets for underwater results */
+div.underwater-results-carousel .slider-pagination {
+    margin-bottom: 152px;
+}
+div.underwater-results-carousel .slider-navigation-next {
+    margin-top: -75px !important;
+    border: 1px solid gray;
+}
+div.underwater-results-carousel .slider-navigation-previous {
+    margin-top: -75px !important;
+    border: 1px solid gray;
+}
+
+
+</style>
+
+
+<!-- HTML -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="https://siddancha.github.io/favicons/mit_favicon.ico">
+    <title>Streaming Flow Policy</title>
+</head>
+<body>
+    
+    <!-- <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://siddancha.github.io/js/hidebib.js"></script>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar is-fixed-top navbar-expand-lg navbar-dark" style="background-color: black;">        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- <ul class="navbar-nav mr-auto">
+                <li class="nav-item" style="font-size: 15px; color: white; font-style: italic;">
+                    <script>
+                        document.write("This page was last modified on: " + document.lastModified +"");
+                    </script>
+                </li>
+            </ul> -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#talk">Talk</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#motivation">Motivation</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#conditional-flow">Conditional-flow</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#marginal-flow">Marginal-flow</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#pusht-multimodality">Multimodal sampling</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#decoupling-stochasticity">Decoupling-Stochasticity</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#caveats">Caveats</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#real-world">Real-world</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="#bibtex">Bibtex</a>
+                </li>
+            <!-- <li class="nav-item">
+                <a class="nav-link" href="#paper">Paper</a>
+            </li> -->
+            </ul>
+        </div>
+    </nav>
+
+    <section class="is-light" style="padding-top: 50px">
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+            
+    <div class="container" id="title" style="font-size:39px; font-weight:bold;">
+        <p class="main-title"><u>Streaming Flow Policy</u></p>
+    </div>
+    <div class="container" style="font-size:35px; font-weight:bold;">
+        <p>Simplifying diffusion/flow-matching policies by<br>treating action trajectories as flow trajectories</p>
+    </div>
+    <br>
+
+    <div class="container" style="margin-bottom: 2px">
+        <div class="author">
+            <a href="https://xinyunsunshine.github.io/" target="_blank">Sunshine Jiang</a>
+        </div>
+
+        <div class="author">
+            <a href="https://fang-xiaolin.github.io/" target="_blank">Xiaolin Fang</a>
+        </div>
+
+        <div class="author">
+            <a href="https://aeroastro.mit.edu/people/nicholas-roy/" target="_blank">Nicholas Roy</a>
+        </div>
+    </div>
+        <div class="container" style="margin-bottom: 7px">
+        <div class="author">
+            <a href="https://people.csail.mit.edu/tlp/" target="_blank">Tomás Lozano-Pérez</a>
+        </div>
+        <div class="author">
+            <a href="https://people.csail.mit.edu/lpk/" target="_blank">Leslie Kaelbling</a>
+        </div>
+        <div class="author">
+            <a href="https://siddancha.github.io/" target="_blank">Siddharth Ancha</a>
+        </div>
+    </div>
+    <div class="container" style="margin-bottom: 7px">
+        <div style="margin-right: 4px"><img src="logos/mit_logo_std_rgb_black.png" width="50px"></div>
+        <div class="mono-affiliation" style="color: black">Massachusetts Institute of Technology</div>
+    </div>
+    
+    <div class="container" style="margin-top: 24px;">
+        <a href="https://sites.google.com/view/icra-2025-beyond-pick-place/home">
+            <div style="font-size: 27px; color: rgb(180, 1, 1); font-weight: bold; font-style: italic;">
+                CoRL 2025 (Oral)
+            </div>
+            <div style="font-size: 22px; color: rgb(180, 1, 1); font-weight: bold; font-style: italic;">
+                ICRA 2025 Workshop: Beyond Pick-and-Place
+            </div>
+            <div style="font-size: 21px; color: rgb(180, 1, 1); font-weight: bold"> 
+              🏆 Best Paper Nominee (3/21 papers)
+            </div>
+        </a>
+    </div>
+
+    <div class="container" style="margin-top: 21px;">
+        <div class="publication-links">
+        <!-- ArXiv Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://arxiv.org/abs/2505.21851"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="ai ai-arxiv"></i>
+            </span>
+            <span>ArXiv</span>
+            </a>
+        </span>
+        <!-- Paper Link. -->
+        <!-- <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="./paper.pdf"
+                class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                <i class="fas fa-file-pdf"></i>
+                </span>
+                <span>Paper</span>
+            </a>
+        </span> -->
+        <!-- Appendix Link. -->
+        <!-- <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="./appendix.pdf"
+                class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                <i class="fas fa-file-pdf"></i>
+                </span>
+                <span>Appendix</span>
+            </a>
+        </span> -->
+        <!-- Video Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://youtu.be/gqUnEzBCbZE"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="fab fa-youtube"></i>
+            </span>
+            <span>5-min Video</span>
+            </a>
+        </span>
+        <!-- Twitter Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://x.com/siddancha/status/1925170490856833180"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="fab fa-x-twitter"></i>
+            </span>
+            <span>Twitter</span>
+            </a>
+        </span>
+        <!-- Code Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://github.com/siddancha/streaming-flow-policy"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="fab fa-github"></i>
+            </span>
+            <span>Code</span>
+            </a>
+        </span>
+        <!-- Poster Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="./poster.pdf"
+                class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                <i class="fas fa-file-pdf"></i>
+                </span>
+                <span>Poster</span>
+            </a>
+        </span>
+        <!-- Colab Link. -->
+        <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="./notebooks"
+            class="highlighted-link colab-link pulse external-link button is-normal is-rounded">
+            <span class="icon">
+                <!-- <i class="fab fa-google"></i> -->
+                <!-- <img src="svg/colab.svg"> -->
+                <!-- 📘 -->
+                <!-- 📕 -->
+                <!-- 📗 -->
+                <!-- 📙 -->
+                <!-- 📒 -->
+                <!-- 📔 -->
+                📚
+                <!-- 📖 -->
+            </span>
+            <span>Notebooks</span>
+            </a>
+        </span>
+        <!-- Dataset Link. -->
+        <!-- <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://github.com/google/nerfies/releases/tag/0.1"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="far fa-images"></i>
+            </span>
+            <span>Data</span>
+            </a> -->
+        </div>
+    </div>
+    
+    </div>
+    </div>
+    </section>
+
+    <section class="is-dark">
+         <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="talk"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 32px; margin-bottom: 10px;">Overview video (5 min)</div>
+        <iframe style="width: 95%; max-width: 848px; height: 477px;" src="https://www.youtube.com/embed/gqUnEzBCbZE?si=TmRI2cItG9J_Y9zX" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    </div>
+    </div>
+    </section>
+
+    <section class="is-light">
+        <!-- dummy anchor to adjust for navbar height     -->
+        <span class="nav-anchor" id="motivation"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+    <div class="container">
+        <div style="font-size:35px;">Why <span class="colorful-text" style="font-style: italic; font-weight: bold;">streaming flow policy</span>?</div>
+        <figure style="margin-bottom: 20px; width: 100%; max-width: 900px;">
+            <img src="media/motivation/motivation-dpfp.png" style="height:500px; max-width: 900px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;">
+            <img src="media/motivation/motivation-sfp.png" style="height:500px; max-width: 900px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;">
+            <br>
+            <!-- <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+                <i><b>Left: </b></i>Conventional diffusion/flow policy.
+                <i><b>Right: </b></i>Streaming flow policy.
+            </figcaption> -->
+        </figure>
+    <br>
+
+    <p class="inner-text" style="font-size: 18px;">
+        <i>Left:</i> <u>Conventional diffusion/flow policy are a <b><i>"trajectory of trajectories"</i></b></u>
+    </p>
+    <p class="inner-text left" style="margin-bottom: 10px;">
+        <a href="https://diffusion-policy.cs.columbia.edu/">Diffusion policy</a> and <a href="https://www.physicalintelligence.company/blog/pi0">flow-matching policy</a>
+        input a history of observations (not shown) to predict a "chunk" of future robot actions.
+        The \(x\)-axis represents the robot action space, and the \(y\)-axis represents increasing diffusion timesteps.
+        Conventional diffusion/flow policies sample a <b><i>"trajectory of trajectories"</i></b> <i>i.e.</i> a diffusion/flow trajectory of action trajectories.
+        This framework discards all intermediate action trajectories that are computed, and must wait for the diffusion/flow process to complete before any actions can be executed on the robot.
+    </p>
+    <p class="inner-text" style="font-size: 18px;">
+        <i>Right:</i> <u>Streaming flow policy treats <b><i>action trajectories as flow trajectories</i></b></u>
+    </p>
+    <p class="inner-text left">
+        We introduce an imitation learning framework that simplifies diffusion/flow policies by treating <b><i>"action trajectories as flow trajectories"</i></b>.
+        We develop a novel flow-matching algorithm in action space, instead of action <i>trajectory</i> space.
+        First, we sample from a narrow Gaussian centered at the most recently generated/executed action.
+        Then, we iteratively sample a sequence of actions that constitutes a <i>single</i> action trajectory.
+        This aligns the "diffusion time" of the flow sampling process with the "execution time" of the action trajectory.
+        Importantly, the computed actions can be streamed to the robot's actuators on the fly <i><u>during</u></i> the flow sampling process, enabling significantly faster and reactive policies.
+    </p>
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-dark">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="conditional-flow"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px"><i class="medium-bold">Constructing</i> conditional flows</div>
+
+    <figure style="margin-bottom: 20px; width: 100%; max-width: 900px;">
+        <img src="media/wineglass-det-stabilizing/demos-and-conditional-flow.png" style="height:480px; max-width: 900px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;">
+    </figure>
+    <br>
+
+
+<p class="inner-text left" style="margin-bottom: 5px;">
+    To illustrate our method, consider a toy example shown in <b>(a)</b> of 1-D actions (\(x\)-axis) with two demonstration trajectories shown in <span class="medium-bold" style="color: blue">blue</span> and <span class="medium-bold" style="color: red">red</span>.
+    The \(y\)-axis represents time.
+    Given a demonstration trajectory from the training set (e.g., the <span class="medium-bold" style="color: blue">blue</span> one), we first <i>construct</i> a conditional flow in <b>(b)</b>  that samples trajectories from a thin Gaussian tube around the demonstration.
+    
+    Let us represent the trajectory by \(\xi: [0, 1] \rightarrow \mathcal{A}\).
+    We construct a velocity field \(v_\xi(a, t \,|\, h)\) as follows:
+</p>
+
+<p class="inner-text left" style="font-size: 18px; margin-bottom: 5px;">
+    $$
+    \begin{align}
+    p_\xi^0(a) \hspace{0.5em}  &:=  \ \mathcal{N}\left(a ~\big\vert~ \xi(0) \,,\, \sigma_0^2\right)\\
+        v_\xi(a, t) \hspace{0.5em}  &:= \hspace{-0.5em}\underbrace{\ \dot{\xi}(t)\ }_{\hspace{-5em}\text{Demonstration velocity}} \hspace{-0.5em} - \underbrace{k(a - \xi(t))}_{\text{Stabilization term}}
+    \end{align}
+    $$
+</p>
+
+<p class="inner-text left" style="margin-bottom: 5px;">
+    The initial distribution \(p_\xi^0(a)\) is a narrow Gaussian centered at the starting action \(\xi(0)\) of the demonstration with a small standard deviation \(\sigma_0\).
+    The velocity field \(v_\xi(a, t \,|\, h)\) is a combination of two terms.
+    The <i>demonstration velocity</i> is the time derivative of the demonstration trajectory at time \(t\); this term serves to flow in the direction of the demonstration.
+    The <i>stabilization term</i> is a negative proportional error feedback that corrects deviations and guides back to the demonstration trajectory.
+    <a href="https://arxiv.org/abs/2307.14619">Block et. al.</a> have shown that controllers that stabilize around demonstration trajectories reduce distribution shift and improve theoretical imitation learning guarantees.
+</p>
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    
+    <section class="is-colorful">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="marginal-flow"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px"><i class="medium-bold">Learning</i> marginal flows</div>
+
+    <figure style="margin-bottom: 20px; width: 100%; max-width: 900px;">
+        <video style="height:480px; max-width: 900px; padding-top: 30px; padding-bottom: 0px; margin-bottom: 0px; mix-blend-mode: multiply;" muted playsinline autoplay loop>
+            <source src="media/wineglass-det-stabilizing/marginal-flow-and-samples.webm">
+        </video>
+        <!-- <img src="media/wineglass-det-stabilizing/marginal-flow-and-samples.png" style="height:480px; max-width: 900px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;"> -->
+    </figure>
+    <br>
+
+<p class="inner-text left" style="margin-bottom: 15px;">
+    Then, we learn a <i>marginal</i> velocity field that expresses multi-modal trajectories, as shown in <b>(c)</b>.
+    The marginal distribution over actions at each time slice induced by the learned velocity field matches the training distribution!
+    The sampled trajectories shown in <b>(e)</b> indeed bifurcate and cover both modes of the demonstrated data.<br>
+</p>
+
+<p class="inner-text left" style="margin-bottom: 15px;">
+    How does this magic work? The answer is <a class="medium-bold" href="https://arxiv.org/abs/2210.02747">flow matching</a>!
+</p>
+
+<p class="inner-text left" style="margin-bottom: 5px;">
+    Let \(p_\mathcal{D}(h, \xi)\) denote the training distribution over histories \(h\) and future action trajectories \(\xi\).
+    Using the constructed conditional velocity fields \(v_\xi(a, t)\) as target, we train a neural network \(v_\theta(a, t \mid h)\) using a finite-sample estimate of the <a class="medium-bold" href="https://arxiv.org/abs/2210.02747">conditional flow matching loss</a>:
+
+    <span style="font-size: 18px;">
+    \begin{align}
+        \mathcal{L}_{\text{CFM}}(v_\theta, p_\mathcal{D}) := ~ 
+        &\mathbb{E}_{(h, \xi) \sim p_\mathcal{D}}~\mathbb{E}_{t \sim {U}[0,1]}~\mathbb{E}_{a \sim p_\xi\left(a \mid t\right)} ~ \big\|v_\theta(a, t \mid h) - v_\xi(a, t)\big\|_2^2
+    \end{align}
+    </span>
+    This is simply an \(L_2\) loss between the predicted velocity field \(v_\theta(a, t \mid h)\) and the conditional velocity field \(v_\xi(a, t)\) as target.
+    The expectation is over histories and trajectories in the training distribution \(p_\mathcal{D}(h, \xi)\), time \(t\) sampled uniformly from \([0, 1]\), and action \(a\) sampled from the constructed conditional flow.
+
+    The <a class="medium-bold" href="https://arxiv.org/abs/2210.02747">flow matching theorem</a> states that if the velocity network is trained well, then the per-timestep marginal action distribution induced by learned flow matches the average of per-timestep marginal distributions of constructed conditional flows  \(p_\xi(a \mid t)\), over the distribution of future trajectories in the training set \(p_\mathcal{D}(\xi \mid h)\) that share the given observation history \(h\).
+
+    <span style="font-size: 17px;">
+    \begin{align}
+        p^*(a \mid t, h)
+        % &= \mathbb{E}_{\xi \sim p_\mathcal{D}(\xi \mid h)}\big[p_\xi(a \mid t)\big]
+        &= \int_\xi p_\xi(a \mid t)\,p_\mathcal{D}(\xi \mid h) \, d\xi
+        \label{eq:averaged-marginal-distributions}
+    \end{align}
+    </span>
+
+    Streaming flow policy is able to both ✅ <b st>represent multi-modal distributions</b> over action trajectories
+    like diffusion/flow policies, while also being ✅ <b>able to stream actions</b> during the flow sampling process.
+</p>
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-light">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="pusht-multimodality"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px">Multimodal sampling in Push-T</div>
+
+    <figure style="margin-bottom: 15px; width: 100%; max-width: 900px; align-items: center; padding-top: 35px; padding-bottom: 5px;">
+        <figcaption style="width: 80%; max-width: 900px; text-align: center; margin: 0 auto;">
+            <div style="font-size: 18px; width: 25%; display: inline-block; text-align: center;">Diffusion policy <a href="https://diffusion-policy.cs.columbia.edu/" target="_blank">[1]</a></div>
+            <div style="font-size: 20px; width: 74%; display: inline-block; text-align: center; font-weight: 500;">Streaming flow policy</div>
+        </figcaption>
+        <img src="media/pusht-multimodality/pusht-multimodality.webp" style="max-height: 350px; width: 80%; max-width: 900px; padding-bottom: 5px; mix-blend-mode: multiply;">
+        <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+            Sampling multimodal action trajectories from policies trained on the Push-T dataset. Similar to diffusion policy, streaming flow policy samples multimodal trajectories in both symmetric and asymmetric configurations.
+        </figcaption>
+    </figure>
+    <br>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        We trained a streaming flow policy on the Push-T dataset <a href="https://diffusion-policy.cs.columbia.edu/" target="_blank">[1]</a>, and visualize predicted action chunks from various configurations. <b>(a)</b>&nbsp;Chi et. al. <a href="https://diffusion-policy.cs.columbia.edu/" target="_blank">[1]</a> report that a diffusion policy trained on the Push-T dataset samples multimodal action trajectories when starting from initial configurations that are symmetric with respect to block, goal pose and the agent (pusher). <b>(b)</b> We find the same to hold true for a streaming flow policy with the same architecture trained on the Push-T dataset. Going a step further, we visualize sampled action trajectories from <i>asymmetric</i> configurations, as shown in <b>(c, d)</b>. We find that streaming flow policy produces highly multimodal trajectories here as well, capturing diverse and valid behaviors to push the block towards the goal pose.
+    </p>
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-dark">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="decoupling-stochasticity"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px">Decoupling stochasticity via latent variables</div>
+
+    <figure style="margin-bottom: 10px; width: 100%; max-width: 900px;">
+        <img src="media/wineglass-stochastic/stochastic-sfp-conditional.png" style="max-height: 350px; max-width: 900px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;">
+        <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+            Constructing a conditional flow using stochastic latent variables instead of adding noise to actions.
+        </figcaption>
+    </figure>
+    <br>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        In this toy example, the \(x\)-axis represents a 1-D action space, and the \(y\)-axis represents action execution time, which is equal to the flow progression time.
+        <b>(a)</b>
+        The toy bi-modal training set, same as the previous example, contains two trajectories shown in <span class="medium-bold" style="color: red">red</span> and <span class="medium-bold" style="color: blue">blue</span>.
+        Given a demonstration trajectory from the training set (e.g., the demonstration in <span class="medium-bold" style="color: blue">blue</span>), we design a velocity field \(v(a, z, t \mid h)\) that takes as input time \(t \in [0, 1]\), the action \(a\) at time \(t\), as well as an additional latent variable \(z \in \mathcal{A}\).
+        The latent variable is responsible for injecting noise into the flow sampling process, allowing the initial action \(a(0)\) to be deterministically set to the initial action of the demonstration.
+        
+        The latent variable \(z(0) \sim \mathcal{N}(0, 1)\) is sampled from the standard normal distribution at the beginning of the flow process, similar to conventional diffusion/flow policies.
+        The velocity field \(v(a, z, t \mid h)\) generates trajectories in an extended sample space
+        \([0, 1] \rightarrow \mathcal{A}^2\)
+        where \(a\) and \(z\) are correlated and co-evolve with time.
+        <b>(b)</b> Shows the marginal distribution of actions \(a(t)\), and <b>(c)</b> shows the marginal distributions of the latent variable \(z(t)\), at each time step.
+        Overlaid in red are the \(a\)- and \(z\)- projections, respectively, of trajectories sampled from the velocity field.
+        The action's trajectory evolves in a narrow Gaussian tube around the demonstration, while the latent variable's trajectory starts from \(\mathcal{N}(0, 1)\) at \(t=0\) and converges to the demonstration trajectory at \(t=1\); see the <a href="paper.pdf">paper</a> for a full description of the velocity field.
+    </p>
+
+    <figure style="margin-bottom: 20px; width: 100%">
+        <img src="media/wineglass-stochastic/stochastic-sfp-marginal.png" style="max-height: 300px; padding-top: 35px; padding-bottom: 5px; mix-blend-mode: multiply;">
+        <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+            Learned marginal velocity field under the decoupled auxiliary stochastic latent variables.
+        </figcaption>
+    </figure>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        The marginal velocity flow field \(v_{\theta}(a, z, t \mid h)\) learned using the flow construction above.
+        <b>(a, b)</b>
+        shows the marginal distribution of actions \(a(t)\) and the latent variable \(z(t)\), respectively, at each time step under the learned velocity field.
+        <b>(c, d)</b>
+        Shows the \(a\)- and \(z\)- projections, respectively, of trajectories sampled from the learned velocity field.
+        By construction, \(a(0)\) deterministically starts from the most recently executed action, whereas \(z(0)\) is sampled from \(\mathcal{N}(0, 1)\).
+        Trajectories starting with \(z(0) < 0\) are shown in <span class="medium-bold" style="color: blue">blue</span>, and those with \(z(0) > 0\) are shown in <span class="medium-bold" style="color: red">red</span>.
+    </p>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        The main takeaway is that in <b>(c)</b>, even though all samples deterministically start from the same initial action (i.e., the most recently executed action), they evolve in a stochastic manner that covers both modes of the training distribution.
+        This is possible because the stochastic latent variable \(z\) is correlated with \(a\), and the initial random sample \(z(0) \sim \mathcal{N}(0, 1)\) informs the direction \(a\) evolves in.
+    </p>
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-light">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="caveats"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px">Caveats</div>
+        <div style="font-size: 20px">Streaming flow policy only matches per-timestep marginal distributions, not necessarily the joint distribution</div>
+
+    <figure style="margin-bottom: 10px; width: 100%; max-width: 900px;">
+        <img src="media/limitations/limitations-det.png" style="padding-top: 35px; padding-bottom: 5px; height: 350px; mix-blend-mode: multiply;">
+        <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+            Streaming flow policy only matches per-timestep marginal distributions, not necessarily the joint distribution.<br>
+            Samples from the stochastic variant of streaming flow policy with shapes: "<span style="font-size: 18px; color: blue; font-weight: bold;">Ɛ</span>" and "<span style="font-size: 18px; color: red; font-weight: bold;">3</span>".
+        </figcaption>
+    </figure>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        A toy example illustrating how streaming flow policy matches marginal distribution of actions in the trajectory at all time steps, but not necessarily their joint distribution.
+        The \(x\)-axis represents a 1-D action space, and the \(y\)-axis represents action execution time, which is equal to the flow progression time.
+        <b>(a)</b>
+        The bi-modal training set contains two <i>intersecting</i> demonstration trajectories,
+        illustrated in <span class="medium-bold" style="color: blue">blue</span> and <span class="medium-bold" style="color: red">red</span>, with shapes "<span style="font-size: 18px; color: blue; font-weight: bold;">S</span>" and "<span style="font-size: 19px; color: red; font-weight: bold;">Ƨ</span>" respectively.
+        <b>(b)</b> The learned velocity flow field \(v_{\theta}(a, t \mid h)\) and the induced marginal action distribution at each time step.
+        The marginal distributions perfectly match the training data.
+        <b>(c)</b> Trajectories sampled from the learned velocity field. Trajectories that start from \(a < 0\) are shown in blue, and those starting from \(a > 0\) are shown in red. The sampled trajectories have shapes "<span style="font-size: 18px; color: blue; font-weight: bold;">Ɛ</span>" and "<span style="font-size: 18px; color: red; font-weight: bold;">3</span>", with equal probability. These shapes are different from the shapes "<span style="font-size: 18px; color: blue; font-weight: bold;">S</span>" and "<span style="font-size: 19px; color: red; font-weight: bold;">Ƨ</span>" in the training distribution, although their per-timestep marginal distributions are identical.
+    </p>
+
+    <figure style="margin-bottom: 10px; width: 100%; max-width: 900px;">
+        <img src="media/limitations/limitations-stoc.png" style="padding-top: 35px; padding-bottom: 5px; height: 350px; mix-blend-mode: multiply;">
+        <figcaption style="font-size: 17px; width:100%; max-width: 900px;">
+            Streaming flow policy only matches per-timestep marginal distributions, not necessarily the joint distribution.<br>
+            Samples from the deterministic variant of streaming flow policy.
+        </figcaption>
+    </figure>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        Different variants of streaming flow policy can produce different joint distributions over actions that are consistent with the per-timestep marginal distributions in the training data.
+        This example is produced using the <a href="#decoupling-stochasticity">stochastic version</a> of streaming flow policy.
+        <b>(a)</b>
+        The marginal action distribution at each time step learned by the stochastic streaming flow policy matches the training data.
+        <b>(b)</b> Samples from the trained policy produces <i>four</i> modes with shapes "<span style="font-size: 19px; color: blue; font-weight: bold;">Ƨ</span>", "<span style="font-size: 18px; color: red; font-weight: bold;">S</span>", "<span style="font-size: 18px; color: blue; font-weight: bold;">Ɛ</span>" and "<span style="font-size: 18px; color: red; font-weight: bold;">3</span>", whereas the training data contains only two modes with shapes "<span style="font-size: 18px; color: red; font-weight: bold;">S</span>" and "<span style="font-size: 19px; color: blue; font-weight: bold;">Ƨ</span>".
+        Due to stochasticity introduced by decoupled latent variables, trajectories in blue (alternatively, red) that start from \(a < 0\) (alternatively, \(a > 0\)) are able to split in either direction at the point of intersection.
+    </p>
+
+    <p class="inner-text left" style="margin-bottom: 15px;">
+        While streaming flow policy cannot capture global constraints across timesteps, it can still capture local constraints such as arbitrary positions constraints and convex velocity constraints; see the <a href="paper.pdf">paper</a> for more details.
+    </p>
+    
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-colorful">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="real-world"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px; width: 100%;">Real-world demo</div><br>
+
+        <div id="results-carousel" class="carousel results-carousel" style="width: 100%; max-width: 550px;">
+            <div>
+                <video style="width: 100%; max-width: 900px; margin-top: 30px; border: 2px solid black" muted playsinline autoplay loop controls>
+                    <source src="media/real-world/compressed-webm/sfp/non-streaming/may8-37s.webm">
+                </video>
+            </div>
+            <div>
+                <video style="width: 100%; max-width: 900px; margin-top: 30px; border: 2px solid black" muted playsinline autoplay loop controls>
+                    <source src="media/real-world/compressed-webm/sfp/non-streaming/may8-35s.webm">
+                </video>
+            </div>
+            <!-- <div>
+                <video style="width: 100%; max-width: 900px; margin-top: 30px; border: 2px solid black" muted playsinline autoplay loop controls>
+                    <source src="media/real-world/compressed-webm/sfp/streaming/may14-42s.webm">
+                </video>
+            </div> -->
+            <!-- <div>
+                <video style="width: 100%; max-width: 900px; margin-top: 30px; border: 2px solid black" muted playsinline autoplay loop controls>
+                    <source src="media/real-world/compressed-webm/sfp/streaming/may14-50s.webm">
+                    # <source src="media/real-world/compressed-webm/sfp/non-streaming/may8-35s.webm">
+                </video>
+            </div> -->
+        </div>
+        <script>
+            // https://bulma-carousel.onrender.com/
+            bulmaCarousel.attach('#results-carousel', {
+                slidesToScroll: 1,
+                slidesToShow: 1
+            });
+        </script>
+
+        <p class="inner-text left" style="margin-top: 10px; margin-bottom: 15px; width: 100%;">
+            We train streaming flow policy on a 7-DOF Franka FR3 robot arm to peform the task of picking up a green apple in the presence of clutter.
+            We provide human demonstrations via kinesthetic teaching.
+            The observations of the robot are raw RGB images, and the action space is the pose of the gripper.
+            We find that streaming flow policy produces smooth, fast and reactive motions while performing the task.
+            Streaming flow policy is faster and smoother than diffusion policy.
+        </p>
+
+        <figure style="margin-bottom: 10px; margin-top: 10px; margin-right: 2px; width: 100%">
+            <video style="width: 100%; max-width: 900px; mix-blend-mode: multiply;" muted playsinline autoplay loop controls>
+                <source src="media/real-world/dp-sfp-comparison.mp4">
+            </video>
+        </figure>
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-light">
+        <!-- dummy anchor to adjust for navbar height -->
+        <span class="nav-anchor" id="bibtex"></span>
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container">
+        <div style="font-size: 35px; width: 100%;">Paper and Bibtex</div><br>
+
+        <div style="width: 20%; margin-right: 5px; margin-top: 10px;">
+        <a href="https://arxiv.org/abs/2505.21851" target="_blank"><img class="layered-paper-big" style="height:150px; margin-bottom: 30px;" src="resources/paper-thumbnail.webp"/></a>
+        <!-- ArXiv Link. -->
+        <span class="link-block">
+            <a href="https://arxiv.org/abs/2505.21851"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="ai ai-arxiv"></i>
+            </span>
+            <span>ArXiv</span>
+            </a>
+        </span>
+        <!-- OpenReview Link. -->
+        <!-- <span class="link-block" style="margin-left: 2px; margin-right: 2px">
+            <a href="https://openreview.net/forum?id=jnpILGz9gQ"
+            class="external-link button is-normal is-rounded is-dark">
+            <span class="icon">
+                <i class="fa-solid fa-file-pdf"></i>
+            </span>
+            <span>OpenReview</span>
+            </a>
+        </span> -->
+        </div>
+        <div style="width: 75%; margin-left: 5px;">
+<pre xml:space="preserve" style="text-align: left;">
+@inproceedings{jiang2025streaming,
+  title     = {Streaming Flow Policy: Simplifying diffusion/flow-matching policies by treating action trajectories as flow trajectories},
+  author    = {Sunshine Jiang AND Xiaolin Fang AND Nicholas Roy AND Tom{\'a}s Lozano-P{\'e}rez AND Leslie Pack Kaelbling AND Siddharth Ancha},
+  booktitle = {9th Annual Conference on Robot Learning, CoRL 2025},
+  year      = {2025},
+  address   = {Seoul, Korea},
+  month     = {September},
+  url       = {https://openreview.net/forum?id=jnpILGz9gQ}
+}
+</pre>
+    </div>
+
+    </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="is-dark">
+    <div class="columns is-centered">
+    <div class="column has-text-centered">
+
+    <div class="container is-max-desktop">
+        <!-- <hr class="container"> -->
+        <div style="font-size: 32px">Acknowledgements</div>
+        <p style="font-size: 16px; text-align: left; width: 95%; margin-top: 15px;">
+            This material is based upon work supported by the MIT Quest for Intelligence initiative.
+            <!-- Army Research Office under Cooperative Agreement No. W911NF-21-2-0150. -->
+            The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of MIT or the U.S. Government.
+            <!-- The U.S. Government is authorized to reproduce and distribute reprints for Government purposes notwithstanding any copyright notation herein. -->
+        </p>
+    <br>
+    <span class="link-block" style="margin-left: 2px; margin-right: 2px; margin-top: 20px">
+        <a href="#top" class="back-to-top-button external-link button is-normal is-rounded is-dark">
+          <span class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M12 2L4 10h5v8h6v-8h5L12 2z" fill="currentColor"/>
+              </svg>
+          </span>
+          <span style="font-size: 18px;">Back to top</span>
+          </a>
+      </span>
+    </div>
+
+    </div>
+    </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Define the styled span as a variable
+            const epsilonShape = '<span style="font-size: 18px; color: blue; font-weight: bold;">Ɛ</span>';
+            const threeShape = '<span style="font-size: 18px; color: red; font-weight: bold;">3</span>';
+            
+            // Replace the hardcoded spans with the variables
+            document.querySelectorAll('.shape-epsilon').forEach(el => {
+                el.innerHTML = epsilonShape;
+            });
+            document.querySelectorAll('.shape-three').forEach(el => {
+                el.innerHTML = threeShape;
+            });
+
+            const navAnchors = document.querySelectorAll('.nav-anchor');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            function activateNavLink() {
+                // Remove 'active' class from all nav links
+                navLinks.forEach((link) => link.classList.remove('active'));
+
+                let index = navAnchors.length;
+
+                navAnchors.forEach((navAnchor, index) => {
+
+                    const eyeLineOffset = 100;
+
+                    // 38px is the height of the fixed navbar
+                    // eyeLineOffset is the offset from the top of the section to the eye line
+                    const scrollY = window.scrollY + 38 + eyeLineOffset;
+
+                    const section = navAnchor.parentNode;
+                    if (
+                        (scrollY >= section.offsetTop) &&
+                        (scrollY < section.offsetTop + section.offsetHeight)
+                    ) {
+                        // Add 'active' class to the current section's nav link
+                        navLinks[index].classList.add('active');
+                        return;
+                    }
+                });
+            }
+
+            activateNavLink(); // Call once on initial load
+            window.addEventListener('scroll', activateNavLink); // Update on scroll
+    });
+    </script>
+</body>

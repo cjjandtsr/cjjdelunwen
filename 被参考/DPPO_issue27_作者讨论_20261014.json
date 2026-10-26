@@ -1,0 +1,35 @@
+{
+  "url": "https://github.com/irom-princeton/dppo/issues/27",
+  "comments": [
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2560565998",
+      "author": "allenzren",
+      "body": "Hmm that is unusual. Could you share the exact config and the task?\r\n\r\nAlso, just to check, did you install my own fork of D3IL?\r\n"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2560567003",
+      "author": "allenzren",
+      "body": "We did tune the hyperparameters for other tasks since some updates to our formulation after the initial release (in general, batch size needs to be bigger). But we didn’t check the D3IL tasks again. I can take a look"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2560574901",
+      "author": "NathanWalt",
+      "body": "I follow the installation/install_d3il.md to install the d3il environment. For the config I use the cfg/d3il/finetune/avoid_m1/ft_ppo_diffusion_mlp.yaml file in your repository and use the checkpoint downloaded from the url in this yaml file. Could you kindly share your hyperparameter configuration?"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2560595998",
+      "author": "allenzren",
+      "body": "Yep I am trying bigger batch size now. Will let you know\r\n"
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2560754523",
+      "author": "allenzren",
+      "body": "I updated the configs https://github.com/irom-princeton/dppo/commit/e7f73dffc131570ef7129d5ed1bc98a05cf030ab. Basically the batch size had to be multiplied by the number of fine-tuned denoising steps, thus the effective batch size matches the original ones used in the paper.\r\n![Screenshot 2024-12-24 at 1 36 53 AM](https://github.com/user-attachments/assets/a0a00750-21ba-4c2a-8292-201fb4a27d34)\r\n\r\nThanks for pointing this out too! We should've updated the D3IL configs when we introduced the new gradient update (https://github.com/irom-princeton/dppo/releases/tag/v0.6)."
+    },
+    {
+      "url": "https://github.com/irom-princeton/dppo/issues/27#issuecomment-2561574947",
+      "author": "NathanWalt",
+      "body": "Thank you for your update! I'll try it out myself later."
+    }
+  ]
+}

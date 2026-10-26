@@ -1,0 +1,2325 @@
+
+===== PAGE 1 =====
+Cal-QL: Calibrated Offline RL Pre-Training for
+Efficient Online Fine-Tuning
+Mitsuhiko Nakamoto1∗ Yuexiang Zhai1∗ Anikait Singh1 Max Sobol Mark2
+Yi Ma1 Chelsea Finn2 Aviral Kumar1 Sergey Levine1
+1UC Berkeley 2Stanford University
+Abstract
+A compelling use case of offline reinforcement learning (RL) is to obtain a policy
+initialization from existing datasets followed by fast online fine-tuning with limited
+interaction. However, existing offline RL methods tend to behave poorly during fine-
+tuning. In this paper, we study the fine-tuning problem in the context of conservative
+offline RL methods and we devise an approach for learning an effective initialization
+from offline data that also enables fast online fine-tuning capabilities. Our approach,
+calibrated Q-learning (Cal-QL), accomplishes this by learning a conservative value
+function initialization that underestimates the value of the learned policy from
+offline data, while also ensuring that the learned Q-values are at a reasonable scale.
+We refer to this property as calibration, and define it formally as providing a lower
+bound on the true value function of the learned policy and an upper bound on
+the value of some other (suboptimal) reference policy, which may simply be the
+behavior policy. We show that a conservative offline RL algorithm that also learns
+a calibrated value function leads to effective online fine-tuning, enabling us to take
+the benefits of offline initializations in online fine-tuning. In practice, Cal-QL can
+be implemented on top of the conservative Q learning (CQL) [32] for offline RL
+within a one-line code change. Empirically, Cal-QL outperforms state-of-the-art
+methods on 9/11 fine-tuning benchmark tasks that we study in this paper. Code
+and video are available at https://nakamotoo.github.io/Cal-QL
+1 Introduction
+Modern machine learning successes follow a common recipe: pre-training models on general-purpose,
+Internet-scale data, followed by fine-tuning the pre-trained initialization on a limited amount of data
+for the task of interest [22, 7]. How can we translate such a recipe to sequential decision-making
+problems? A natural way to instantiate this paradigm is to utilize offline reinforcement learning
+(RL) [37] for initializing value functions and policies from static datasets, followed by online fine-
+tuning to improve this initialization with limited active interaction. If successful, such a recipe might
+enable efficient online RL with much fewer samples than current methods that learn from scratch.
+Many algorithms for offline RL have been applied to online fine-tuning. Empirical results across
+such works suggest a counter-intuitive trend: policy initializations obtained from more effective
+offline RL methods tend to exhibit worse online fine-tuning performance, even within the same
+task (see Table 2 of Kostrikov et al. [31] & Figure 4 of Xiao et al. [57]). On the other end, on-
+line RL methods training from scratch (or RL from demonstrations [ 53], where the replay buffer
+is seeded with the offline data) seem to improve online at a significantly faster rate. However,
+∗Equal contributions. Corresponding authors: Mitsuhiko Nakamoto, Yuexiang Zhai, and Aviral Kumar
+({nakamoto, simonzhai}@berkeley.edu, aviralku@andrew.cmu.edu)
+37th Conference on Neural Information Processing Systems (NeurIPS 2023).
+arXiv:2303.05479v4  [cs.LG]  20 Jan 2024
+
+===== PAGE 2 =====
+these online methods require actively collecting data by rolling out policies from scratch, which
+inherits similar limitations to naïve online RL methods in problems where data collection is ex-
+pensive or dangerous. Overall, these results suggest that it is challenging to devise an offline RL
+algorithm that both acquires a good initialization from prior data and also enables efficient fine-tuning.
+Online Fine-Tuning
+Return
+Fast Sample-Efficient Online Fine-Tuning
+Offline Pre-training
+Oracle
+Calibrated [ours]
+Prior Algorithm 1
+Prior Algorithm 2
+Offline
+Dataset
+Finetuned
+Agent Environment
+Online 
+Dataset
+Agent
+Offline  
+Dataset
+Figure 1: We study offline RL pre-training followed
+by online RL fine-tuning. Some prior offline RL meth-
+ods tend to exhibit slow performance improvement in
+this setting (yellow), resulting in worse asymptotic per-
+formance. Others suffer from initial performance degra-
+dation once online fine-tuning begins (red), resulting in
+a high cumulative regret. We develop an approach that
+“calibrates” the learned value function to attain a fast
+improvement with a smaller regret (blue).
+How can we devise a method to learn an effec-
+tive policy initialization that also improves dur-
+ing fine-tuning? Prior work [32, 6] shows that
+one can learn a good offline initialization by op-
+timizing the policy against a conservative value
+function obtained from an offline dataset. But,
+as we show in Section 4.1, conservatism alone is
+insufficient for efficient online fine-tuning. Con-
+servative methods often tend to “unlearn” the
+policy initialization learned from offline data
+and waste samples collected via online interac-
+tion in recovering this initialization. We find
+that the “unlearning” phenomenon is a conse-
+quence of the fact that value estimates produced
+via conservative methods can be significantly
+lower than the ground-truth return of any valid
+policy. Having Q-value estimates that do not
+lie on a similar scale as the return of a valid
+policy is problematic. Because once fine-tuning
+begins, actions executed in the environment for
+exploration that are actually worse than the pol-
+icy learned from offline data could erroneously
+appear better, if their ground-truth return value is larger than the learned conservative value estimate.
+Hence, subsequent policy optimization will degrade the policy performance until the method recovers.
+If we can ensure that the conservative value estimates learned using the offline data arecalibrated,
+meaning that these estimates are on a similar scale as the true return values, then we can avoid the
+unlearning phenomenon caused by conservative methods (see the formal definition in 4.1). Of course,
+we cannot enforce such a condition perfectly, since it would require eliminating all errors in the value
+function. Instead, we devise a method for ensuring that the learned values upper bound the true values
+of some reference policy whose values can be estimated more easily (e.g., the behavior policy), while
+still lower bounding the values of the learned policy. Though this does not perfectly ensure that the
+learned values are correct, we show that it still leads to sample-efficient online fine-tuning. Thus,
+our practical method, calibrated Q-learning (Cal-QL), learns conservative value functions that are
+“calibrated” against the behavior policy, via a simple modification to existing conservative methods.
+The main contribution of this paper is Cal-QL, a method for acquiring an offline initialization that
+facilitates online fine-tuning. Cal-QL aims to learn conservative value functions that are calibrated
+with respect to a reference policy (e.g., the behavior policy). Our analysis of Cal-QL shows that
+Cal-QL attains stronger guarantees on cumulative regret during fine-tuning. In practice, Cal-QL
+can be implemented on top of conservative Q-learning [ 32], a prior offline RL method, without
+any additional hyperparameters. We evaluate Cal-QL across a range of benchmark tasks from [10],
+[51] and [44], including robotic manipulation and navigation. We show that Cal-QL matches or
+outperforms the best methods on all tasks, in some cases by 30-40%.
+2 Related Work
+Several prior works suggest that online RL methods typically require a large number of samples [50,
+54, 61, 26, 64, 18, 38] to learn from scratch. We can utilize offline data to accelerate online
+RL algorithms. Prior works do this in a variety of ways: incorporating the offline data into the
+replay buffer of online RL [48, 53, 23, 52], utilizing auxiliary behavioral cloning losses with policy
+gradients [46, 27, 67, 66], or extracting a high-level skill space for downstream online RL [17, 1].
+While these methods improve the sample efficiency of online RL from scratch, as we will also show
+in our results, they do not eliminate the need to actively roll out poor policies for data collection.
+To address this issue, a different line of work first runs offline RL for learning a good policy and value
+initialization from the offline data, followed by online fine-tuning [45, 30, 41, 3, 56, 36, 42]. These
+2
+
+===== PAGE 3 =====
+approaches typically employ offline RL methods based on policy constraints or pessimism [12, 49, 16,
+15, 30, 51, 36] on the offline data, then continue training with the same method on a combination of
+offline and online data once fine-tuning begins [43, 28, 62, 32, 4]. Although pessimism is crucial for
+offline RL [25, 6], using pessimism or constraints for fine-tuning [45, 30, 41] slows down fine-tuning
+or leads to initial unlearning, as we will show in Section 4.1. In effect, these prior methods either
+fail to improve as fast as online RL or lose the initialization from offline RL. We aim to address this
+limitation by understanding some conditions on the offline initialization that enable fast fine-tuning.
+Our work is most related to methods that utilize a pessimistic RL algorithm for offline training but
+incorporate exploration in fine-tuning [36, 42, 56]. In contrast to these works, our method aims to
+learn a better offline initialization that enables standard online fine-tuning. Our approach fine-tunes
+naïvely without ensembles [36] or exploration [42] and, as we show in our experiments, this alone is
+enough to outperform approaches that employ explicit optimism during data collection.
+3 Preliminaries and Background
+The goal in RL is to learn the optimal policy for an MDP M = ( S, A, P, r, ρ, γ). S, A denote
+the state and action spaces. P (s′|s, a) and r(s, a) are the dynamics and reward functions. ρ(s)
+denotes the initial state distribution. γ ∈ (0, 1) denotes the discount factor. Formally, the goal is
+to learn a policy π : S 7→ A that maximizes cumulative discounted value function, denoted by
+V π(s) = 1
+1−γ
+P
+t Eat∼π(st) [γtr(st, at)|s0 = s]. The Q-function of a given policy π is defined as
+Qπ(s, a) = 1
+1−γ
+P
+t Eat∼π(st) [γtr(st, at)|s0 = s, a0 = a], and we use Qπ
+θ to denote the estimate
+of the Q-function of a policy π as obtained via a neural network with parameters θ.
+Given access to an offline dataset D = {(s, a, r, s′)} collected using a behavior policy πβ, we aim
+to first train a good policy and value function using the offline dataset D alone, followed by an
+online phase that utilizes online interaction in M. Our goal during fine-tuning is to obtain the
+optimal policy with the smallest number of online samples. This can be expressed as minimizing the
+cumulative regret over rounds of online interaction: Reg(K) := Es∼ρ
+PK
+k=1
+h
+V ⋆(s) − V πk
+(s)
+i
+.
+As we demonstrate in Section 7, existing methods face challenges in this setting.
+Our approach will build on the conservative Q-learning (CQL) [ 32] algorithm. CQL imposes an
+additional regularizer that penalizes the learned Q-function on out-of-distribution (OOD) actions
+while compensating for this pessimism on actions seen within the training dataset. Assuming that the
+value function is represented by a function, Qθ, the training objective of CQL is given by
+min
+θ
+α (Es∼D,a∼π [Qθ(s, a)] − Es,a∼D [Qθ(s, a)])| {z }
+Conservative regularizer R(θ)
++ 1
+2 Es,a,s′∼D
+h 
+Qθ(s, a) − Bπ ¯Q(s, a)
+2i
+, (3.1)
+where Bπ ¯Q(s, a) is the backup operator applied to a delayed target Q-network, ¯Q: Bπ ¯Q(s, a) :=
+r(s, a) + γEa′∼π(a′|s′)[ ¯Q(s′, a′)]. The second term is the standard TD error [40, 13, 20]. The first
+term R(θ) (in blue) is a conservative regularizer that aims to prevent overestimation in the Q-values
+for OOD actions by minimizing the Q-values under the policy π(a|s), and counterbalances by
+maximizing the Q-values of the actions in the dataset following the behavior policy πβ.
+4 When Can Offline RL Initializations Enable Fast Online Fine-Tuning?
+A starting point for offline pre-training and online fine-tuning is to simply initialize the value function
+with one that is produced by an existing offline RL method and then perform fine-tuning. However,
+we empirically find that initializations learned by many offline RL algorithms can perform poorly
+during fine-tuning. We will study the reasons for this poor performance for the subset of conservative
+methods to motivate and develop our approach for online fine-tuning, calibrated Q-learning.
+4.1 Empirical Analysis
+Offline RL followed by online fine-tuning typically poses non-trivial challenges for a variety of
+methods. While analysis in prior work [45] notes challenges for a subset of offline RL methods, in
+Figure 2, we evaluate the fine-tuning performance of a variety of prior offline RL methods (CQL [32],
+IQL [30], TD3+BC [11], AW AC [45]) on a particular diagnostic instance of a visual pick-and-place
+task with a distractor object and sparse binary rewards [ 51], and find that all methods struggle
+to attain the best possible performance, quickly. More details about this task are in Appendix B.
+3
+
+===== PAGE 4 =====
+0 100000 200000
+Training Steps
+−40
+−30
+−20
+−10
+0
+Average Q-Value
+0 100000 200000
+Training Steps
+0.00
+0.25
+0.50
+0.75
+1.00
+Normalized Score
+Figure 3: The evolution of the average Q-value and the success rate of CQL over the course of offline
+pre-training and online fine-tuning. Fine-tuning begins at 50K steps. The red-colored part denotes the period
+of performance recovery which also coincides with the period of Q-value adjustment.
+0 1 2 3 4 5
+Environment Steps ×104
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+CQL
+IQL
+A W AC
+TD3+BC
+Figure 2: Multiple prior offline RL al-
+gorithms suffer from difficulties during
+fine-tuning including poor asymptotic per-
+formance and initial unlearning.
+While the offline Q-function initialization obtained from all
+methods attains a similar (normalized) return of around 0.5,
+they suffer from difficulties during fine-tuning: TD3+BC,
+IQL, AWAC attain slow asymptotic performance and CQL
+unlearns the offline initialization, followed by spending a
+large amount of online interaction to recover the offline
+performance again, before any further improvement. This
+initial unlearning appears in multiple tasks as we show in
+Appendix F. In this work, we focus on developing effective
+fine-tuning strategies on top of conservative methods like
+CQL. To do so, we next aim to understand the potential
+reason behind the initial unlearning in CQL.
+Why does CQL unlearn initially? To understand why CQL
+unlearns initially, we inspect the learned Q-values averaged
+over the dataset in Figure 3. Observe that the Q-values
+learned by CQL in the offline phase are much smaller than their ground-truth value (as expected), but
+these Q-values drastically jump and adjust in scale when fine-tuning begins. In fact, we observe that
+performance recovery (red segment in Figure 3) coincides with a period where the range of Q-values
+changes to match the true range. This is as expected: as a conservative Q-function experiences new
+online data, actions much worse than the offline policy on the rollout states appear to attain higher
+rewards compared to the highly underestimated offline Q-function, which in turn deceives the policy
+optimizer into unlearning the initial policy. We illustrate this idea visually in Figure 4. Once the
+Q-function has adjusted and the range of Q-values closely matches the true range, then fine-tuning
+can proceed normally, after the dip.
+To summarize, our empirical analysis indicates that methods existing fine-tuning methods suffer
+from difficulties such as initial unlearning or poor asymptotic performance. In particular, we observed
+that conservative methods can attain good asymptotic performance, but “waste” samples to correct the
+learned Q-function. Thus, in this paper, we attempt to develop a good fine-tuning method that builds
+on top of an existing conservative offline RL method, CQL, but aims to “calibrate” the Q-function so
+that the initial dip in performance can be avoided.
+4.2 Conditions on the Offline Initialization that Enable Fast Fine-Tuning
+Our observations from the preceding discussion motivate two conclusions in regard to the offline
+Q-initialization for fast fine-tuning: (a) methods that learn conservative Q-functions can attain good
+asymptotic performance, and (b) if the learned Q-values closely match the range of ground-truth
+Q-values on the task, then online fine-tuning does not need to devote samples to unlearn and then
+recover the offline initialization. One approach to formalize this intuition of Q-values lying on a
+similar scale as the ground-truth Q-function is via the requirement that the conservative Q-values
+learned by the conservative offline RL method must be lower-bounded by the ground-truth Q-value of
+a sub-optimal reference policy. This will prevent conservatism from learning overly small Q-values.
+We will refer to this property as “calibration” with respect to the reference policy.
+Definition 4.1 (Calibration). An estimated Q-function Qπ
+θ for a given policy π is said to be calibrated
+with respect to a reference policy µ if Ea∼π [Qπ
+θ (s, a)] ≥ Ea∼µ [Qµ(s, a)] := V µ(s), ∀s ∈ D.
+If the learned Q-function Qπ
+θ is calibrated with respect to a policy µ that is worse than π, it would
+prevent unlearning during fine-tuning that we observed in the case of CQL. This is because the
+4
+
+===== PAGE 5 =====
+policy optimizer would not unlearn π in favor of a policy that is worse than the reference policy
+µ upon observing new online data as the expected value of π is constrained to be larger than V µ:
+Ea∼π [Qπ
+θ (s, a)] ≥ V µ(s). Our practical approach Cal-QL will enforce calibration with respect to
+a policy µ whose ground-truth value, V µ(s), can be estimated reliably without bootstrapping error
+(e.g., the behavior policy induced by the dataset). This is the key idea behind our method (as we will
+discuss next) and is visually illustrated in Figure 4.
+5 Cal-QL: Calibrated Q-Learning
+Our approach, calibrated Q-learning (Cal-QL) aims to learn a conservative and calibrated value
+function initializations from an offline dataset. To this end, Cal-QL builds on CQL [ 32] and then
+constrains the learned Q-function to produce Q-values larger than the Q-value of a reference policy µ
+per Definition 4.1. In principle, our approach can utilize many different choices of reference policies,
+but for developing a practical method, we simply utilize the behavior policy as our reference policy.
+Calibrating CQL. We can constrain the learned Q-function Qπ
+θ to be larger than V µ via a simple
+change to the CQL training objective shown in Equation 3.1: masking out the push down of the
+learned Q-value on out-of-distribution (OOD) actions in CQL if the Q-function is not calibrated, i.e.,
+if Ea∼π [Qπ
+θ (s, a)] ≤ V µ(s). Cal-QL modifies the CQL regularizer, R(θ) in this manner:
+Es∼D,a∼π [max (Qθ(s, a), V µ(s))] − Es,a∼D [Qθ(s, a)] , (5.1)
+where the changes from standard CQL are depicted in red. As long as α (in Equation 3.1) is large, for
+any state-action pair where the learned Q-value is smaller than Qµ, the Q-function in Equation 5.1
+will upper bound Qµ in a tabular setting. Of course, as with any practical RL method, with function
+approximators and gradient-based optimizers, we cannot guarantee that we can enforce this condition
+for every state-action pair, but in our experiments, we find that Equation 5.1 is sufficient to enforce
+the calibration in expectation over the states in the dataset.
+Pseudo-code and implementation details. Our implementation of Cal-QL directly builds on the
+implementation of CQL from Geng [14]. We present a pseudo-code for Cal-QL in Appendix A.
+Additionally, we list the hyperparameters α for the CQL algorithm and our baselines for each suite of
+tasks in Appendix C. Following the protocol in prior work [30, 52], the practical implementation of
+Cal-QL trains on a mixture of the offline data and the new online data, weighted in some proportion
+during fine-tuning. To get V µ(s), we can fit a function approximator Qµ
+θ or V µ
+θ to the return-to-go
+values via regression, but we observed that also simply utilizing the return-to-go estimates for tasks
+that end in a terminal was sufficient for our use case. We show in Section 7, how this simple one-line
+change to the objective drastically improves over prior fine-tuning results.
+Cal-QL
+online update
+CQLaction
+learned Q-functionground truth values
+Pre-trained Q-function Online fine-tuned Q-function 
+action during exploration
+bad action appears optimalunder learned Q-functiondataset bad action doesn’t appear optimalunder learned Q-functionaction during exploration
+online update
+Figure 4: Intuition behind policy unlearning with CQL and the idea behind Cal-QL. The plot visualizes a
+slice of the learned Q-function and the ground-truth values for a given state. Erroneous peaks on suboptimal
+actions (x-axis) arise when updating CQL Q-functions with online data. This in turn can lead the policy to
+deviate away from high-reward actions covered by the dataset in favor of erroneous new actions, resulting in
+deterioration of the pre-trained policy. In contrast, Cal-QL corrects the scale of the learned Q-values by using
+a reference value function, such that actions with worse Q-values than the reference value function do not
+erroneously appear optimal in fine-tuning.
+5
+
+===== PAGE 6 =====
+6 Theoretical Analysis of Cal-QL
+We will now analyze the cumulative regret attained over online fine-tuning, when the value function
+is pre-trained with Cal-QL, and show that enforcing calibration (Defintion 4.1) leads to a favorable
+regret bound during the online phase. Our analysis utilizes tools from Song et al. [52], but studies the
+impact of calibration on fine-tuning. We also remark that we simplify the treatment of certain aspects
+(e.g., how to incorporate pessimism) as it allows us to cleanly demonstrate the benefits of calibration.
+Notation & terminology. In our analysis, we will consider an idealized version of Cal-QL for
+simplicity. Specifically, following prior work [ 52] under the bilinear model [ 9], we will operate
+in a finite-horizon setting with a horizon H. We denote the learned Q-function at each learning
+iteration k for a given (s, a) pair and time-step h by Qk
+θ(s, a). For any given policy π, let Cπ ≥ 1
+denote the concentrability coefficient such that Cπ := maxf ∈C
+PH−1
+h=0 Es,a∼dπ
+h
+[T fh+1(s,a)−fh(s,a)]
+qPH−1
+h=0 Es,a∼νh(T fh+1(s,a)−fh(s,a))2
+,
+i.e., a coefficient that quantifies the distribution shift between the policy π and the dataset D, in
+terms of the ratio of Bellman errors averaged under π and the dataset D. Note that C represents
+the Q-function class and we assume C has a bellman-bilinear rank [ 9] of d. We also use C µ
+π to
+denote the concentrability coefficient over a subset of calibrated Q-functions w.r.t. a reference policy
+µ: C µ
+π := max f ∈C,f(s,a)≥Qµ(s,a)
+PH−1
+h=0 Es,a∼dπ
+h
+[T fh+1(s,a)−fh(s,a)]
+qPH−1
+h=0 Es,a∼νh(T fh+1(s,a)−fh(s,a))2
+, which provides C µ
+π ≤ Cπ.
+Similar to C, let dµ denote the bellman bilinear rank of Cµ – the calibrated Q-function class w.r.t. the
+reference policy µ. Intuitively, we have Cµ ⊂ C , which implies that dµ ≤ d. The formal definitions
+are provided in Appendix H.2. We will use πk to denote the arg-max policy induced by Qk
+θ.
+Intuition. We intuitively discuss how calibration and conservatism enable Cal-QL to attain a smaller
+regret compared to not imposing calibration. Our goal is to bound the cumulative regret of online
+fine-tuning,P
+k Es0∼ρ[V π⋆
+(s0) − V πk
+(s0)]. We can decompose this expression into two terms:
+Reg(K) =
+KX
+k=1
+Es0∼ρ
+h
+V ⋆(s0) − maxa Qk
+θ(s0, a)
+i
+| {z }
+(i) := miscalibration
++
+KX
+k=1
+Es0∼ρ
+h
+maxa Qk
+θ(s0, a) − V πk
+(s0)
+i
+| {z }
+(ii) := overestimation
+. (6.1)
+This decomposition of regret into terms (i) and (ii) is instructive. Term (ii) corresponds to the amount
+of over-estimation in the learned value function, which is expected to be small if a conservative RL
+algorithm is used for training. Term (i) is the difference between the ground-truth value of the optimal
+policy and the learned Q-function and is negative if the learned Q-function were calibrated against
+the optimal policy (per Definition 4.1). Of course, this is not always possible because we do not know
+V ⋆ a priori. But note that when Cal-QL utilizes a reference policy µ with a high value V µ, close to
+V ⋆, then the learned Q-function Qθ is calibrated with respect to Qµ per Condition 4.1 and term (i)
+can still be controlled. Therefore, controlling this regret requires striking a balance between learning
+a calibrated (term (i)) and conservative (term (ii)) Q-function. We now formalize this intuition and
+defer the detailed proof to Appendix H.6.
+Theorem 6.1 (Informal regret bound of Cal-QL). With high probability, Cal-QL obtains the following
+bound on total regret accumulated during online fine-tuning:
+Reg(K) = eO
+
+min
+
+C µ
+π⋆ H
+p
+dK log (|F |), K Eρ[V ⋆(s0) − V µ(s0)] + H
+q
+dµK log (|F |)
+	
+,
+where F is the functional class of the Q-function.
+Comparison to Song et al. [52]. Song et al. [52] analyzes an online RL algorithm that utilizes offline
+data without imposing conservatism or calibration. We now compare Theorem 6.1 to Theorem 1 of
+Song et al. [52] to understand the impact of these conditions on the final regret guarantee. Theorem 1
+of Song et al. [52] presents a regret bound: Reg(K) = eO
+
+Cπ⋆ H
+p
+dK log (|F |)
+
+and we note some
+improvements in our guarantee, that we also verify via experiments in Section 7.3: (a) for the setting
+where the reference policyµ contains near-optimal behavior, i.e.,V ⋆ −V µ ≲ O(H
+p
+d log (|F |) /K),
+Cal-QL can enable a tighter regret guarantee compared to Song et al. [52]; (b) as we show in
+Appendix H.3, the concentrability coefficient C µ
+π⋆ appearing in our guarantee is no larger than the
+one that appears in Theorem 1 of Song et al. [52], providing another source of improvement; and (c)
+finally, in the case where the reference policy has broad coverageand is highly sub-optimal, Cal-QL
+reverts back to the guarantee from [52], meaning that Cal-QL improves upon this prior work.
+6
+
+===== PAGE 7 =====
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-diverse-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-play-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-diverse-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-play-v2
+Cal-QL (Ours)
+IQL
+CQL
+Hybrid RL
+SAC
+A W AC
+O3F
+ODT
+SAC + oﬄine data
+CQL + SAC
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-diverse-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-play-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-diverse-v2
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-play-v2
+Cal-QL (Ours)
+IQL
+CQL
+Hybrid RL
+SAC
+A W AC
+O3F
+ODT
+SAC + oﬄine data
+CQL + SAC
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-partial-v0
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-mixed-v0
+0.0 0.2 0.4 0.6 0.8 1.0 1.2
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-complete-v0
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+visual-manipulation
+0.0 0.5 1.0 1.5 2.0 2.5 3.0
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+pen-binary-v0
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+door-binary-v0
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×106
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+relocate-binary-v0
+Figure 6: Online fine-tuning after offline initialization on the benchmark tasks. The plots show the online
+fine-tuning phase after pre-training for each method (except SAC-based approaches which are not pre-trained).
+Observe that Cal-QL consistently matches or exceeds the speed and final performance of the best prior method
+and is the only algorithm to do so across all tasks. (6 seeds)
+7 Experimental Evaluation
+The goal of our experimental evaluation is to study how well Cal-QL can facilitate sample-efficient
+online fine-tuning. To this end, we compare Cal-QL with several other state-of-the-art fine-tuning
+methods on a variety of offline RL benchmark tasks from D4RL [ 10], Singh et al. [51], and Nair
+et al. [45], evaluating performance before and after fine-tuning. We also study the effectiveness of
+Cal-QL on higher-dimensional tasks, where the policy and value function must process raw image
+observations. Finally, we perform empirical studies to understand the efficacy of Cal-QL with
+different dataset compositions and the impact of errors in the reference value function estimation.
+Figure 5: Tasks: We evaluate Cal-QL on a diverse set
+of benchmark problems: AntMaze and Frankakitchen
+domains from [10], Adroit tasks from [45] and a vision-
+based robotic manipulation task from [34].
+Offline RL tasks and datasets. We evaluate
+Cal-QL on a number of benchmark tasks and
+datasets used by prior works [30, 45] to evalu-
+ate fine-tuning performance: (1) The AntMaze
+tasks from D4RL [10] that require controlling
+an ant quadruped robot to navigate from a start-
+ing point to a desired goal location in a maze.
+The reward is +1 if the agent reaches within a
+pre-specified small radius around the goal and
+0 otherwise. (2) The FrankaKitchen tasks from D4RL require controlling a 9-DoF Franka robot
+to attain a desired configuration of a kitchen. To succeed, a policy must complete four sub-tasks
+in the kitchen within a single rollout, and it receives a binary reward of +1/0 for every sub-task
+it completes. (3) Three Adroit dexterous manipulation tasks [ 47, 30, 45] that require learning
+complex manipulation skills on a 28-DoF five-fingered hand to (a) manipulate a pen in-hand to a
+desired configuration (pen-binary), (b) open a door by unlatching the handle (door-binary), and
+(c) relocating a ball to a desired location ( relocate-binary). The agent obtains a sparse binary
++1/0 reward if it succeeds in solving the task. Each of these tasks only provides a narrow offline
+dataset consisting of 25 demonstrations collected via human teleoperation and additional trajectories
+collected by a BC policy. Finally, to evaluate the efficacy of Cal-QL on a task where we learn from
+raw visual observations, we study (4) a pick-and-place task from prior work [51, 34] that requires
+learning to pick a ball and place it in a bowl, in the presence of distractors. Additionally, we compared
+Cal-QL on D4RL locomotion tasks (halfcheetah, hopper, walker) in Appendix D.
+7
+
+===== PAGE 8 =====
+Comparisons, prior methods, and evaluation protocol. We compare Cal-QL to running online
+SAC [21] from scratch, as well as prior approaches that leverage offline data. This includes naïvely
+fine-tuning offline RL methods such as CQL [32] and IQL [30], as well as fine-tuning with AW AC [45],
+O3F [42] and online decision transformer (ODT) [65], methods specifically designed for offline RL
+followed by online fine-tuning. In addition, we also compare to a baseline that trains SAC [21] using
+both online data and offline data (denoted by “SAC + offline data”) that mimics DDPGfD [53] but
+utilizes SAC instead of DDPG. We also compare to Hybrid RL [52], a recently proposed method
+that improves the sample efficiency of the “SAC + offline data” approach, and “CQL+SAC”, which
+first pre-train with CQL and then run fine-tuning with SAC on a mixture of offline and online data
+without conservatism. More details of each method can be found in Appendix C. We present learning
+curves for online fine-tuning and also quantitatively evaluate each method on its ability to improve the
+initialization learned from offline data measured in terms of (i) final performance after a pre-defined
+number of steps per domain and (ii) the cumulative regret over the course of online fine-tuning. In
+Section 7.2, we run Cal-QL with a higher update-to-data (UTD) ratio and compare it to RLPD [2], a
+more sample-efficient version of “SAC + offline data”.
+7.1 Empirical Results
+We first present a comparison of Cal-QL in terms of the normalized performance before and after
+fine-tuning in Table 1 and the cumulative regret in a fixed number of online steps in Table 2. Following
+the protocol of [ 10], we normalize the average return values for each domain with respect to the
+highest possible return (+4 in FrankaKitchen; +1 in other tasks; see Appendix C.1 for more details).
+Cal-QL improves the offline initialization significantly.Observe in Table 1 and Figure 6 that while
+the performance of offline initialization acquired by Cal-QL is comparable to that of other methods
+such as CQL and IQL, Cal-QL is able to improve over its offline initialization the most by 106.9% in
+aggregate and achieve the best fine-tuned performance in 9 out of 11 tasks.
+Cal-QL enables fast fine-tuning. Observe in Table 2 that Cal-QL achieves the smallest regret on8
+out of 11 tasks, attaining an average regret of 0.22 which improves over the next best method (IQL)
+by 42%. Intuitively, this means that Cal-QL does not require running highly sub-optimal policies. In
+tasks such as relocate-binary, Cal-QL enjoys the fast online learning benefits associated with
+naïve online RL methods that incorporate the offline data in the replay buffer (SAC + offline data
+and Cal-QL are the only two methods to attain a score of ≥ 90% on this task) unlike prior offline RL
+methods. As shown in Figure 6, in the kitchen and antmaze domains, Cal-QL brings the benefits
+of fast online learning together with a good offline initialization, improving drastically on the regret
+metric. Finally, observe that the initial unlearning at the beginning of fine-tuning with conservative
+methods observed in Section 4.1 is greatly alleviated in all tasks (see Appendix F for details).
+Task CQL IQL AW AC O3F ODT CQL+SAC Hybrid SRL SAC+od SAC Cal-QL (Ours)
+large-diverse 25 →87 40 →59 00 →00 59 →28 00 →01 36 →00 →00 →00 →00 33 →95
+large-play 34 →76 41 →51 00 →00 68 →01 00 →00 21 →00 →00 →00 →00 26 →90
+medium-diverse 65 →98 70 →92 00 →00 92 →97 00 →03 64 →98 →02 →68 →00 75 →98
+medium-play 62 →98 72 →94 00 →00 89 →99 00 →05 67 →98 →25 →96 →00 54 →97
+partial 71 →75 40 →60 01 →13 11 →22 - 71 →00 →00 →07 →03 67 →79
+mixed 56 →50 48 →48 02 →12 06 →33 - 59 →01 →01 →00 →02 38 →80
+complete 13 →34 57 →50 01 →08 17 →41 - 21 →06 →00 →05 →06 22 →68
+pen 55 →13 88 →92 88 →92 91 →89 - 48 →10 →54 →17 →11 79 →99
+door 22 →88 41 →88 29 →13 04 →08 - 29 →66 →88 →39 →17 35 →92
+relocate 06 →69 06 →45 06 →08 03 →35 - 01 →00 →99 →16 →00 03 →98
+manipulation 50 →97 49 →81 50 →73 - - 42 →41 →00 →01 →01 49 →99
+average 42 →71 50 →69 16 →20 44 →45 00 →02 42 →29 →24 →23 →04 44 →90
+improvement + 71.0% + 37.7% + 23.7% + 3.0% N/A - 30.3% N/A N/A N/A + 106.9%
+a
+Table 1: Normalized score before & after online fine-tuning. Observe that Cal-QL improves over the
+best prior fine-tuning method and attains a much larger performance improvement over the course of online
+fine-tuning. The numbers represent the normalized score out of 100 following the convention in [10].
+7.2 Cal-QL With High Update-to-Data (UTD) Ratio
+We can further enhance the online sample efficiency of Cal-QL by increasing the number of gradient
+steps per environment step made by the algorithm. The number of updates per environment step is
+usually called the update-to-data (UTD) ratio. In standard online RL, running off-policy Q-learning
+with a high UTD value (e.g., 20, compared to the typical value of 1) often results in challenges
+pertaining to overfitting [39, 5, 2, 8]. As expected, we noticed that running Cal-QL with a high
+UTD value also leads these overfitting challenges. To address these challenges in high UTD settings,
+we combine Cal-QL with the Q-function architecture in recent work, RLPD [ 2] (i.e., we utilized
+layer normalization in the Q-function and ensembles akin to Chen et al. [5]), that attempts to tackle
+8
+
+===== PAGE 9 =====
+Task CQL IQL AW AC O3F ODT CQL+SAC Hybrid RL SAC+od SAC Cal-QL (Ours)
+large-diverse 0.35 0.46 1.00 0.62 0.98 0.99 1.00 1.00 1.00 0.20
+large-play 0.32 0.52 1.00 0.91 1.00 0.99 1.00 1.00 1.00 0.28
+medium-diverse 0.06 0.08 0.99 0.03 0.95 0.06 0.98 0.77 1.00 0.05
+medium-play 0.09 0.10 0.99 0.04 0.96 0.06 0.90 0.47 1.00 0.07
+partial 0.31 0.49 0.89 0.78 - 0.97 0.98 0.98 0.92 0.27
+mixed 0.55 0.60 0.88 0.72 - 0.97 0.99 1.00 0.91 0.27
+complete 0.70 0.53 0.97 0.66 - 0.99 0.99 0.96 0.91 0.44
+pen 0.86 0.11 0.12 0.13 - 0.90 0.56 0.75 0.87 0.11
+door 0.36 0.25 0.81 0.82 - 0.23 0.35 0.60 0.94 0.23
+relocate 0.71 0.74 0.95 0.71 - 0.86 0.30 0.89 1.00 0.43
+manipulation 0.15 0.32 0.38 - - 0.61 1.00 1.00 0.99 0.11
+average 0.41 0.38 0.82 0.54 0.97 0.69 0.82 0.86 0.96 0.22
+Table 2: Cumulative regret averaged over the steps of fine-tuning. The smaller the better and 1.00 is the
+worst. Cal-QL attains the smallest overall regret, achieving the best performance among 8 / 11 tasks.
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-diverse-v2
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-large-play-v2
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-diverse-v2
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+antmaze-medium-play-v2
+Cal-QL (UTD=20) Cal-QL (UTD=1) RLPD (UTD=20)
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+pen-binary-v0
+0.0 0.2 0.4 0.6 0.8 1.0
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+door-binary-v0
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+relocate-binary-v0
+Figure 7: Cal-QL with UTD=20 . Incorporating design choices from RLPD enables Cal-QL to achieve
+sample-efficient fine-tuning with UTD=20. Specifically, Cal-QL generally attains similar or higher asymptotic
+performance as RLPD, while also exhibiting a smaller cumulative regret. (3 seeds)
+overfitting challenges. Note that Cal-QL still first pre-trains on the offline dataset using Equation 5.1
+followed by online fine-tuning, unlike RLPD that runs online RL right from the start. In Figure 7,
+we compare Cal-QL (UTD = 20) with RLPD [2] (UTD = 20) and also Cal-QL (UTD = 1) as a
+baseline. Observe that Cal-QL ( UTD = 20) improves over Cal-QL (UTD = 1) and training from
+scratch (RLPD).
+7.3 Understanding the Behavior of Cal-QL
+In this section, we aim to understand the behavior of Cal-QL by performing controlled experiments
+that modify the dataset composition, and by investigating various metrics to understand the properties
+of scenarios where utilizing Cal-QL is especially important for online fine-tuning.
+Effect of data composition. To understand the efficacy of Cal-QL with different data compositions,
+we ran it on a newly constructed fine-tuning task on the medium-size AntMaze domain with a
+low-coverage offline dataset, which is generated via a scripted controller that starts from a fixed
+initial position and navigates the ant to a fixed goal position. In Figure 8, we plot the performance of
+Cal-QL and baseline CQL (for comparison) on this task, alongside the trend of average Q-values
+over the course of offline pre-training (to the left of the dashed vertical line, before 250 training
+epochs) and online fine-tuning (to the right of the vertical dashed line, after 250 training epochs),
+and the trend of bounding rate, i.e., the fraction of transitions in the data-buffer for which the
+constraint in Cal-QL actively lower-bounds the learned Q-function with the reference value. For
+comparison, we also plot these quantities for a diverse dataset with high coverage on the task (we use
+the antmaze-medium-diverse from Fu et al. [10] as a representative diverse dataset) in Figure 8.
+Observe that for the diverse dataset, both naïve CQL and Cal-QL perform similarly, and indeed, the
+learned Q-values behave similarly for both of these methods. In this setting, online learning doesn’t
+spend samples to correct the Q-function when fine-tuning begins leading to a low bounding rate,
+almost always close to 0. Instead, with the narrow dataset, we observe that the Q-values learned by
+9
+
+===== PAGE 10 =====
+Figure 8: Performance of Cal-QL with data compositions. Cal-QL is most effective with narrow datasets,
+where Q-values need to be corrected at the beginning of fine-tuning.
+naïve CQL are much smaller, and are corrected once fine-tuning begins. This correction co-occurs
+with a drop in performance (solid blue line on left), and naïve CQL is unable to recover from this
+drop. Cal-QL which calibrates the scale of the Q-function for many more samples in the dataset,
+stably transitions to online fine-tuning with no unlearning (solid red line on left).
+This suggests that in settings with narrow datasets (e.g., in the experiment above and in theadroit and
+visual-manipulation domains from Figure 6), Q-values learned by naïve conservative methods
+are more likely to be smaller than the ground-truth Q-function of the behavior policy due to function
+approximation errors. Hence utilizing Cal-QL to calibrate the Q-function against the behavior policy
+can be significantly helpful. On the other hand, with significantly high-coverage datasets, especially
+in problems where the behavior policy is also random and sub-optimal, Q-values learned by naïve
+methods are likely to already be calibrated with respect to those of the behavior policy. Therefore
+no explicit calibration might be needed (and indeed, the bounding rate tends to be very close to 0
+as shown in Figure 8). In this case, Cal-QL will revert back to standard CQL, as we observe in the
+case of the diverse dataset above. This intuition is also reflected in Theorem 6.1: when the reference
+policy µ is close to a narrow, expert policy, we would expect Cal-QL to be especially effective in
+controlling the efficiency of online fine-tuning.
+Figure 9: Using a neural net-
+work approximator for the ref-
+erence value function performs
+comparable to using the Monte-
+Carlo return. This indicates that
+errors in the reference Q-function
+do not negatively impact the per-
+formance.
+Estimation errors in the reference value function do not affect
+performance significantly. In our experiments, we compute the ref-
+erence value functions using Monte-Carlo return estimates. However,
+this may not be available in all tasks. How does Cal-QL behave when
+reference value functions must be estimated using the offline dataset
+itself? To answer this, we ran an experiment on thekitchen domain,
+where instead of using an estimate for Qµ based on the Monte-Carlo
+return, we train a neural network function approximator Qµ
+θ to ap-
+proximate Qµ via supervised regression on to Monte-Carlo return,
+which is then utilized by Cal-QL. Observe in Figure 9, that the per-
+formance of Cal-QL largely remains unaltered. This implies as long
+as we can obtain a reasonable function approximator to estimate the
+Q-function of the reference policy (in this case, the behavior policy),
+errors in the reference Q-function do not affect the performance of
+Cal-QL significantly.
+8 Discussion, Future Directions, and Limitations
+In this work we developed Cal-QL a method for acquiring conservative offline initializations that
+facilitate fast online fine-tuning. Cal-QL learns conservative value functions that are constrained to be
+larger than the value function of a reference policy. This form of calibration allows us to avoid initial
+unlearning when fine-tuning with conservative methods, while also retaining the effective asymptotic
+performance that these methods exhibit. Our theoretical and experimental results highlight the benefit
+of Cal-QL in enabling fast online fine-tuning. While Cal-QL outperforms prior methods, we believe
+that we can develop even more effective methods by adjusting calibration and conservatism more
+carefully. A limitation of our work is that we do not consider fine-tuning setups where pre-training
+and fine-tuning tasks are different, but this is an interesting avenue for future work.
+10
+
+===== PAGE 11 =====
+Acknowledgments
+This research was partially supported by the Office of Naval Research N00014-21-1-2838, N00014-
+22-1-2102, ARO W911NF-21-1-0097, the joint Simons Foundation-NSF DMS grant #2031899,
+AFOSR FA9550-22-1-0273, and Tsinghua-Berkeley Shenzhen Institute (TBSI) Research Fund, as
+well as support from Intel and C3.ai, the Savio computational cluster resource provided by the
+Berkeley Research Computing program, and computing support from Google. We thank Philip J.
+Ball, Laura Smith, and Ilya Kostrikov for sharing the experimental results of RLPD. AK is supported
+by the Apple Scholars in AI/ML PhD Fellowship. MN is partially supported by the Nakajima
+Foundation Fellowship. YZ is partially supported by Siemens CITRIS and TBSI research fund. YZ
+would like to thank Prof. Song Mei for insightful suggestions on the presentation of Theorem 6.1.
+References
+[1] A. Ajay, A. Kumar, P. Agrawal, S. Levine, and O. Nachum. Opal: Offline primitive discovery
+for accelerating offline reinforcement learning. arXiv preprint arXiv:2010.13611, 2020.
+[2] P. J. Ball, L. Smith, I. Kostrikov, and S. Levine. Efficient online reinforcement learning with
+offline data. arXiv preprint arXiv:2302.02948, 2023.
+[3] A. Beeson and G. Montana. Improving td3-bc: Relaxed policy constraint for offline learning
+and stable online fine-tuning. arXiv preprint arXiv:2211.11802, 2022.
+[4] J. Buckman, C. Gelada, and M. G. Bellemare. The importance of pessimism in fixed-dataset
+policy optimization. arXiv preprint arXiv:2009.06799, 2020.
+[5] X. Chen, C. Wang, Z. Zhou, and K. W. Ross. Randomized ensembled double q-learning:
+Learning fast without a model. In International Conference on Learning Representations, 2021.
+URL https://openreview.net/forum?id=AY8zfZm0tDd.
+[6] C.-A. Cheng, T. Xie, N. Jiang, and A. Agarwal. Adversarially trained actor critic for offline
+reinforcement learning. arXiv preprint arXiv:2202.02446, 2022.
+[7] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova. Bert: Pre-training of deep bidirectional
+transformers for language understanding. arXiv preprint arXiv:1810.04805, 2018.
+[8] P. D’Oro, M. Schwarzer, E. Nikishin, P.-L. Bacon, M. G. Bellemare, and A. Courville. Sample-
+efficient reinforcement learning by breaking the replay ratio barrier. In The Eleventh Inter-
+national Conference on Learning Representations, 2023. URL https://openreview.net/
+forum?id=OpC-9aBBVJe.
+[9] S. Du, S. Kakade, J. Lee, S. Lovett, G. Mahajan, W. Sun, and R. Wang. Bilinear classes: A
+structural framework for provable generalization in rl. In International Conference on Machine
+Learning, pages 2826–2836. PMLR, 2021.
+[10] J. Fu, A. Kumar, O. Nachum, G. Tucker, and S. Levine. D4rl: Datasets for deep data-driven
+reinforcement learning. arXiv preprint arXiv:2004.07219, 2020.
+[11] S. Fujimoto and S. S. Gu. A minimalist approach to offline reinforcement learning. arXiv
+preprint arXiv:2106.06860, 2021.
+[12] S. Fujimoto, D. Meger, and D. Precup. Off-policy deep reinforcement learning without explo-
+ration. arXiv preprint arXiv:1812.02900, 2018.
+[13] S. Fujimoto, H. van Hoof, and D. Meger. Addressing function approximation error in actor-critic
+methods. In International Conference on Machine Learning (ICML), pages 1587–1596, 2018.
+[14] X. Geng. Jaxcql: a simple implementation of sac and cql in jax. 2022. URL https://github.
+com/young-geng/JaxCQL.
+[15] S. K. S. Ghasemipour, D. Schuurmans, and S. S. Gu. Emaq: Expected-max q-learning operator
+for simple yet effective offline and online rl. In International Conference on Machine Learning,
+pages 3682–3691. PMLR, 2021.
+11
+
+===== PAGE 12 =====
+[16] Y . Guo, S. Feng, N. Le Roux, E. Chi, H. Lee, and M. Chen. Batch reinforcement learning
+through continuation method. In International Conference on Learning Representations, 2020.
+[17] A. Gupta, V . Kumar, C. Lynch, S. Levine, and K. Hausman. Relay policy learning: Solving
+long-horizon tasks via imitation and reinforcement learning. arXiv preprint arXiv:1910.11956,
+2019.
+[18] A. Gupta, A. Pacchiano, Y . Zhai, S. M. Kakade, and S. Levine. Unpacking reward shap-
+ing: Understanding the benefits of reward engineering on sample complexity. arXiv preprint
+arXiv:2210.09579, 2022.
+[19] T. Haarnoja, A. Zhou, P. Abbeel, and S. Levine. Soft actor-critic: Off-policy maximum
+entropy deep reinforcement learning with a stochastic actor. In arXiv, 2018. URL https:
+//arxiv.org/pdf/1801.01290.pdf.
+[20] T. Haarnoja, A. Zhou, K. Hartikainen, G. Tucker, S. Ha, J. Tan, V . Kumar, H. Zhu, A. Gupta,
+P. Abbeel, and S. Levine. Soft actor-critic algorithms and applications. Technical report, 2018.
+[21] T. Haarnoja, A. Zhou, K. Hartikainen, G. Tucker, S. Ha, J. Tan, V . Kumar, H. Zhu, A. Gupta,
+P. Abbeel, et al. Soft actor-critic algorithms and applications. arXiv preprint arXiv:1812.05905,
+2018.
+[22] K. He, X. Chen, S. Xie, Y . Li, P. Dollár, and R. Girshick. Masked autoencoders are scalable
+vision learners. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+Recognition, pages 16000–16009, 2022.
+[23] T. Hester, M. Vecerik, O. Pietquin, M. Lanctot, T. Schaul, B. Piot, D. Horgan, J. Quan,
+A. Sendonaris, I. Osband, et al. Deep q-learning from demonstrations. In Thirty-Second AAAI
+Conference on Artificial Intelligence, 2018.
+[24] C. Jin, Q. Liu, and S. Miryoosefi. Bellman eluder dimension: New rich classes of rl problems,
+and sample-efficient algorithms. Advances in neural information processing systems , 34:
+13406–13418, 2021.
+[25] Y . Jin, Z. Yang, and Z. Wang. Is pessimism provably efficient for offline rl? InInternational
+Conference on Machine Learning, pages 5084–5096. PMLR, 2021.
+[26] S. Kakade and J. Langford. Approximately optimal approximate reinforcement learning. In
+International Conference on Machine Learning (ICML), volume 2, 2002.
+[27] B. Kang, Z. Jie, and J. Feng. Policy optimization with demonstrations. In International
+conference on machine learning, pages 2469–2478. PMLR, 2018.
+[28] R. Kidambi, A. Rajeswaran, P. Netrapalli, and T. Joachims. Morel: Model-based offline
+reinforcement learning. arXiv preprint arXiv:2005.05951, 2020.
+[29] I. Kostrikov. JAXRL: Implementations of Reinforcement Learning algorithms in JAX, 10 2021.
+URL https://github.com/ikostrikov/jaxrl.
+[30] I. Kostrikov, A. Nair, and S. Levine. Offline reinforcement learning with implicit q-learning.
+arXiv preprint arXiv:2110.06169, 2021.
+[31] I. Kostrikov, J. Tompson, R. Fergus, and O. Nachum. Offline reinforcement learning with fisher
+divergence critic regularization. arXiv preprint arXiv:2103.08050, 2021.
+[32] A. Kumar, A. Zhou, G. Tucker, and S. Levine. Conservative q-learning for offline reinforcement
+learning. arXiv preprint arXiv:2006.04779, 2020.
+[33] A. Kumar, A. Singh, F. Ebert, Y . Yang, C. Finn, and S. Levine. Pre-Training for Robots: Offline
+RL Enables Learning New Tasks from a Handful of Trials.arXiv e-prints, art. arXiv:2210.05178,
+Oct. 2022. doi: 10.48550/arXiv.2210.05178.
+[34] A. Kumar, A. Singh, F. Ebert, Y . Yang, C. Finn, and S. Levine. Pre-training for robots: Offline
+rl enables learning new tasks from a handful of trials. arXiv preprint arXiv:2210.05178, 2022.
+12
+
+===== PAGE 13 =====
+[35] T. Lattimore and C. Szepesvári. Bandit algorithms. Cambridge University Press, 2020.
+[36] S. Lee, Y . Seo, K. Lee, P. Abbeel, and J. Shin. Offline-to-online reinforcement learning
+via balanced replay and pessimistic q-ensemble. In Conference on Robot Learning , pages
+1702–1712. PMLR, 2022.
+[37] S. Levine, A. Kumar, G. Tucker, and J. Fu. Offline reinforcement learning: Tutorial, review,
+and perspectives on open problems. arXiv preprint arXiv:2005.01643, 2020.
+[38] Q. Li, Y . Zhai, Y . Ma, and S. Levine. Understanding the complexity gains of single-task rl with
+a curriculum. arXiv preprint arXiv:2212.12809, 2022.
+[39] Q. Li, A. Kumar, I. Kostrikov, and S. Levine. Efficient deep reinforcement learning requires
+regulating overfitting. In The Eleventh International Conference on Learning Representations,
+2023. URL https://openreview.net/forum?id=14-kr46GvP-.
+[40] T. P. Lillicrap, J. J. Hunt, A. Pritzel, N. Heess, T. Erez, Y . Tassa, D. Silver, and D. Wierstra.
+Continuous control with deep reinforcement learning. arXiv preprint arXiv:1509.02971, 2015.
+[41] J. Lyu, X. Ma, X. Li, and Z. Lu. Mildly conservative q-learning for offline reinforcement
+learning. arXiv preprint arXiv:2206.04745, 2022.
+[42] M. S. Mark, A. Ghadirzadeh, X. Chen, and C. Finn. Fine-tuning offline policies with optimistic
+action selection. In Deep Reinforcement Learning Workshop NeurIPS 2022, 2022.
+[43] O. Nachum, B. Dai, I. Kostrikov, Y . Chow, L. Li, and D. Schuurmans. Algaedice: Policy
+gradient from arbitrary experience. arXiv preprint arXiv:1912.02074, 2019.
+[44] A. Nair, M. Dalal, A. Gupta, and S. Levine. Accelerating online reinforcement learning with
+offline datasets. CoRR, abs/2006.09359, 2020. URL https://arxiv.org/abs/2006.09359.
+[45] A. Nair, M. Dalal, A. Gupta, and S. Levine. Accelerating online reinforcement learning with
+offline datasets. arXiv preprint arXiv:2006.09359, 2020.
+[46] A. Rajeswaran, V . Kumar, A. Gupta, G. Vezzani, J. Schulman, E. Todorov, and S. Levine.
+Learning complex dexterous manipulation with deep reinforcement learning and demonstrations.
+arXiv preprint arXiv:1709.10087, 2017.
+[47] A. Rajeswaran, V . Kumar, A. Gupta, G. Vezzani, J. Schulman, E. Todorov, and S. Levine.
+Learning complex dexterous manipulation with deep reinforcement learning and demonstrations.
+In Robotics: Science and Systems, 2018.
+[48] S. Schaal. Learning from demonstration. Advances in neural information processing systems, 9,
+1996.
+[49] N. Y . Siegel, J. T. Springenberg, F. Berkenkamp, A. Abdolmaleki, M. Neunert, T. Lampe,
+R. Hafner, and M. Riedmiller. Keep doing what worked: Behavioral modelling priors for offline
+reinforcement learning. arXiv preprint arXiv:2002.08396, 2020.
+[50] D. Silver, A. Huang, C. J. Maddison, A. Guez, L. Sifre, G. Van Den Driessche, J. Schrittwieser,
+I. Antonoglou, V . Panneershelvam, M. Lanctot, et al. Mastering the game of go with deep neural
+networks and tree search. nature, 529(7587):484–489, 2016.
+[51] A. Singh, A. Yu, J. Yang, J. Zhang, A. Kumar, and S. Levine. Cog: Connecting new skills to
+past experience with offline reinforcement learning. arXiv preprint arXiv:2010.14500, 2020.
+[52] Y . Song, Y . Zhou, A. Sekhari, D. Bagnell, A. Krishnamurthy, and W. Sun. Hybrid RL:
+Using both offline and online data can make RL efficient. In The Eleventh International
+Conference on Learning Representations, 2023. URL https://openreview.net/forum?
+id=yyBis80iUuU.
+[53] M. Vecerik, T. Hester, J. Scholz, F. Wang, O. Pietquin, B. Piot, N. Heess, T. Rothörl, T. Lampe,
+and M. Riedmiller. Leveraging demonstrations for deep reinforcement learning on robotics
+problems with sparse rewards. arXiv preprint arXiv:1707.08817, 2017.
+13
+
+===== PAGE 14 =====
+[54] O. Vinyals, I. Babuschkin, W. M. Czarnecki, M. Mathieu, A. Dudzik, J. Chung, D. H. Choi,
+R. Powell, T. Ewalds, P. Georgiev, et al. Grandmaster level in starcraft ii using multi-agent
+reinforcement learning. Nature, 575(7782):350–354, 2019.
+[55] A. Wagenmaker and A. Pacchiano. Leveraging offline data in online reinforcement learning.
+arXiv preprint arXiv:2211.04974, 2022.
+[56] J. Wu, H. Wu, Z. Qiu, J. Wang, and M. Long. Supported policy optimization for offline
+reinforcement learning. arXiv preprint arXiv:2202.06239, 2022.
+[57] C. Xiao, H. Wang, Y . Pan, A. White, and M. White. The in-sample softmax for offline
+reinforcement learning. In International Conference on Learning Representations, 2023. URL
+https://openreview.net/forum?id=u-RuvyDYqCM.
+[58] T. Xie and N. Jiang. Q* approximation schemes for batch reinforcement learning: A theoretical
+comparison. In Conference on Uncertainty in Artificial Intelligence, pages 550–559. PMLR,
+2020.
+[59] T. Xie, C.-A. Cheng, N. Jiang, P. Mineiro, and A. Agarwal. Bellman-consistent pessimism for
+offline reinforcement learning. Advances in neural information processing systems, 34, 2021.
+[60] T. Xie, N. Jiang, H. Wang, C. Xiong, and Y . Bai. Policy finetuning: Bridging sample-efficient
+offline and online reinforcement learning. Advances in neural information processing systems,
+34:27395–27407, 2021.
+[61] D. Ye, G. Chen, W. Zhang, S. Chen, B. Yuan, B. Liu, J. Chen, Z. Liu, F. Qiu, H. Yu, Y . Yin,
+B. Shi, L. Wang, T. Shi, Q. Fu, W. Yang, L. Huang, and W. Liu. Towards playing full moba
+games with deep reinforcement learning. In H. Larochelle, M. Ranzato, R. Hadsell, M. F.
+Balcan, and H. Lin, editors, Advances in Neural Information Processing Systems, volume 33,
+pages 621–632. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/
+paper/2020/file/06d5ae105ea1bea4d800bc96491876e9-Paper.pdf.
+[62] T. Yu, G. Thomas, L. Yu, S. Ermon, J. Zou, S. Levine, C. Finn, and T. Ma. Mopo: Model-based
+offline policy optimization. arXiv preprint arXiv:2005.13239, 2020.
+[63] A. Zanette, M. J. Wainwright, and E. Brunskill. Provable benefits of actor-critic methods
+for offline reinforcement learning. Advances in neural information processing systems , 34:
+13626–13640, 2021.
+[64] Y . Zhai, C. Baek, Z. Zhou, J. Jiao, and Y . Ma. Computational benefits of intermediate rewards
+for goal-reaching policy learning. Journal of Artificial Intelligence Research, 73:847–896, 2022.
+[65] Q. Zheng, A. Zhang, and A. Grover. Online decision transformer. In International Conference
+on Machine Learning, pages 27042–27059. PMLR, 2022.
+[66] H. Zhu, A. Gupta, A. Rajeswaran, S. Levine, and V . Kumar. Dexterous manipulation with deep
+reinforcement learning: Efficient, general, and low-cost. In 2019 International Conference on
+Robotics and Automation (ICRA), pages 3651–3657. IEEE, 2019.
+[67] Y . Zhu, Z. Wang, J. Merel, A. Rusu, T. Erez, S. Cabi, S. Tunyasuvunakool, J. Kramár, R. Hadsell,
+N. de Freitas, et al. Reinforcement and imitation learning for diverse visuomotor skills. arXiv
+preprint arXiv:1802.09564, 2018.
+14
+
+===== PAGE 15 =====
+Appendices
+A Implementation details of Cal-QL
+Our algorithm, Cal-QL is illustrated in Algorithm 1. A python-style implementation is provided
+in Appendix A.2. The official code and experimental logs are available at https://github.com/
+nakamotoo/Cal-QL
+A.1 Cal-QL Algorithm
+We use JQ(θ) to denote the calibrated conservative regularizer for the Q network update:
+JQ(θ) := α (Es∼D,a∼π [max (Qθ(s, a), Qµ(s, a))] − Es,a∼D [Qθ(s, a)])| {z }
+Calibrated conservative regularizer R(θ)
+(A.1)
++ 1
+2 Es,a,s′∼D
+h 
+Qθ(s, a) − Bπ ¯Q(s, a)
+2i
+. (A.2)
+Algorithm 1 Cal-QL pseudo-code
+1: Initialize Q-function, Qθ, a policy, πϕ
+2: for step t in {1, . . . , N}do
+3: Train the Q-function using the conservative regularizer
+in Eq. A.1:
+θt := θt−1 − ηQ∇θJQ(θ) (A.3)
+4: Improve policy πϕ with SAC-style update:
+ϕt := ϕt−1 + ηπEs∼D,a∼πϕ(·|s)[Qθ(s, a)−log πϕ(a|s)]
+(A.4)
+5: end for
+A.2 Python Implementation
+Listing 1: Training Q networks given a batch of data
+q_data = critic ( batch [ ’ o b s e r v a t i o n s ’] , batch [ ’ actions ’ ])
+n e x t _ d i s t = actor ( batch [ ’ n e x t _ o b s e r v a t i o n s ’ ])
+next_pi_actions , n e x t _ l o g _ p i s = n e x t _ d i s t . sample ()
+t a r g e t _ q v a l = t a r g e t _ c r i t i c ( batch [ ’ o b s e r v a t i o n s ’] , n e x t _ p i _ a c t i o n s )
+t a r g e t _ q v a l = batch [ ’ rewards ’] + self . gamma * (1 - batch [ ’ dones ’ ]) * t a r g e t _ q v a l
+td_loss = m se _lo ss ( q_data , t a r g e t _ q v a l )
+n u m _ s a m p l e s = 4
+r a n d o m _ a c t i o n s = uniform (( num_samples , batch_size , a c t i o n _ d i m ) , min = -1 , max =1)
+r a n d o m _ p i = 0.5 ** batch [ ’ actions ’ ]. shape [ -1]
+pi_actions , log_pis = actor ( batch [ ’ o b s e r v a t i o n s ’ ])
+q _ r a n d _ i s = critic ( batch [ ’ o b s e r v a t i o n s ’] , r a n d o m _ a c t i o n s ) - r a n d o m _ p i
+q_pi_is = critic ( batch [ ’ o b s e r v a t i o n s ’] , p i _ a c t i o n s ) - log_pis
+# Cal - QL ’s m o d i f i c a t i o n
+m c _ r e t u r n = batch [ ’ m c _ r e t u r n ’ ]. repeat ( n u m _ s a m p l e s )
+q_pi_is = max ( q_pi_is , m c _ r e t u r n )
+cat_q = c o n c a t e n a t e ([ q_rand_is , q_pi_is ] , ne w_ ax is = True )
+cat_q = l o g s u m e x p ( cat_q , axis =0) # sum over n u m _ s a m p l e s
+c r i t i c _ l o s s = td_loss + (( cat_q - q_data ). mean () * c q l _ a l p h a )
+c r i t i c _ o p t i m i z e r . z e r o _ g r a d ()
+c r i t i c _ l o s s . b ack wa rd ()
+c r i t i c _ o p t i m i z e r . step ()
+15
+
+===== PAGE 16 =====
+Listing 2: Training the policy (or the actor) given a batch of data
+# return d i s t r i b u t i o n of actions
+pi_actions , log_pis = actor ( batch [ ’ o b s e r v a t i o n s ’ ])
+# c a l c u l a t e q value of actor actions
+qpi = critic ( batch [ ’ o b s e r v a t i o n s ’] , actions )
+qpi = qpi . min ( axis =0)
+# same o b j e c t i v e as CQL ( kumar et al .)
+a c t o r _ l o s s = ( log_pis * self . alpha - qpi ). mean ()
+# op ti mi ze loss
+a c t o r _ o p t i m i z e r . z e r o _ g r a d ()
+a c t o r _ l o s s . ba ckw ar d ()
+a c t o r _ o p t i m i z e r . step ()
+B Environment Details
+B.1 Antmaze
+The Antmaze navigation tasks aim to control an 8-DoF ant quadruped robot to move from a starting
+point to a desired goal in a maze. The agent will receive sparse +1/0 rewards depending on whether
+it reaches the goal or not. We study each method on “medium” and “hard” (shown in Figure 5)
+mazes which are difficult to solve, using the following datasets from D4RL [10]: large-diverse,
+large-play, medium-diverse, and medium-play. The difference between “diverse” and “play”
+datasets is the optimality of the trajectories they contain. The “diverse” datasets contain the trajectories
+commanded to a random goal from random starting points, while the “play” datasets contain the
+trajectories commanded to specific locations which are not necessarily the goal. We used an episode
+length of 1000 for each task. For Cal-QL, CQL, and IQL, we pre-trained the agent using the offline
+dataset for 1M steps. We then trained online fine-tuning for 1M environment steps for each method.
+B.2 Franka Kitchen
+The Franka Kitchen domain require controlling a 9-DoF Franka robot to arrange a kitchen environment
+into a desired configuration. The configuration is decomposed into 4 subtasks, and the agent will
+receive rewards of0, +1, +2, +3, or +4 depending on how many subtasks it has managed to solve. To
+solve the whole task and reach the desired configuration, it is important to learn not only how to solve
+each subtask, but also to figure out the correct order to solve. We study this domain using datasets
+with three different optimalities: kitchen-complete, kitchen-partial, and kitchen-mixed.
+The “complete” dataset contains the trajectories of the robot performing the whole task completely.
+The “partial” dataset partially contains some complete demonstrations, while others are incomplete
+demonstrations solving the subtasks. The “mixed” dataset only contains incomplete data without any
+complete demonstrations, which is hard and requires the highest degree of stitching and generalization
+ability. We used an episode length of 1000 for each task. For Cal-QL, CQL, and IQL, we pre-trained
+the agent using the offline dataset for 500K steps. We then performed online fine-tuning for 1.25M
+environment steps for each method.
+B.3 Adroit
+The Adroit domain involves controlling a 24-DoF shadow hand robot. There are 3 tasks we consider
+in this domain: pen-binary, relocate-binary, relocate-binary. These tasks comprise a
+limited set of narrow human expert data distributions (∼ 25) with additional trajectories collected by
+a behavior-cloned policy. We truncated each trajectory and used the positive segments (terminate
+when the positive reward signal is found) for all methods. This domain has a very narrow dataset
+distribution and a large action space. In addition, learning in this domain is difficult due to the sparse
+reward, which leads to exploration challenges. We utilized a variant of the dataset used in prior work
+[44] to have a standard comparison with SOTA offline fine-tuning experiments that consider this
+domain. For the offline learning phase, we pre-trained the agent for 20K steps. We then performed
+online fine-tuning for 300K environment steps for the pen-binary task, and 1M environment steps
+for the door-binary and relocate-binary tasks. The episode length is 100, 200, and 200 for
+pen-binary, door-binary, and relocate-binary respectively.
+16
+
+===== PAGE 17 =====
+B.4 Visual Manipulation Domain
+The Visual Manipulation domain consists of a pick-and-place task. This task is a multitask formulation
+explored in the work, Pre-training for Robots (PTR) [33]. Here each task is defined as placing an
+object in a bin. A distractor object was present in the scene as an adversarial object which the agent
+had to avoid picking. There were 10 unique objects and no overlap between the task objects and
+the interfering/distractor objects. The episode length is 40. For the offline phase, we pre-trained the
+policy with offline data for 50K steps. We then performed online fine-tuning for 100K environment
+steps for each method, taking 5 gradient steps per environment step.
+C Experiment Details
+C.1 Normalized Scores
+The visual-manipulation, adroit, and antmaze domains are all goal-oriented, sparse reward
+tasks. In these domains, we computed the normalized metric as simply the goal achieved rate for each
+method. For example, in the visual manipulation environment, if the object was placed successfully in
+the bin, a +1 reward was given to the agent and the task is completed. Similarly, for thedoor-binary
+task in the adroit tasks, we considered the success rate of opening the door. For the kitchen task, the
+task is to solve a series of 4 sub-tasks that need to be solved in an iterative manner. The normalized
+score is computed simply as #tasks solved
+total tasks .
+C.2 Mixing Ratio Hyperparameter
+In this work, we explore the mixing ratio parameter m, which is used during the online fine-tuning
+phase. The mixing ratio is either a value in the range [0, 1] or the value -1. If this mixing ratio is
+within [0, 1], it represents what percentage of offline and online data is seen in each batch when
+fine-tuning. For example, if the mixing ratio m = 0.25, that means for each batch we sample 25%
+from the offline data and 75% from online data. Instead, if the mixing ratio is -1, the buffers are
+appended to each other and sampled uniformly. We present an ablation study over mixing ratio in
+Appendix G.
+C.3 Details and Hyperparameters for CQL and Cal-QL
+We list the hyperparameters for CQL and Cal-QL in Table 3. We utilized a variant of Bellman backup
+that computes the target value by performing a maximization over target values computed for k
+actions sampled from the policy at the next state, where we used k = 4 in visual pick and place
+domain and k = 10 in others. In the Antmaze domain, we used the dual version of CQL [ 32] and
+conducted ablations over the value of the threshold of the CQL regularizer R(θ) (target action gap)
+instead of α. In the visual-manipulation domain which is not presented in the original paper, we
+swept over the alpha values of α = 0.5, 1, 5, 10, and utilized separate α values for offline (α = 5)
+and online (α = 0.5) phases for the final results. We built our code upon the CQL implementation
+from https://github.com/young-geng/JaxCQL [14]. We used a single NVIDIA TITAN RTX
+chip to run each of our experiments.
+C.4 Details and Hyperparameters for IQL
+We list the hyperparameters for IQL in Table 4. To conduct our experiments, we used the of-
+ficial implementation of IQL provided by the authors [ 30], and primarily followed their recom-
+mended parameters, which they previously ablated over in their work. In the visual-manipulation
+domain which is not presented in the original paper, we performed a parameter sweep over expec-
+tile τ = 0 .5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99 and temperature β = 1 , 3, 5, 10, 25, 50 and selected the
+best-performing values of τ = 0 .7 and β = 10 for our final results. In addition, as the second
+best-performing method in the visual-manipulation domain, we also attempted to use separate β
+values for IQL, for a fair comparison with CQL and Cal-QL. However, we found that it has little to
+no effect, as shown in Figure 10.
+C.5 Details and Hyperparameters for A W AC and ODT
+We used the JAX implementation of AW AC fromhttps://github.com/ikostrikov/jaxrl [29].
+We primarily followed the author’s recommended parameters, where we used the Lagrange multiplier
+17
+
+===== PAGE 18 =====
+λ = 1 .0 for the Antmaze and Franka Kitchen domains, and λ = 0 .3 for the Adroit domain. In
+the visual-manipulation domain, we performed a parameter sweep over λ = 0.1, 0.3, 1, 3, 10 and
+selected the best-performing value of λ = 1 for our final results. For ODT, we used the author’s
+official implementation from https://github.com/facebookresearch/online-dt, with the
+author’s recommended parameters they used in the Antmaze domain. In addition, in support of our
+result of AW AC and ODT (as shown in Table 1), the poor performance of Decision Transformers and
+AW AC in the Antmaze domain can also be observed in Table 1 and Table 2 of the IQL paper [30].
+C.6 Details and Hyperparameters for SAC, SAC + Offline Data, Hybrid RL and CQL + SAC
+We used the standard hyperparameters for SAC as derived from the original implementation in [19].
+We used the same other hyperparameters as CQL and Cal-QL. We used automatic entropy tuning for
+the policy and critic entropy terms, with a target entropy of the negative action dimension. For SAC,
+the agent is only trained with the online explored data. For SAC + Offline Data, the offline data and
+online explored data is combined together and sampled uniformly. For Hybrid RL, we use the same
+mixing ratio used for CQL and Cal-QL presented in Table 3. For CQL + SAC, we first pre-train with
+CQL and then run online fine-tuning using both offline and online data, also using the same mixing
+ratio presented in Table 3.
+Table 3: CQL, Cal-QL Hyperparameters
+Hyperparameters Adroit Kitchen Antmaze Manipulation
+α 1 5 - 5 (online: 0.5)
+target action gap - - 0.8 -
+mixing ratio -1, 0.25, 0.5 -1,0.25, 0.5 0.5 0.2, 0.5, 0.7, 0.9
+Table 4: IQL Hyperparameters
+Hyperparameters Adroit Kitchen Antmaze Manipulation
+expectileτ 0.8 0.7 0.9 0.7
+temperatureβ 3 0.5 10 10
+mixing ratio -1, 0.2, 0.5 -1, 0.25, 0.5 0.5 0.2, 0.5, 0.7, 0.9
+D D4RL locomotion benchmark
+In this section, we further compare Cal-QL with previous methods on the D4RL locomotion bench-
+marks. Since the dataset for these tasks does not end in a terminal, we estimate the reference value
+functions using a neural network by fitting a SARSA Q-function to the offline dataset. We present
+the normalized scores before and after fine-tuning in Table 5, and the cumulative regret in Table 6.
+Overall, we observe that Cal-QL outperforms state-of-the-art methods such as IQL and AWAC, as
+well as fast online RL methods that do not employ pre-training (Hybrid RL), performing comparably
+to CQL.
+Task CQL IQL AW AC Hybrid RL Cal-QL (Ours)
+halfcheetah-expert-v2 0.79 → 1.02 0.95 → 0.54 0.69 → 0.65 N/A → 0.84 0.85 → 1.00
+halfcheetah-medium-expert-v2 0.59 → 1.00 0.86 → 0.57 0.72 → 0.77 N/A → 0.86 0.54 → 0.99
+halfcheetah-medium-replay-v2 0.51 → 0.95 0.43 → 0.36 0.43 → 0.47 N/A → 0.89 0.51 → 0.93
+halfcheetah-medium-v2 0.53 → 0.97 0.47 → 0.43 0.49 → 0.57 N/A → 0.88 0.52 → 0.93
+halfcheetah-random-v2 0.36 → 1.01 0.11 → 0.54 0.14 → 0.37 N/A → 0.80 0.33 → 1.04
+hopper-expert-v2 1.00 → 0.73 1.02 → 0.52 1.12 → 1.11 N/A → 0.54 0.58 → 0.75
+hopper-medium-expert-v2 0.86 → 0.92 0.07 → 0.81 0.30 → 1.03 N/A → 1.00 0.69 → 0.76
+hopper-medium-replay-v2 0.69 → 1.11 0.76 → 0.86 0.70 → 1.08 N/A → 0.77 0.76 → 1.10
+hopper-medium-v2 0.78 → 0.99 0.57 → 0.26 0.58 → 0.90 N/A → 1.06 0.89 → 0.98
+hopper-random-v2 0.09 → 1.08 0.08 → 0.64 0.09 → 0.43 N/A → 0.80 0.10 → 0.79
+walker2d-expert-v2 1.08 → 1.12 1.09 → 1.02 1.11 → 1.24 N/A → 1.12 0.92 → 1.00
+walker2d-medium-expert-v2 1.00 → 0.56 1.09 → 1.06 0.86 → 1.16 N/A → 0.95 0.96 → 0.77
+walker2d-medium-replay-v2 0.76 → 0.92 0.63 → 0.95 0.60 → 0.94 N/A → 1.03 0.52 → 0.99
+walker2d-medium-v2 0.80 → 1.11 0.81 → 1.04 0.75 → 0.98 N/A → 0.86 0.75 → 1.03
+walker2d-random-v2 0.05 → 0.85 0.06 → 0.09 0.04 → 0.04 N/A → 0.90 0.04 → 0.49
+average 0.66 → 0.96 0.60 → 0.65 0.57 → 0.78 N/A → 0.89 0.60 → 0.90
+Table 5: Normalized score before & after online fine-tuning on D4RL locomotion tasks.
+18
+
+===== PAGE 19 =====
+Task CQL IQL AW AC Hybrid RL Cal-QL (Ours)
+halfcheetah-expert-v2 0.03 0.47 0.28 0.49 0.08
+halfcheetah-medium-expert-v20.05 0.42 0.24 0.49 0.07
+halfcheetah-medium-replay-v20.14 0.65 0.56 0.29 0.16
+halfcheetah-medium-v2 0.15 0.61 0.48 0.31 0.17
+halfcheetah-random-v2 0.11 0.54 0.67 0.33 0.10
+hopper-expert-v2 0.17 0.58 -0.07 0.37 0.22
+hopper-medium-expert-v2 0.09 0.32 -0.02 0.32 0.17
+hopper-medium-replay-v2 0.09 0.09 0.05 0.27 0.12
+hopper-medium-v2 0.04 0.73 0.08 0.26 0.05
+hopper-random-v2 0.17 0.54 0.74 0.37 0.27
+walker2d-expert-v2 -0.02 0.15 -0.18 0.11 0.15
+walker2d-medium-expert-v2 0.03 0.02 -0.14 0.17 0.10
+walker2d-medium-replay-v2 0.06 0.10 0.19 0.30 0.13
+walker2d-medium-v2 0.11 0.12 0.07 0.29 0.22
+walker2d-random-v2 0.53 0.92 0.96 0.56 0.49
+average 0.12 0.42 0.26 0.33 0.17
+Table 6: Cumulative regret on D4RL locomotion tasks. The smaller the better and 1.00 is the worst.
+E Extended Discussion on Limitations of Existing Fine-Tuning Methods
+In this section, we aim to highlight some potential reasons behind the slow improvement of other
+methods in our empirical analysis experiment in Section 4.1, and specifically, we use IQL for the
+analysis. We first swept over the temperature β values used in the online fine-tuning phase for IQL,
+which controls the constraint on how closely the learned policy should match the behavior policy. As
+shown in Figure 10, the change in the temperature β has little to no effect on the sample efficiency.
+Another natural hypothesis is that IQL improves slowly because we are not making enough updates
+per unit of data collected by the environment. To investigate this, we ran IQL with(a) five times as
+many gradient steps per step of data collection (UTD = 5), and (b) with a more aggressive policy
+update. Observe in Figure 11 that (a) does not improve the asymptotic performance of IQL, although
+it does improve CQL meaning that there is room for improvement on this task by making more
+gradient updates. Observe in Figure 11 that (b) often induces policy unlearning, similar to the failure
+mode in CQL. These two observations together indicate that a policy constraint approach can slow
+down learning asymptotically, and we cannot increase the speed by making more aggressive updates
+as this causes the policy to find erroneously optimistic out-of-distribution actions, and unlearn the
+policy learned from offline data.
+0 25000 50000 75000 100000 125000 150000 175000 200000
+Environment Steps
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+β=1
+β=3
+β=5
+β=10
+β=25
+β=50
+Figure 10: Abalation on IQL’s online temperature values: The change in the temperature β used in online
+fine-tuning phase has little to no effect on the sample efficiency.
+Figure 11: IQL and CQL: Step 0 on the x-axis is the performance after offline pre-training. Observe while
+CQL suffers from initial policy unlearning, IQL improves slower throughout fine-tuning.
+19
+
+===== PAGE 20 =====
+F Initial Unlearning of CQL on Multiple Tasks
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-partial-v0
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-mixed-v0
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+kitchen-complete-v0
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×104
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+visual-manipulation
+Cal-QL (Ours) CQL
+0 1 2 3 4 5
+Environment Steps ×104
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+pen-binary-v0
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+door-binary-v0
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0
+Environment Steps ×105
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Normalized Score
+relocate-binary-v0
+Figure 12: While CQL experiences initial unlearning, Cal-QL effectively mitigates it and quickly recovers its
+performance.
+In this section, we show the learning curves of CQL and Cal-QL from Figure 6 and zoom in on the
+x-axis to provide a clearer visualization of CQL’s initial unlearning in the Franka Kitchen, Adroit,
+and the visual-manipulation domains. As depicted in Figure 12, it is evident across all tasks that
+while CQL experiences initial unlearning, Cal-QL can effectively mitigate it and quickly recovers its
+performance. Regarding the Antmaze domain, as we discussed in section 7.3, CQL does not exhibit
+initial unlearning since the default dataset has a high coverage of data. However, we can observe a
+similar phenomenon if we narrow down the dataset distribution (as shown in Figure 8).
+G Ablation Study over Mixing Ratio Hyperparameter
+Here we present an ablation study over mixing ratio on the adroit door-binary task for Cal-QL (left)
+and IQL (right). Perhaps as intuitively expected, we generally observe the trend that a larger mixing
+ratio (i.e., more offline data) exhibits slower performance improvement during online fine-tuning.
+Figure 13: Ablation study over mixing ratio on the adroit door-binary task for Cal-QL (left) and IQL (right).
+H Regret Analysis of Cal-QL
+We provide a theoretical version of Cal-QL in Algorithm 2. Policy fine-tuning has been studied in
+different settings [60, 52, 55]. Our analysis largely adopts the settings and results in Song et al. [52],
+with additional changes in Assumption H.1, Assumption H.3, and Definition H.4. Note that the goal
+of this proof is to demonstrate that a pessimistic functional class (Assumption H.1) allows one to
+utilize the offline data efficiently, rather than providing a new analytical technique for regret analysis.
+20
+
+===== PAGE 21 =====
+See comparisons between Section H.3 and Section I.1. Note that we use f instead of Qθ in the main
+text to denote the estimated Q function for notation simplicity.
+Algorithm 2 Theoretical version of Cal-QL
+1: Input: Value function classF, # total iterationsK, offline datasetDν
+h of size moff for h ∈ [H −1].
+2: Initialize f1
+h(s, a) = 0, ∀(s, a).
+3: for k = 1, . . . , K do
+4: Let πt be the greedy policy w.r.t. f k ▷ I.e., πk
+h(s) = arg maxa f k
+h(s, a).
+5: For each h, collect mon online tuples Dk
+h ∼ dπk
+h ▷ online data collection
+6: Set f k+1
+H (s, a) = 0, ∀(s, a).
+7: for h = H − 1, . . .0 do ▷ FQI with offline and online data
+8: Estimate f k+1
+h using conservative least squares on the aggregated data: ▷ I.e., CQL
+regularized class Ch
+f k+1
+h ← arg min
+f ∈Ch
+(
+bEDν
+h
+
+f(s, a) − r − max
+a′ f k+1
+h+1(s′, a′)
+2
++
+KX
+τ =1
+bEDτ
+h
+
+f(s, a) − r − max
+a′ f k+1
+h+1(s′, a′)
+2
+)
+(H.1)
+9: f k+1
+h = max{f k+1
+h , Qref
+h } ▷ Set a reference policy for calibration (Definition 4.1)
+10: end for
+11: end for
+12: Output: πK
+H.1 Preliminaries
+In this subsection, we follow most of the notations and definitions in Song et al. [52]. In particular,
+we consider the finite horizon cases, where the value function and Q function are defined as:
+V π
+h (s) = E
+"H−1X
+τ=h
+rτ |π, sh = s
+#
+(H.2)
+Qπ
+h(s, a) = E
+"H−1X
+τ=h
+rτ |π, sh = s, ah = a
+#
+. (H.3)
+We also define the Bellman operator T such that ∀f : S × A:
+T f(s, a) = Es,a[R(s, a)] + Es′∼P(s,a) max
+a′
+f(s′, a′), ∀(s, a) ∈ S × A , (H.4)
+where R(s, a) ∈ ∆[0, 1] represents a stochastic reward function.
+H.2 Notations
+• Feature covariance matrix Σk;h:
+Σk;h =
+kX
+τ=1
+Xh(f τ)(Xh(f τ))⊤ + λI (H.5)
+• Matrix Norm Zanette et al. [63]: for a matrix Σ, the matrix norm ∥u∥Σ is defined as:
+∥u∥Σ =
+√
+uΣu⊤ (H.6)
+• Weighted ℓ2 norm: for a given distribution β ∈ ∆(S × A) and a function f : S × A 7→ R,
+we denote the weighted ℓ2 norm as:
+∥f ∥2
+2,β :=
+q
+E(s,a)∼βf2(s, a) (H.7)
+• A stochastic reward function R(s, a) ∈ ∆([0, 1])
+• For each offline data distribution ν = {ν0, . . . , νH−1}, the offline data set at time step h
+(νh) contains data samples (s, a, r, s′), where (s, a) ∼ νh, r ∈ R(s, a), s′ ∼ P (s, a).
+21
+
+===== PAGE 22 =====
+• Given a policy π := {π0, . . . , πH−1}, where πh : S 7→ ∆(A), dπ
+h ∈ ∆(s, a) denotes the
+state-action occupancy induced by π at step h.
+• We consider the value-based function approximation setting, where we are given a function
+class C = C0 × . . . CH−1 with Ch ⊂ S × A 7→ [0, Vmax].
+• A policy πf is defined as the greedy policy w.r.t. f: πf
+h(s) = arg maxa fh(s, a). Specifi-
+cally, at iteration k, we use πk to denote the greedy policy w.r.t. f k.
+H.3 Assumptions and Defintions
+Assumption H.1 (Pessimistic Realizability and Completeness) . For any policy πe, we say Ch is
+a pessimistic function class w.r.t. πe, if for any h, we have Qπe
+h ∈ C h, and additionally, for any
+fh+1 ∈ C h+1, we have T fh+1 ∈ C h and fh(s, a) ≤ Qπe
+h (s, a), ∀(s, a) ∈ S × A .
+Definition H.2 (Bilinear model Du et al. [9]). We say that the MDP together with the function
+class F is a bilinear model of rand d of for any h ∈ [H − 1], there exist two (known) mappings
+Xh, Wh : F 7→ Rd with maxf ∥Xh(f)∥2 ≤ BX and maxf ∥Wh(f)∥2 ≤ BW such that
+∀f, g ∈ F :
+Es,a∼dπf
+h
+[gh(s, a) − T gh+1(s, a)]
+ = |⟨Xh(f), Wh(g)⟩| . (H.8)
+Assumption H.3 (Bilinear Rank of Reference Policies). Suppose Qref ∈ Cref ⊂ C , where Cref is the
+function class of our reference policy, we assume the Bilinear rank of Cref is dref and dref ≤ d.
+Definition H.4 (Calibrated Bellman error transfer coefficient) . For any policy π, we define the
+calibrated transfer coefficient w.r.t. to a reference policyπref as
+Cref
+π := max
+f ∈C,f(s,a)≥Qref(s,a)
+PH−1
+h=0 Es,a∼dπ
+h[T fh+1(s, a) − fh(s, a)]qPH−1
+h=0 Es,a∼νh(T fh+1(s, a) − fh(s, a))2
+, (H.9)
+where Qref = Qπref
+.
+H.4 Discussions on the Assumptions
+The pessimistic realizability and completeness assumption (Assumption H.1) is motivated by some
+theoretical studies of the pessimistic offline methods [59, 6] with regularizers:
+min
+θ
+α (Es∼D,a∼π [Qθ(s, a)] − Es,a∼D [Qθ(s, a)])| {z }
+Conservative regularizer R(θ)
++ 1
+2 Es,a,s′∼D
+h 
+Qθ(s, a) − Bπ ¯Q(s, a)
+2i
+.
+(H.10)
+Since the goal of the conservative regularizer R(θ) intrinsically wants to enforce
+Qθ(s, π(s)) ≤ Qθ(s, πe(s)), (H.11)
+where π is the training policy and πe is the reference (behavior) policy. One can consider (H.10) as
+the Lagrange duality formulation of the following primal optimization problem:
+min
+θ
+Es,a,s′∼D
+h 
+Qθ(s, a) − Bπ ¯Q(s, a)
+2i
+, subject to Es∼D,a∼π [Qθ(s, a)] ≤ Es∼D,a∼πe [Qθ(s, a)] ,
+(H.12)
+where the constraint set is equivalent to Assumption H.1. Although Assumption H.1 directly
+characterizes the constraint set of the primal form of (H.10) the exact theoretical connection between
+the pessimistic realizability and the regularized bellman consistency equation is beyond the scope of
+this work and we would like to leave that for future studies.
+Assumption H.1 allows us to restrict the functional class of interest to a smaller conservative function
+class C ⊂ F , which leads to a smaller Bellman rank of the reference policy (dref ≤ d) suggested in
+Assumption H.3, and a smaller concentrability coefficient (Cref
+π ≤ Cπ) defined in Definition H.4,
+and I.2. Assumption H.3 and Definition I.2 provide the Bellman Bilinear rank and Bellman error
+transfer coefficient of the pessimistic functional class C of interest.
+22
+
+===== PAGE 23 =====
+H.5 Proof Structure Overview
+We provide an overview of the proof structure and its dependency on different assumptions below:
+• Theorem H.5: the total regret is decomposed into offline regretsand online regrets.
+– Bounding offline regrets, requiring Definition H.4 and the following lemmas:
+* Performance difference lemma w.r.t. a comparator policy (Lemma I.5).
+* Least square generalization bound (Lemma I.4), requiring Assumption H.1.
+– Bounding online regrets, requiring Definition H.2
+* Performance difference lemma for the online error (Lemma I.6).
+* Least square generalization bound (Lemma I.4), requiring Assumption H.1.
+* Upper bounds with the bilinear model assumption (Lemma I.7).
+* Applying Elliptical Potential Lemma [35] with bellman rankd and dref (Lemma I.8),
+requiring Assumption H.3.
+H.6 Our Results
+Theorem H.5 (Formal Result of Theorem 6.1). Fix δ ∈ (0, 1), moff = K, mon = 1, suppose and the
+function class C follows Assumption H.1 w.r.t. πe. Suppose the underlying MDP admits Bilinear rank
+d on function class C and dref on Cref, respectively, then with probability at least1 − δ, Algorithm 2
+obtains the following bound on cumulative suboptimality w.r.t. any comparator policy πe:
+KX
+t=1
+V πe
+− V πk
+= eO
+
+min
+n
+Cref
+πe H
+p
+dK log (|F |/δ), K
+
+V πe
+− V ref
+
++ H
+p
+dref K log (|F |/δ)
+o
+.
+(H.13)
+Note that Theorem H.5 provides a guarantee for any comparator policy πe, which can be directly
+applied to π⋆ described in our informal result (Theorem 6.1). We also change the notation for the
+reference policy from µ in Theorem 6.1 to πref (similarly, dref , V ref , Cref
+πe correspond to dµ, V µ, Cµ
+πe
+in Theorem 6.1) for notation consistency in the proof. Our proof of Theorem H.5 largely follows the
+proof of Theorem 1 of [52], and the major changes are caused by Assumption H.1, Assumption H.3,
+and Definition H.4.
+Proof. Let Ek denote the event that
+
+f k
+0 (s, a) ≤ Qref(s, a)
+	
+and ¯Ek denote the event that
+f k
+0 (s, a) > Qref(s, a)
+	
+. Let V ref(s) = maxa Qref(s, a), we start by noting that
+KX
+k=1
+V πe
+− V πf k
+=
+KX
+k=1
+Es∼ρ
+
+V πe
+0 (s) − V πf k
+0 (s)
+
+=
+KX
+k=1
+Es∼ρ
+h
+1
+ ¯Ek
+	
+V πe
+0 (s) − V ref(s)
+i
+| {z }
+Γ0
++
+KX
+k=1
+Es∼ρ
+h
+1
+ ¯Ek
+	
+V ref(s) − max
+a
+f k
+0 (s, a)
+i
+| {z }
+=0, by the definition of ¯Ek and line 9 of Algorithm 2
++
+KX
+t=1
+Es∼ρ
+
+1
+ ¯Ek
+	
+max
+a
+f k
+0 (s, a) − V πf k
+0 (s)
+
+| {z }
+Γ1
++
+KX
+k=1
+Es∼ρ
+h
+1 {Ek}
+
+V πe
+0 (s) − max
+a
+f k
+0 (s, a)
+i
+| {z }
+Γ2
++
+TX
+t=1
+Es∼ρ
+
+1 {Ek}
+
+max
+a
+f k
+0 (s, a) − V πf k
+0 (s)
+
+| {z }
+Γ3
+.
+(H.14)
+Let K1 =PK
+k=1 1
+
+f k
+0 (s, a) > Qref(s, a)
+	
+and K2 =PK
+k=1 1
+
+f k
+0 (s, a) ≤ Qref(s, a)
+	
+(or equiva-
+lently K1 =PK
+k=1 1
+ ¯Ek
+	
+, K2 =PK
+k=1 1 {Ek}). For Γ0, we have
+Γ0 = K2Es∼ρ
+
+V πe
+(s) − V ref(s)
+
+. (H.15)
+23
+
+===== PAGE 24 =====
+For Γ2, we have
+Γ2 =
+KX
+k=1
+Es∼ρ
+h
+1 {Ek}
+
+V πe
+0 (s) − max
+a
+f k
+0 (s, a)
+i
+(i)
+≤
+KX
+k=1
+1 {Ek}
+H−1X
+h=0
+Es,a∼dπe
+h
+
+T f k
+h+1(s, a) − f k
+h(s, a)
+
+(ii)
+≤
+KX
+k=1
+
+Cref
+πe · 1 {Ek}
+vuut
+H−1X
+h=0
+Es,a∼νh
+h 
+f k
+h(s, a) − T f k
+h+1(s, a)
+2i
+
+
+(iii)
+≤ K1Cref
+πe
+p
+H · ∆off,
+(H.16)
+where ∆off is similarly defined as Song et al. [52] (See (I.3) of Lemma I.4). Inequality (i) holds
+because of Lemma I.5, inequality (ii) holds by the definition of Cref
+πe (Definition H.4), inequality (iii)
+holds by applying Lemma I.4 with the function class satisfying Assumption H.1, and Definition H.4.
+Note that the telescoping decomposition technique in the above equation also appears in [58, 24, 9].
+Next, we will bound Γ1 + Γ3:
+Γ1 + Γ3 =
+KX
+k=1
+ 
+1 {Ek} + 1
+ ¯Ek
+	
+Es∼d0
+
+max
+a
+f k
+0 (s, a) − V πf k
+0 (s)
+
+(i)
+≤
+KX
+k=1
+ 
+1 {Ek} + 1
+ ¯Ek
+	 H−1X
+h=0
+Es,a∼dπf k
+h
+
+f k
+h(s, a) − T f k
+h+1(s, a)
+
+(ii)
+=
+KX
+t=1
+"
+ 
+1 {Ek} + 1
+ ¯Ek
+	 H−1X
+h=0
+
+Xh(f k), Wh(f k)
+
+#
+(iii)
+≤
+KX
+k=1
+"
+ 
+1 {Ek} + 1
+ ¯Ek
+	 H−1X
+h=0
+Xh(f k)
+
+Σ−1
+k−1;h
+q
+∆on + λB2
+W
+#
+,
+(H.17)
+where ∆on is similarly defined as Song et al. [52] (See (I.4) of Lemma I.4). Inequality (i) holds
+by Lemma I.6, equation (ii) holds by the definition of Bilinear model ( (H.8) in Definition H.2),
+inequality (iii) holds by Lemma I.7 and Lemma I.4 with the function class satisfying Assumption H.1.
+Using Lemma I.8, we have that
+Γ1 + Γ3
+≤
+KX
+k=1
+"
+ 
+1 {Ek} + 1
+ ¯Ek
+	 H−1X
+h=0
+Xh(f k)
+
+Σ−1
+k−1;h
+q
+∆on + λB2
+W
+#
+(i)
+≤H
+s
+2d log
+
+1 + K1B2
+X
+λd
+
+· (∆on + λB2
+W ) · K1 + H
+s
+2dref log
+
+1 + K2B2
+X
+λdref
+
+· (∆on + λB2
+W ) · K2
+(ii)
+≤ H
+ s
+2d log
+
+1 + K1
+d
+
+· (∆on + B2
+X B2
+W ) · K1 +
+s
+2dref log
+
+1 + K2
+dref
+
+· (∆on + B2
+X B2
+W ) · K2
+!
+,
+(H.18)
+where the first part of inequality (i) holds by the assumption that the underlying MDPs have
+bellman rank d (Definition H.2) when ¯Ek happens, and the second part of inequality (i) holds by the
+assumption that Cref has bilinear rank dref (Assumption H.3) Cref has bellman rank dref when Ek
+happens. Inequality (ii) holds by plugging in λ = B2
+X. Substituting (H.15), inequality H.16, and
+inequality (H.18) into (H.14), we have
+KX
+t=1
+V πe
+− V πf k
+≤ Γ0 + Γ2 + Γ1 + Γ3 ≤ K2
+
+V πe
+(s) − V ref(s)
+
++ K1Cref
+πe
+√
+H · ∆off
++H
+ s
+2d log
+
+1 + K1
+d
+
+· (∆on + B2
+X B2
+W ) · K1 +
+s
+2dref log
+
+1 + K2
+dref
+
+· (∆on + B2
+X B2
+W ) · K2
+!
+(H.19)
+24
+
+===== PAGE 25 =====
+Plugging in the values of ∆on, ∆off from (I.3) and (I.4), and using the subadditivity of the square
+root function, we have
+KX
+k=1
+V πe
+− V πf k
+≤ K2
+
+V πe
+(s) − V ref(s)
+
++ 16VmaxCref
+πe K1
+s
+H
+moff
+log
+2HK1|F |
+δ
+
++
+ 
+16Vmax
+s
+1
+mon
+log
+2HK1|F |
+δ
+
++ BX BW
+!
+· H
+s
+2dK1 log
+
+1 + K1
+d
+
++
+ 
+16Vmax
+s
+1
+mon
+log
+2HK2|F |
+δ
+
++ BX BW
+!
+· H
+s
+2dref K2 log
+
+1 + K2
+dref
+
+.
+(H.20)
+Setting moff = K, mon = 1 in the above equation completes the proof, we have
+KX
+k=1
+V πe
+− V πk
+≤ eO
+
+Cref
+πe
+p
+HK1 log (|F |/δ)
+
++ eO
+
+H
+p
+dK1 log (|F |/δ)
+
++ K2
+
+V πe
+(s) − V ref(s)
+
++ eO
+
+H
+p
+dref K2 log (|F |/δ)
+
+≤
+
+
+
+eO
+
+Cref
+πe H
+p
+dK1 log (|F |/δ)
+
+if K1 ≫ K2,
+eO
+
+K2
+ 
+V πe
+− V ref
++ H
+p
+dref K2 log (|F |/δ)
+
+otherwise.
+≤ eO
+
+min
+n
+Cref
+πe H
+p
+dK log (|F |/δ), K
+
+V πe
+− V ref
+
++ H
+p
+dref K log (|F |/δ)
+o
+,
+(H.21)
+where the last inequality holds because K1, K2 ≤ K, which completes the proof.
+I Key Results of HyQ [52]
+In this section, we restate the major theoretical results of Hy-Q [52] for completeness.
+I.1 Assumptions
+Assumption I.1 (Realizability and Bellman completeness) . For any h, we have Q⋆
+h ∈ F h, and
+additionally, for any fh+1 ∈ F h+1, we have T fh+1 ∈ F h.
+Definition I.2 (Bellman error transfer coefficient). For any policy π, we define the transfer coefficient
+as
+Cπ := max
+
+
+0, max
+f ∈F
+PH−1
+h=0 Es,a∼dπ
+h[T fh+1(s, a) − fh(s, a)]qPH−1
+h=0 Es,a∼νh(T fh+1(s, a) − fh(s, a))2
+
+
+ . (I.1)
+I.2 Main Theorem of Hy-Q
+Theorem I.3 (Theorem 1 of Song et al. [52]). Fix δ ∈ (0, 1), moff = K, mon = 1, and suppose
+that the underlying MDP admits Bilinear rank d (Definition H.2), and the function class F satisfies
+Assumption I.1. Then with probability at least 1 − δ, HyQ obtains the following bound on cumulative
+suboptimality w.r.t. any comparator policy πe:
+Reg(K) = eO
+
+max{Cπe , 1}VmaxBX BW
+p
+dH2K · log(|F |/δ)
+
+. (I.2)
+I.3 Key Lemmas
+I.3.1 Least Squares Generalization and Applications
+Lemma I.4 (Lemma 7 of Song et al. [52], Online and Offline Bellman Error Bound for FQI). Let
+δ ∈ (0, 1) and ∀h ∈ [H − 1], k ∈ [K], let f k+1
+h be the estimated value function for time step h
+25
+
+===== PAGE 26 =====
+computed via least square regression using samples in the dataset {Dν
+h, D1
+h, . . . ,DT
+h } in (H.1) in the
+iteration t of Algorithm 2. Then with probability at least 1 − δ, for any h ∈ [H − 1] and k ∈ [K], we
+have f k+1
+h − T f k+1
+h+1
+2
+2,νh
+≤ 1
+moff
+256V 2
+max log(2HK |F |/δ) =: ∆off (I.3)
+and
+kX
+τ=1
+f k+1
+h − T f k+1
+h+1
+2
+2,µτ
+h
+≤ 1
+mon
+256V 2
+max log(2HK |F |/δ) =: ∆on, (I.4)
+where νh denotes the offline data distribution at time h, and the distribution µτ
+h ∈ ∆(s, a) is defined
+such that s, a ∼ dπτ
+h .
+I.3.2 Bounding Offline Suboptimality via Performance Difference Lemma
+Lemma I.5 (Lemma 5 of Song et al. [52], performance difference lemma of w.r.t. πe). Let πe =
+(πe
+0, . . . , πe
+H−1) be a comparator policy and consider any value function f = (f0, . . . , fH−1), where
+fh : S × A 7→ R. Then we have
+Es∼d0
+h
+V πe
+0 (s) − max
+a
+f0(s, a)
+i
+≤
+H−1X
+i=1
+Es,a∼dπe
+i
+[T fi+1(s, a) − fi(s, a)] , (I.5)
+where we define fH(s, a) = 0, ∀(s, a).
+I.3.3 Bounding Online Suboptimality via Performance Difference Lemma
+Lemma I.6 (Lemma 4 of Song et al. [52], performance difference lemma) . For any function
+f = (f0, . . . , fH−1) where fh : S × A 7→ R and h ∈ [H − 1], we have
+Es∼d0
+h
+max
+a
+f0(s, a) − V πf
+0 (s)
+i
+≤
+H−1X
+h=0
+Es,a∼dπf
+h
+[fh(s, a) − T fh+1(s, a)]
+ , (I.6)
+where we define fH(s, a) = 0, ∀s, a.
+Lemma I.7 (Lemma 8 of Song et al. [52], upper bounding bilinear class) . For any k ≥ 2 and
+h ∈ [H − 1], we have
+
+Wh(f k), Xh(f k)
+ ≤
+Xh(f k)
+
+Σ−1
+k−1;h
+vuut
+k−1X
+i=1
+Es,a∼df i
+h
+h 
+f k
+h − T f k
+h+1
+2i
++ λB2
+W , (I.7)
+where Σk−1;h is defined as (H.5) and we use df k
+h to denote dπf k
+h .
+Lemma I.8 (Lemma 6 of Song et al. [52], bounding the inverse covariance norm) . Let
+Xh(f1), . . . , Xh(f K) ∈ Rd be a sequence of vectors with
+Xh(f k)
+
+2 ≤ BX < ∞, ∀k ≤ K.
+Then we have
+KX
+k=1
+Xh(f k)
+
+Σ−1
+k−1;h
+≤
+s
+2dK log
+
+1 + KB 2
+X
+λd
+
+, (I.8)
+where we define Σk;h :=Pk
+τ=1 Xh(f τ)Xh(f τ)T + λI and we assume λ ≥ B2
+X holds ∀k ∈ [K].
+26

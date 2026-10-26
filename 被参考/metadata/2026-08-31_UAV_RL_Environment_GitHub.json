@@ -1,0 +1,292 @@
+{
+  "retrieval_date": "2026-08-31",
+  "timezone": "Asia/Shanghai",
+  "report": "论文/研究报告/2026-08-31_UAV轻量RL环境_GitHub实践核验与风险纠偏.md",
+  "scope": "Non-Gazebo UAV RL environment research. No training code modified, no downloaded code executed.",
+  "archive_root": "论文/被参考/2026-08-31_UAV_RL_Environment_GitHub",
+  "year_note": "Null publication years indicate continuously updated code/docs; immutable commit or snapshot date is authoritative.",
+  "license_note": "Verbatim research archives only. Check upstream license before incorporating implementation.",
+  "sources": {
+    "NavRL": {
+      "title": "NavRL: Learning Safe Flight in Dynamic Environments",
+      "authors": "Zhefan Xu, Xinming Han, Haoyu Shen, Hanyu Jin, Kenji Shimada",
+      "year": 2025,
+      "arxiv_id": "2409.15634",
+      "url": "https://github.com/Zhefan-Xu/NavRL",
+      "commit": "3725bcc2e7c1be4ecf1455d922299ae85042603a",
+      "relevance": "UAV PPO navigation, termination, height reward and sensor semantics; no safety shield adoption"
+    },
+    "AerialGym": {
+      "title": "Aerial Gym Simulator: A Framework for Highly Parallelized Simulation of Aerial Robots",
+      "authors": "Mihir Kulkarni, Welf Rehberg, Kostas Alexis; repository contributors",
+      "year": 2025,
+      "arxiv_id": "2503.01471",
+      "doi": "10.1109/LRA.2025.3548507",
+      "url": "https://github.com/ntnu-arl/aerial_gym_simulator",
+      "commit": "f0d0f05283f7897bab5a1bcc7b19b91cebbab218",
+      "relevance": "Collision accumulation, reset ordering and ray/sensor semantics only; no simulator migration"
+    },
+    "QuadSwarm": {
+      "title": "QuadSwarm: A Modular Multi-Quadrotor Simulator for Deep Reinforcement Learning with Direct Thrust Control",
+      "authors": "Zhehui Huang et al.; repository contributors",
+      "year": 2023,
+      "arxiv_id": "2306.09537",
+      "url": "https://github.com/Zhehui-Huang/quad-swarm-rl",
+      "commit": "e18d6925f73e3d3b35a8acb056817203ff7b8b07",
+      "relevance": "Lightweight integration, motor response and counterexample of recoverable floor contact"
+    },
+    "SB3": {
+      "title": "Stable-Baselines3 on-policy collection implementation",
+      "authors": "Stable-Baselines3 contributors",
+      "year": null,
+      "url": "https://github.com/DLR-RM/stable-baselines3",
+      "commit": "3246f5060eacd8bff4de575eaafbbc6e0baac376",
+      "relevance": "Buffer/episode boundaries, terminal observation bootstrap"
+    },
+    "DiffusionPolicy": {
+      "title": "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+      "authors": "Cheng Chi et al.; repository contributors",
+      "year": 2023,
+      "arxiv_id": "2303.04137",
+      "url": "https://github.com/real-stanford/diffusion_policy",
+      "commit": "5ba07ac6661db573af695b419a7947ecb704690f",
+      "relevance": "Prediction horizon and execution horizon may differ; no PPO inference from BC source"
+    },
+    "FCL": {
+      "title": "Flexible Collision Library",
+      "authors": "FCL contributors",
+      "year": null,
+      "url": "https://github.com/flexible-collision-library/fcl",
+      "commit": "e5efcc41b57b2d0da3bf183480f1298a6d531f44",
+      "relevance": "Discrete versus continuous collision queries; no dependency installed"
+    },
+    "Gymnasium": {
+      "title": "Handling Time Limits",
+      "authors": "Farama Foundation / Gymnasium contributors",
+      "year": null,
+      "url": "https://gymnasium.farama.org/tutorials/gymnasium_basics/handling_time_limits/",
+      "commit": null,
+      "relevance": "Termination versus exogenous truncation"
+    },
+    "AerialGymIssue52": {
+      "title": "Strange behavior and continuous environment resets while running RL navigation example",
+      "authors": "xuan-mxx (issue reporter); GitHub participants",
+      "year": 2025,
+      "url": "https://github.com/ntnu-arl/aerial_gym_simulator/issues/52",
+      "commit": null,
+      "relevance": "User-reported early-crash case only; no confirmed common cause inferred"
+    }
+  },
+  "files": [
+    {
+      "file": "AerialGym_base_depth_camera_config.py",
+      "bytes": 2871,
+      "sha256": "05ee9eafacade30512eb6af1234c11bffdb406847d81dbec05b56bdc699c2fec",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/config/sensor_config/camera_config/base_depth_camera_config.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/config/sensor_config/camera_config/base_depth_camera_config.py",
+      "download_date": "2026-08-31",
+      "citation_use": "near/far out-of-range encoding"
+    },
+    {
+      "file": "AerialGym_env_manager.py",
+      "bytes": 18570,
+      "sha256": "dbf11f3665fc6d7317dea95d967350b922b18f6b0dcf8b581fc394925bad4d21",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/env_manager/env_manager.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/env_manager/env_manager.py",
+      "download_date": "2026-08-31",
+      "citation_use": "per-substep collision accumulation"
+    },
+    {
+      "file": "AerialGym_env_with_obstacles.py",
+      "bytes": 2995,
+      "sha256": "bc0acfefef70328167ef843f98a0e658b3b233031b5f657b05c9afb4e2215610",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/config/env_config/env_with_obstacles.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/config/env_config/env_with_obstacles.py",
+      "download_date": "2026-08-31",
+      "citation_use": "ground-plane configuration is not automatically enabled"
+    },
+    {
+      "file": "AerialGym_IGE_env_manager.py",
+      "bytes": 22711,
+      "sha256": "0eb9e67a42baa8587405610bc2cd495d5342c44032318af34b6015c571647818",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/env_manager/IGE_env_manager.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/env_manager/IGE_env_manager.py",
+      "download_date": "2026-08-31",
+      "citation_use": "physics and contact tensor refresh"
+    },
+    {
+      "file": "AerialGym_issue52.html",
+      "bytes": 624345,
+      "sha256": "23529386bc59b8b0b3e62bafc6e1be981784eb0413cdc2b48a199c8a64317985",
+      "source_id": "AerialGymIssue52",
+      "upstream_path": null,
+      "source_url": "https://github.com/ntnu-arl/aerial_gym_simulator/issues/52",
+      "download_date": "2026-08-31",
+      "citation_use": "community first-step crash/reset report; case evidence only"
+    },
+    {
+      "file": "AerialGym_navigation_task.py",
+      "bytes": 22577,
+      "sha256": "8806cc7f5907de56c8c27b9fe86b2674fba5497e79b32a9b03ca21f4d338c80a",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/task/navigation_task/navigation_task.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/task/navigation_task/navigation_task.py",
+      "download_date": "2026-08-31",
+      "citation_use": "exclusive success/crash/timeout and reset order"
+    },
+    {
+      "file": "AerialGym_paper_abstract.html",
+      "bytes": 40754,
+      "sha256": "eba0e4498ec2d64b84df82c1eb84d46930b0d60e63cb5908412fa6e97715efff",
+      "source_id": "AerialGym",
+      "upstream_path": null,
+      "source_url": "https://arxiv.org/abs/2503.01471",
+      "download_date": "2026-08-31",
+      "citation_use": "paper identity and simulator scope only"
+    },
+    {
+      "file": "AerialGym_warp_camera_kernels.py",
+      "bytes": 10645,
+      "sha256": "e3f2080c715cd641c5ec156323dbdaa125b7f62c17b30ade14cbcc51777b65fc",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/sensors/warp/warp_kernels/warp_camera_kernels.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/sensors/warp/warp_kernels/warp_camera_kernels.py",
+      "download_date": "2026-08-31",
+      "citation_use": "explicit no-hit sentinel"
+    },
+    {
+      "file": "AerialGym_warp_sensor.py",
+      "bytes": 10554,
+      "sha256": "4ff30fbe3e06d91188c1ccf8d869b80ebaba1ab86717cb7485e578a2bc8470c4",
+      "source_id": "AerialGym",
+      "upstream_path": "aerial_gym/sensors/warp/warp_sensor.py",
+      "source_url": "https://raw.githubusercontent.com/ntnu-arl/aerial_gym_simulator/f0d0f05283f7897bab5a1bcc7b19b91cebbab218/aerial_gym/sensors/warp/warp_sensor.py",
+      "download_date": "2026-08-31",
+      "citation_use": "range/noise processing"
+    },
+    {
+      "file": "DiffusionPolicy_unet_hybrid.py",
+      "bytes": 13173,
+      "sha256": "d8ead767ed3b1501c358aa3dd97ab479ebdf77a62ec9ab7081d6a2211c2d2e76",
+      "source_id": "DiffusionPolicy",
+      "upstream_path": "diffusion_policy/policy/diffusion_unet_hybrid_image_policy.py",
+      "source_url": "https://raw.githubusercontent.com/real-stanford/diffusion_policy/5ba07ac6661db573af695b419a7947ecb704690f/diffusion_policy/policy/diffusion_unet_hybrid_image_policy.py",
+      "download_date": "2026-08-31",
+      "citation_use": "execution slice from prediction"
+    },
+    {
+      "file": "FCL_README.md",
+      "bytes": 9915,
+      "sha256": "862f975ddbb961a1ae4bdf494bfc3170df71b29d495d84eadffeb9e7ce33ef2d",
+      "source_id": "FCL",
+      "upstream_path": "README.md",
+      "source_url": "https://raw.githubusercontent.com/flexible-collision-library/fcl/e5efcc41b57b2d0da3bf183480f1298a6d531f44/README.md",
+      "download_date": "2026-08-31",
+      "citation_use": "continuous collision definition and interface"
+    },
+    {
+      "file": "Gymnasium_handling_time_limits.html",
+      "bytes": 48104,
+      "sha256": "6a4b59d216b2722f83f218f445b39def5a2433cc68e5381da10ec5f842688f86",
+      "source_id": "Gymnasium",
+      "upstream_path": null,
+      "source_url": "https://gymnasium.farama.org/tutorials/gymnasium_basics/handling_time_limits/",
+      "download_date": "2026-08-31",
+      "citation_use": "official bootstrap explanation"
+    },
+    {
+      "file": "NavRL_env.py",
+      "bytes": 34125,
+      "sha256": "4be2ed2868a13362cbd7645254ade281c478f64000be163ca11a907e6d2a9b7d",
+      "source_id": "NavRL",
+      "upstream_path": "isaac-training/training/scripts/env.py",
+      "source_url": "https://raw.githubusercontent.com/Zhefan-Xu/NavRL/3725bcc2e7c1be4ecf1455d922299ae85042603a/isaac-training/training/scripts/env.py",
+      "download_date": "2026-08-31",
+      "citation_use": "height/collision termination and range semantics"
+    },
+    {
+      "file": "NavRL_paper_abstract.html",
+      "bytes": 42977,
+      "sha256": "d7aee835a99e3ddd8e0b040acdb2d51b737be3ada096b289f800cb68b808108a",
+      "source_id": "NavRL",
+      "upstream_path": null,
+      "source_url": "https://arxiv.org/abs/2409.15634",
+      "download_date": "2026-08-31",
+      "citation_use": "abstract identifies external safety shield; full paper not read"
+    },
+    {
+      "file": "NavRL_train.py",
+      "bytes": 5057,
+      "sha256": "2173ab5244f59af07d7b3315a05f22db10fc6d69903d53c1b1555d47ca2b4a8d",
+      "source_id": "NavRL",
+      "upstream_path": "isaac-training/training/scripts/train.py",
+      "source_url": "https://raw.githubusercontent.com/Zhefan-Xu/NavRL/3725bcc2e7c1be4ecf1455d922299ae85042603a/isaac-training/training/scripts/train.py",
+      "download_date": "2026-08-31",
+      "citation_use": "collector and eval ordering"
+    },
+    {
+      "file": "NavRL_train.yaml",
+      "bytes": 715,
+      "sha256": "f6a916c3401ac195e78631ae6946abfb09b7bfdb3f75b415b6576fa22545b8e7",
+      "source_id": "NavRL",
+      "upstream_path": "isaac-training/training/cfg/train.yaml",
+      "source_url": "https://raw.githubusercontent.com/Zhefan-Xu/NavRL/3725bcc2e7c1be4ecf1455d922299ae85042603a/isaac-training/training/cfg/train.yaml",
+      "download_date": "2026-08-31",
+      "citation_use": "static-obstacle option and distinct budgets; not copied"
+    },
+    {
+      "file": "QuadSwarm_paper_abstract.html",
+      "bytes": 43975,
+      "sha256": "423d978097a28ca7abeec8697ce3a634f7a1ca9f4f92bef9e1c2bb5d30e974ba",
+      "source_id": "QuadSwarm",
+      "upstream_path": null,
+      "source_url": "https://arxiv.org/abs/2306.09537",
+      "download_date": "2026-08-31",
+      "citation_use": "paper identity and lightweight simulator scope only"
+    },
+    {
+      "file": "QuadSwarm_quadrotor_dynamics.py",
+      "bytes": 29977,
+      "sha256": "293134527b3c72a1a54892b1c00cd488b688fe4900ac0a34de8a267c35c82f92",
+      "source_id": "QuadSwarm",
+      "upstream_path": "gym_art/quadrotor_multi/quadrotor_dynamics.py",
+      "source_url": "https://raw.githubusercontent.com/Zhehui-Huang/quad-swarm-rl/e18d6925f73e3d3b35a8acb056817203ff7b8b07/gym_art/quadrotor_multi/quadrotor_dynamics.py",
+      "download_date": "2026-08-31",
+      "citation_use": "dynamics integration and floor response"
+    },
+    {
+      "file": "QuadSwarm_quadrotor_single.py",
+      "bytes": 21187,
+      "sha256": "8b2c717bf3fabf7a88936aab5e5895d6e8aae446e335893ded0f3f86be301ecc",
+      "source_id": "QuadSwarm",
+      "upstream_path": "gym_art/quadrotor_multi/quadrotor_single.py",
+      "source_url": "https://raw.githubusercontent.com/Zhehui-Huang/quad-swarm-rl/e18d6925f73e3d3b35a8acb056817203ff7b8b07/gym_art/quadrotor_multi/quadrotor_single.py",
+      "download_date": "2026-08-31",
+      "citation_use": "floor cost versus terminal semantics"
+    },
+    {
+      "file": "QuadSwarm_room.py",
+      "bytes": 4784,
+      "sha256": "b28660be4efcc17150b8953f26609dcefbf32de309f2b64d83744e17f3d774bc",
+      "source_id": "QuadSwarm",
+      "upstream_path": "gym_art/quadrotor_multi/collisions/room.py",
+      "source_url": "https://raw.githubusercontent.com/Zhehui-Huang/quad-swarm-rl/e18d6925f73e3d3b35a8acb056817203ff7b8b07/gym_art/quadrotor_multi/collisions/room.py",
+      "download_date": "2026-08-31",
+      "citation_use": "post-contact wall response; not adopted"
+    },
+    {
+      "file": "SB3_on_policy_algorithm.py",
+      "bytes": 14576,
+      "sha256": "ce1984ea8e8a2d969443a484ab159194b9d70ff92a7ef1bc25fcc183e391e35c",
+      "source_id": "SB3",
+      "upstream_path": "stable_baselines3/common/on_policy_algorithm.py",
+      "source_url": "https://raw.githubusercontent.com/DLR-RM/stable-baselines3/3246f5060eacd8bff4de575eaafbbc6e0baac376/stable_baselines3/common/on_policy_algorithm.py",
+      "download_date": "2026-08-31",
+      "citation_use": "preserved last observation and bootstrap"
+    }
+  ]
+}

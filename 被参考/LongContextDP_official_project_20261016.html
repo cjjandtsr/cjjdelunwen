@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Training and Evaluating Diffusion Policies with Long Context Lengths</title>
+  <meta name="description" content="Benchmarking and training diffusion policies for imitation learning across short-to-long context lengths." />
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:title" content="Training and Evaluating Diffusion Policies with Long Context Lengths" />
+  <meta property="og:description" content="Benchmarking and training diffusion policies for imitation learning across short-to-long context lengths." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dp-with-long-context.github.io/" />
+  <link rel="canonical" href="https://dp-with-long-context.github.io/" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sticky top bar: notice + section jump-nav -->
+  <div class="topbar">
+    <div class="construction-banner" role="status">
+      <span class="construction-icon">🎬</span>
+      <span>More evaluation videos coming soon</span>
+      <span class="construction-icon">🎬</span>
+    </div>
+    <nav class="jumpnav" aria-label="Section navigation">
+      <a href="#overview">Overview</a>
+      <a href="#naive-scaling">Naïve scaling</a>
+      <a href="#recommendations">Training recommendations</a>
+      <a href="#abstract">Abstract</a>
+    </nav>
+  </div>
+
+  <header class="hero">
+    <div class="container">
+      <h1 class="title"><span class="title-line">Training and Evaluating Diffusion Policies</span> <span class="title-line">with Long Context Lengths</span></h1>
+
+      <div class="authors">
+        <span class="author"><a href="https://www.linkedin.com/in/abhinavagarwal17/" target="_blank" rel="noopener">Abhinav Agarwal</a><sup>*</sup></span>
+        <span class="author"><a href="https://adamwei.com/" target="_blank" rel="noopener">Adam Wei</a><sup>&dagger;</sup></span>
+        <span class="author"><a href="https://tkargin.github.io/" target="_blank" rel="noopener">Taylan Kargin</a><sup>&dagger;</sup></span>
+        <span class="author"><a href="https://michaelszeng.github.io/" target="_blank" rel="noopener">Michael Zeng</a></span>
+        <span class="author"><a href="https://www.linkedin.com/in/cole-becker-559102129/" target="_blank" rel="noopener">Cole Becker</a></span>
+        <span class="author"><a href="https://keremdayi.com/" target="_blank" rel="noopener">Arif Kerem Day&#305;</a></span>
+        <span class="author"><a href="https://www.mit.edu/~parrilo/" target="_blank" rel="noopener">Pablo Parrilo</a></span>
+        <span class="author"><a href="https://asu.mit.edu/" target="_blank" rel="noopener">Asuman Ozdaglar</a></span>
+        <span class="author"><a href="https://locomotion.csail.mit.edu/russt.html" target="_blank" rel="noopener">Russ Tedrake</a></span>
+      </div>
+
+      <div class="affiliations">
+        <span>Massachusetts Institute of Technology</span>
+      </div>
+
+      <div class="footnote">
+        <sup>*</sup> Corresponding author &nbsp;&middot;&nbsp; <sup>&dagger;</sup> Equal contribution
+      </div>
+
+      <nav class="links">
+        <a class="btn" href="https://arxiv.org/abs/2606.16447" target="_blank" rel="noopener">
+          <span class="btn-icon">📄</span> arXiv
+        </a>
+        <a class="btn" href="https://arxiv.org/pdf/2606.16447" target="_blank" rel="noopener">
+          <span class="btn-icon">⬇</span> Paper
+        </a>
+        <a class="btn btn-disabled" aria-disabled="true">
+          <span class="btn-icon">💻</span> Code <span class="soon">(coming soon)</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="abstract" id="overview">
+      <h2>Summary</h2>
+      <p>
+        We investigate context length scaling in Diffusion Policy across a spectrum of
+        tasks at different data scales and find that with appropriate architecture,
+        hyperparameters, and data scale, naïve context length scaling doesn't catastrophically
+        fail. We then make recommendations to train single-task long-context Diffusion Policies
+        in different data regimes.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- ======== Naïve-scaling section ======== -->
+  <section class="naive-scaling" id="naive-scaling">
+    <div class="ns-inner">
+
+      <!-- section opener: context-length animation -->
+      <h2 class="sec-title">Naïve scaling isn't always brittle</h2>
+      <p class="sec-question">What happens as context length is increased from short to long?</p>
+
+      <div class="ctx-anim">
+        <div class="strip" id="strip"></div>
+        <div class="qarrow"><div class="qline"><div class="qtrack" id="qtrack"><span class="qhead"></span><span class="qbar"></span></div></div></div>
+        <div class="flow">
+          <div class="merge">+ other tokens (proprioception, timestep, &hellip;)</div>
+          <div class="down">&darr;</div>
+          <div class="policy-box">Policy<small>Denoising backbone &middot; UNet / DiT</small></div>
+          <div class="down">&darr;</div>
+          <div class="actions-out">robot actions</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- axis explorer -->
+      <h3 class="block-title">We study naïve scaling along three axes</h3>
+
+      <div class="axis-tabs" id="axisTabs">
+        <button class="axis-tab" data-axis="memory">Memory requirement</button>
+        <button class="axis-tab" data-axis="primitive">Manipulation primitive</button>
+        <button class="axis-tab" data-axis="data">Data scale</button>
+      </div>
+      <div class="scale-legend">
+        <span style="font-weight:600;color:var(--fg);">every plot sweeps data scale:</span>
+        <span class="lg"><span class="ld"></span>N/2 · low</span>
+        <span class="lg"><span class="ld"></span>N · ideal</span>
+        <span class="lg"><span class="ld"></span>2N · high</span>
+      </div>
+
+      <div id="results"></div>
+
+      <div class="divider"></div>
+
+      <!-- hardware -->
+      <h3 class="block-title">Naïve scaling works on hardware, too <span class="badge">hardware</span></h3>
+      <p class="block-lead">On a task requiring the robot to scoop marshmallows exactly two times and hit a button
+        to indicate completion, we are able to achieve high success rates through the UNet+Cross-Attention
+        architecture as well as hyper-parameter changes for other architectures. We used 100 demos for this task.</p>
+      <div class="hw">
+        <div class="vid"><video class="with-controls" src="videos/hardware_unet_cross_success.mp4" autoplay loop muted playsinline></video></div>
+        <div class="hw-plot"><img src="media/plots/hardware_marshmallows.jpg" alt="Marshmallows hardware success rate by architecture: UNet+Cross-Attention, UNet+FiLM, DiT"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======== Recommendations for Training ======== -->
+  <section class="recommendations" id="recommendations">
+    <div class="ns-inner">
+      <h2 class="sec-title">Recommendations for Training Long-Context Policies</h2>
+      <p class="block-lead">For training single-task long-context Diffusion Policies, especially in the
+        limited-data regime, we make two recommendations: an architecture choice and a training algorithm.</p>
+
+      <!-- Architecture subsection -->
+      <h3 class="block-title">Architecture</h3>
+      <p class="sec-lead">We compare two action denoising backbones &mdash; <b>UNet</b> and <b>DiT</b> &mdash; and for
+        the UNet, two conditioning methods &mdash; <b>Cross-Attention</b> and <b>FiLM</b>.</p>
+
+      <div class="arch-diagram">
+        <div class="arch-glabel">Action denoising backbone</div>
+        <div class="arch-backbones">
+          <figure class="arch-card best arch-unet" id="archUnet" tabindex="0" aria-expanded="false">
+            <div class="arch-img"><img src="media/arch/unet.png" alt="UNet denoising backbone"></div>
+            <figcaption>UNet <span class="arch-badge">recommended</span></figcaption>
+            <div class="arch-hint">hover for conditioning methods &darr;</div>
+          </figure>
+          <figure class="arch-card">
+            <div class="arch-img"><img src="media/arch/dit.png" alt="DiT denoising backbone"></div>
+            <figcaption>DiT</figcaption>
+          </figure>
+        </div>
+
+        <div class="arch-cond-panel" id="archCondPanel">
+          <div class="arch-glabel">Conditioning method <span>(for UNet)</span></div>
+          <div class="arch-cards">
+            <figure class="arch-card best">
+              <div class="arch-img"><img src="media/arch/cross_attention.png" alt="Cross-attention conditioning"></div>
+              <figcaption>Cross-Attention <span class="arch-badge">recommended</span></figcaption>
+            </figure>
+            <figure class="arch-card">
+              <div class="arch-img"><img src="media/arch/film.png" alt="FiLM conditioning"></div>
+              <figcaption>FiLM</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-takeaways">
+        <div class="arch-take"><span class="arch-take-k">a</span><span><b>In the single-task, training-from-scratch case, UNet is the better backbone</b> &mdash; it outperforms DiT even after favorable hyper-parameter changes.</span></div>
+        <div class="arch-take"><span class="arch-take-k">b</span><span><b>Cross-attention conditioning especially helps in the limited-data regime.</b></span></div>
+      </div>
+
+      <figure class="vh-fig">
+        <img src="media/plots/architecture_compare.jpg" alt="UNet+Cross-Attention vs UNet+FiLM vs DiT success rates across Push-T, Square, Push-and-Return at the N/2 and N data scales">
+        <figcaption>Figure 7 &mdash; UNet+Cross-Attention vs. UNet+FiLM vs. DiT, at the N/2 and N data scales.</figcaption>
+      </figure>
+
+      <div class="divider"></div>
+
+      <!-- Variable History Training subsection -->
+      <h3 class="block-title">Variable History Training</h3>
+      <p class="sec-lead">We propose training policies over multiple context lengths, shown according to a curriculum
+        during training. We believe this way the model can use short-context datagrams to mitigate over-fitting while
+        learning to benefit from memory when useful (and ignoring it when not).</p>
+      <p class="eval-line">We evaluate two curricula.</p>
+
+      <div class="legend">
+        <span class="lk"><span class="sw obs"></span>observation</span>
+        <span class="lk"><span class="sw past"></span>past action</span>
+        <span class="lk"><span class="sw future"></span>future action</span>
+      </div>
+
+      <div class="tabs" id="vhTabs">
+        <button class="tab" data-key="prog">Progressive</button>
+        <button class="tab" data-key="spr">Random sprinkle</button>
+      </div>
+
+      <div class="curr">
+        <p class="curr-desc" id="vhDesc"></p>
+        <div class="train-label">datagrams seen during training &mdash; one per step</div>
+        <div class="track" id="vhTrack"></div>
+        <div class="axis"><div class="line"></div><div class="prog" id="vhProg"></div><div class="head" id="vhHead"></div><div class="lbl">increasing training step &rarr;</div></div>
+      </div>
+
+      <div class="vh-result">
+        <p class="vh-take">In the data regime where naively increasing context length performs worse than short-context
+          policies, we find <b>progressive curriculum and limited past prediction perform best</b>.</p>
+        <figure class="vh-fig">
+          <img src="media/plots/variable_history_halfN.jpg" alt="Variable history training vs UNet+Cross-Attention at N/2 data scale for Push-T, Square, and Push-and-Return">
+          <figcaption>Figure 8 &mdash; Variable history training comparison in the low (N/2) data regime.</figcaption>
+        </figure>
+        <p class="vh-more">For results at other data scales, please see the paper.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="abstract" id="abstract">
+      <h2>Abstract</h2>
+      <p>
+        Imitation learning has enabled highly-dexterous robotic manipulation from RGB
+        observations. Policies trained with these methods, however, typically condition
+        robot actions on only a short history of observations. These policies cannot solve
+        tasks that require memory and can get stuck repeatedly executing the same failing
+        motions. In this work, we first benchmark policy performance as context length is
+        incrementally increased from short to long, across a spectrum of tasks with varying
+        local stability and memory requirements, and in multiple data regimes. To our
+        knowledge, this is the first study to investigate context length in imitation
+        learning at this level of detail. Our results challenge prior claims: naïvely scaling
+        context length is not as brittle as advertised in literature. With an appropriate
+        conditioning method and denoising backbone (UNet&nbsp;+&nbsp;Cross-Attention),
+        single-task policies achieve high success rates on many tasks in the usual data
+        regime even with naïve scaling. Next, we propose a training algorithm to jointly
+        train policies at multiple context lengths, further reducing the sample complexity
+        of long-context learning. Finally, we apply our findings to re-evaluate some
+        previously proposed solutions to long-context imitation learning.
+      </p>
+      <nav class="links" style="margin-top:18px;">
+        <a class="btn" href="https://arxiv.org/abs/2606.16447" target="_blank" rel="noopener">
+          <span class="btn-icon">📄</span> arXiv
+        </a>
+      </nav>
+    </section>
+
+    <section class="bibtex">
+      <h2>BibTeX</h2>
+      <pre><code>@article{agarwal2026longcontext,
+  title   = {Training and Evaluating Diffusion Policies with Long Context Lengths},
+  author  = {Agarwal, Abhinav and Wei, Adam and Kargin, Taylan and Zeng, Michael
+             and Becker, Cole and Day{\i}, Arif Kerem and Parrilo, Pablo
+             and Ozdaglar, Asuman and Tedrake, Russ},
+  year    = {2026}
+}</code></pre>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 The Authors &middot; Massachusetts Institute of Technology</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ---------- context-length animation ---------- */
+    var SLOTS=[{img:'media/anim/obs_1.jpg',label:'t&minus;T&#8338;+1'},{ellipsis:true},{img:'media/anim/obs_3.jpg',label:'t&minus;5'},{img:'media/anim/obs_4.jpg',label:'t&minus;4'},{img:'media/anim/obs_5.jpg',label:'t&minus;3'},{img:'media/anim/obs_6.jpg',label:'t&minus;2'},{img:'media/anim/obs_7.jpg',label:'t&minus;1'},{img:'media/anim/obs_8.jpg',label:'t'}];
+    var N=SLOTS.length,strip=document.getElementById('strip'),qtrack=document.getElementById('qtrack'),slots=[];
+    SLOTS.forEach(function(d){var s=document.createElement('div');s.className='slot';s.innerHTML=d.ellipsis?'<div class="frame ell">&middot;&middot;&middot;</div><div class="tstamp">&nbsp;</div>':'<div class="frame"><img src="'+d.img+'" alt=""></div><div class="tstamp">o<sub>'+d.label+'</sub></div>';strip.appendChild(s);slots.push(s);});
+    var k=0;
+    function step(){k=k%N+1;var f=N-k;for(var i=0;i<N;i++){slots[i].classList.toggle('active',i>=f);slots[i].classList.toggle('newest',i===N-1);}if(k===1){qtrack.style.transition='none';qtrack.style.width=(100/N)+'%';void qtrack.offsetWidth;qtrack.style.transition='';}else{qtrack.style.width=(k/N*100)+'%';}}
+    var STEP_MS=480,HOLD_MS=950,timer;
+    function tick(){if(k===N){clearInterval(timer);setTimeout(function(){step();start();},HOLD_MS);}else step();}
+    function start(){timer=setInterval(tick,STEP_MS);}
+    step();start();
+
+    /* ---------- task data ---------- */
+    var TASKS=[
+      {key:'lift',name:'Lift',sub:'robomimic',video:'media/tasks/lift.mp4',plot:'media/plots/lift_cross_data_scaling.jpg',mem:'short',prim:'easy',small:true},
+      {key:'square',name:'Square',sub:'robomimic',video:'media/tasks/square.mp4',plot:'media/plots/square_cross_data_scaling.jpg',mem:'short',prim:'medium',small:true},
+      {key:'pusht',name:'Push-T',sub:'',video:'media/tasks/push_t.mp4',plot:'media/plots/push_t_cross_data_scaling.jpg',mem:'short',prim:'hard'},
+      {key:'gar',name:'Grasp-and-Return',sub:'',video:'media/tasks/grasp_and_return.mp4',plot:'media/plots/grasp_and_return_cross_task_success_data_scaling.jpg',mem:'long',prim:'easy'},
+      {key:'par',name:'Push-and-Return',sub:'',video:'media/tasks/push_and_return.mp4',plot:'media/plots/push_and_return_strong_cross_task_success_data_scaling.jpg',mem:'long',prim:'hard'}
+    ];
+    var MEMLABEL={short:'short-context',long:'memory'};
+    var PRIMLABEL={easy:'grasping',medium:'grasping+',hard:'pushing'};
+
+    var AXES={
+      memory:{label:'Memory requirement',field:'mem',groups:[
+        {id:'short',title:'Short-context solvable',color:'var(--short)',take:'Regardless of data scale, Lift shows no drop in performance. On the contrary, Square and Push-T performance decreases beyond short context lengths in the low data regime (N/2). The magnitude of drop, however, reduces as more data is added, with Square showing statistically insignificant drop in the high data regime.'},
+        {id:'long',title:'Long-context required',color:'var(--long)',take:'Task success significantly improves for both Push-and-Return and Grasp-and-Return tasks as context length is increased. The primary difference is about data: Grasp-and-Return shows good long-context performance with just N/2 trajectories, whereas acceptable performance for Push-and-Return is N trajectories onward.'}
+      ]},
+      primitive:{label:'Manipulation primitive',field:'prim',groups:[
+        {id:'easy',title:'Stable grasping · easy',color:'var(--easy)',take:'Locally stable, prehensile tasks are the most sample-efficient — favorable long-context trends even at N/2.'},
+        {id:'medium',title:'Grasping + more · medium',color:'var(--medium)',take:'Square sits in between: a low-data drop that is largely recovered as data grows.'},
+        {id:'hard',title:'Pushing · locally unstable',color:'var(--hard)',take:'Locally unstable pushing is the most data-hungry; long-context success demands more demonstrations.'}
+      ]},
+      data:{label:'Data scale',field:null,groups:[
+        {id:'all',title:'All tasks · N/2 → N → 2N',color:'var(--accent)',take:'Across tasks, long-context performance increases as data is scaled. While the low data regime shows drop in performance for some tasks, naïve scaling largely works fine in the ideal and high data regime in most cases.'}
+      ]}
+    };
+
+    /* build persistent task cards once (moving them never reloads the videos) */
+    var cardMap={};
+    TASKS.forEach(function(t){
+      var c=document.createElement('div');c.className='task-card';
+      c.innerHTML=
+        '<div class="tc-name">'+t.name+(t.sub?' <span class="tc-sub">'+t.sub+'</span>':'')+'</div>'+
+        '<div class="tc-tags"><span class="chip mem-'+t.mem+'">'+MEMLABEL[t.mem]+'</span>'+
+          '<span class="chip p-'+t.prim+'">'+PRIMLABEL[t.prim]+'</span></div>'+
+        '<div class="tc-vid'+(t.small?' small-vid':'')+'"><video '+(t.small?'':'class="with-controls" ')+'src="'+t.video+'" autoplay loop muted playsinline></video></div>'+
+        '<div class="tc-plot"><img src="'+t.plot+'" alt="'+t.name+' success vs context length at N/2, N, 2N"></div>';
+      cardMap[t.key]=c;
+    });
+
+    var results=document.getElementById('results');
+    function render(axisKey){
+      var axis=AXES[axisKey];
+      results.innerHTML='';
+      axis.groups.forEach(function(g){
+        var members=TASKS.filter(function(t){return axis.field===null||t[axis.field]===g.id;});
+        var gd=document.createElement('div');gd.className='group';gd.style.setProperty('--gc',g.color);
+        gd.innerHTML='<div class="group-head"><span class="group-title" style="color:'+g.color+'">'+g.title+'</span><span class="group-take">'+g.take+'</span></div><div class="card-row"></div>';
+        var rowEl=gd.querySelector('.card-row');
+        members.forEach(function(t){rowEl.appendChild(cardMap[t.key]);});
+        results.appendChild(gd);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.axis-tab'),function(b){b.classList.toggle('active',b.dataset.axis===axisKey);});
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.axis-tab'),function(b){
+      b.addEventListener('mouseenter',function(){render(b.dataset.axis);});
+      b.addEventListener('click',function(){render(b.dataset.axis);});
+    });
+    render('memory');
+
+    /* ---------- muted policy + custom controls (play/pause + seek; no unmute) ---------- */
+    var PLAY='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+    var PAUSE='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+    function wire(v){
+      v.muted=true;v.defaultMuted=true;v.removeAttribute('controls');
+      v.addEventListener('volumechange',function(){if(!v.muted)v.muted=true;});
+      if(!v.classList.contains('with-controls')||v.dataset.wired)return;
+      v.dataset.wired='1';
+      var bar=document.createElement('div');bar.className='video-controls';
+      var btn=document.createElement('button');btn.type='button';btn.className='vc-btn';btn.setAttribute('aria-label','Play or pause');
+      function sync(){btn.innerHTML=v.paused?PLAY:PAUSE;}
+      btn.addEventListener('click',function(){v.paused?v.play():v.pause();});
+      v.addEventListener('play',sync);v.addEventListener('pause',sync);
+      var seek=document.createElement('input');seek.type='range';seek.className='vc-seek';seek.min=0;seek.max=1000;seek.value=0;seek.setAttribute('aria-label','Seek');
+      var scrub=false;
+      seek.addEventListener('input',function(){if(v.duration)v.currentTime=seek.value/1000*v.duration;});
+      seek.addEventListener('pointerdown',function(){scrub=true;});window.addEventListener('pointerup',function(){scrub=false;});
+      v.addEventListener('timeupdate',function(){if(!scrub&&v.duration)seek.value=v.currentTime/v.duration*1000;});
+      bar.appendChild(btn);bar.appendChild(seek);v.parentElement.appendChild(bar);sync();
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('video'),wire);
+  </script>
+
+  <script>
+    /* ---------- Variable History Training: datagram curricula ---------- */
+    (function(){
+      var FRAMES=['media/anim/obs_4.jpg','media/anim/obs_5.jpg','media/anim/obs_6.jpg','media/anim/obs_7.jpg','media/anim/obs_8.jpg'];
+      var PAST_MAX=2, FUTURE=3;
+      function datagram(m){
+        var dg=document.createElement('div');dg.className='dg';
+        var obs='<div class="dg-row">';
+        for(var i=0;i<m;i++){var fi=FRAMES.length-m+i; if(fi<0)fi=i%FRAMES.length; obs+='<div class="cell obs"><img src="'+FRAMES[fi]+'" alt=""></div>';}
+        obs+='</div>';
+        var past=Math.min(PAST_MAX,m);
+        var act='<div class="dg-row">';
+        for(var e=0;e<m-past;e++) act+='<div class="cell empty"></div>';     // spacers under older observations
+        for(var p=0;p<past;p++) act+='<div class="cell past"></div>';        // past actions under most recent obs
+        for(var f=0;f<FUTURE;f++) act+='<div class="cell future"></div>';    // future actions beyond current time
+        act+='</div>';
+        dg.innerHTML=obs+act;
+        return dg;
+      }
+      var CURRICULA={
+        prog:{desc:'Start with only short contexts, then progressively add longer ones as training proceeds.',lengths:[1,2,3,4,5]},
+        spr:{desc:'Mostly train at the full context length, with shorter contexts sprinkled in at random (p ≈ 0.8 full).',lengths:[5,5,2,5,3]}
+      };
+      var track=document.getElementById('vhTrack'), prog=document.getElementById('vhProg'),
+          head=document.getElementById('vhHead'), axis=prog.parentElement, currDesc=document.getElementById('vhDesc');
+      var items=[], frac=0, RATE=0.012, HOLD=900, holding=false;
+      function build(key){
+        currDesc.textContent=CURRICULA[key].desc;
+        track.innerHTML=''; items=[];
+        CURRICULA[key].lengths.forEach(function(m,idx){
+          var dg=datagram(m); dg.dataset.center=((idx+0.6)/CURRICULA[key].lengths.length).toFixed(3);
+          track.appendChild(dg); items.push(dg);
+        });
+        frac=0; holding=false;
+        Array.prototype.forEach.call(document.querySelectorAll('#vhTabs .tab'),function(b){b.classList.toggle('active',b.dataset.key===key);});
+      }
+      function loop(){
+        if(holding||!items.length) return;
+        frac+=RATE; var done=frac>=1; if(done)frac=1;
+        var w=axis.clientWidth-16;
+        prog.style.width=(frac*w)+'px'; head.style.left=(frac*w)+'px';
+        items.forEach(function(dg){dg.classList.toggle('on', frac>=parseFloat(dg.dataset.center));});
+        if(done){holding=true;setTimeout(function(){frac=0;holding=false;items.forEach(function(dg){dg.classList.remove('on');});},HOLD);}
+      }
+      setInterval(loop,40);
+      Array.prototype.forEach.call(document.querySelectorAll('#vhTabs .tab'),function(b){
+        b.addEventListener('mouseenter',function(){build(b.dataset.key);});
+        b.addEventListener('click',function(){build(b.dataset.key);});
+      });
+      build('prog');
+    })();
+  </script>
+
+  <script>
+    /* ---------- Architecture: reveal UNet conditioning methods on hover/tap ---------- */
+    (function(){
+      var unet=document.getElementById('archUnet'), panel=document.getElementById('archCondPanel');
+      if(!unet||!panel) return;
+      var pinned=false;
+      function show(v){ panel.classList.toggle('show', v); unet.classList.toggle('open', v); unet.setAttribute('aria-expanded', v?'true':'false'); }
+      unet.addEventListener('mouseenter', function(){ show(true); });
+      unet.addEventListener('mouseleave', function(){ if(!pinned) show(false); });
+      unet.addEventListener('focus', function(){ show(true); });
+      unet.addEventListener('blur', function(){ if(!pinned) show(false); });
+      unet.addEventListener('click', function(){ pinned=!pinned; show(pinned); });
+      unet.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pinned=!pinned; show(pinned); } });
+    })();
+  </script>
+</body>
+</html>

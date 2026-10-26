@@ -1,0 +1,1359 @@
+===== PDF PAGE 1 =====
+        Deﬁning and Characterizing Reward Hacking
+
+
+
+
+           Joar Skalse∗                   Nikolaus H. R. Howe                  Dmitrii Krasheninnikov
+      University of Oxford            Mila, Université de Montréal              University of Cambridge
+
+                                                David Krueger∗
+                                           University of Cambridge
+
+
+                                                   Abstract
+
+          We provide the ﬁrst formal deﬁnition ofreward hacking, a phenomenon where
+          optimizing an imperfect proxy reward function,  ˜R, leads to poor performance
+          according to the true reward function,R. We say that a proxy is unhackable if
+          increasing theexpectedproxy return cannever decreasethe expected true return.
+          Intuitively, it might be possible to create an unhackable proxy by leaving some
+          termsoutoftherewardfunction(makingit“narrower”)oroverlookingﬁne-grained
+          distinctions between roughly equivalent outcomes, but we show this is usually
+          not the case.  A key insight is that the linearity of reward (in state-action visit
+          counts)makesunhackabilityaverystrongcondition. Inparticular,forthesetofall
+          stochastic policies, two reward functions can only be unhackable if one of them
+          is constant. We thus turn our attention to deterministic policies and ﬁnite sets of
+          stochastic policies,where non-trivial unhackable pairs alwaysexist, and establish
+          necessaryandsufﬁcientconditionsfortheexistenceofsimpliﬁcations,animportant
+          special case of unhackability. Our results reveal a tension between using reward
+          functions to specify narrow tasks and aligning AI systems with human values.
+
+1   Introduction
+
+It is well known that optimising a proxy can lead to unintended outcomes: a boat spins in circles
+collecting“powerups”insteadoffollowingtheracetrackinaracinggame(ClarkandAmodei,2016);
+an evolved circuit listens in on radiosignals from nearby computers’ oscillators instead ofbuilding
+its own(Bird and Layzell,2002); universities rejectthe most qualiﬁedapplicants inorder to appear
+moreselectiveandboosttheirratings(Golden,2001). Inthecontextofreinforcementlearning(RL),
+such failures are calledreward hacking.
+For AI systems that take actions in safety-critical real world environments such as autonomous
+vehicles,algorithmictrading,orcontentrecommendationsystems,theseunintendedoutcomescan
+be catastrophic. This makes it crucial to align autonomous AI systems with their users’ intentions.
+Preciselyspecifyingwhichbehavioursareorarenotdesirableischallenging,however. Oneapproach
+to this speciﬁcation problem is to learn an approximation of the true reward function (Ng et al., 2000;
+Ziebart,2010;Leikeetal.,2018). Optimizingalearnedproxyrewardcanbedangerous,however;
+for instance, it might overlook side-effects (Krakovna et al., 2018; Turner et al., 2019) or encourage
+power-seeking(Turneretal.,2021)behavior. Thisraisesthequestionmotivatingourwork: Whenis
+it safe to optimise a proxy?
+To begin to answer this question, we consider a somewhat simpler one: When could optimising a
+proxy lead to worse behaviour? “Optimising”, in this context, does not refer to ﬁnding a global,
+or even local, optimum, but rather running a search process, such as stochastic gradient descent
+
+   ∗Equal contribution. Correspondence to: joar.mvs@gmail.com,  david.scott.krueger@gmail.com
+
+
+36th Conference on Neural Information Processing Systems (NeurIPS 2022).
+
+===== PDF PAGE 2 =====
+(SGD), that yields a sequence of candidate policies, and tends to move towards policies with higher
+(proxy) reward. We make no assumptions about the path through policy space that optimisation
+takes.1 Instead,weaskwhether thereisany wayinwhichimprovingapolicyaccording totheproxy
+could make the policy worse according to the true reward; this is equivalent to asking if there exists a
+pair ofpoliciesπ1,π2 where theproxy prefersπ1, but thetrue reward functionprefersπ2. Whenthis
+is the case, we refer to this pair of true reward function and proxy reward function ashackable.
+Giventhestrictnessofourdeﬁnition,itis notimmediatelyapparentthatanynon-trivialexamplesof
+unhackablerewardfunctionpairsexist. Andindeed,ifweconsiderthesetofallstochasticpolicies,
+they do not (Section 5.1). However, restricting ourselves to any ﬁnite set of policies guarantees at
+least one non-trivial unhackable pair (Section 5.2).
+Intuitively, wemight expectthe proxytobe a“simpler” versionof thetrue rewardfunction. Noting
+that the deﬁnition of unhackability is symmetric, we introduce the asymmetric special case of
+simpliﬁcation, andarriveat similar theoreticalresults forthis notion.2 In theprocess, andthrough
+examples, weshowthat seemingly naturalways of simplifyingrewardfunctions often fail to produce
+simpliﬁcations in our formal sense, and in fact fail to rule out the potential for reward hacking.
+We conclude with a discussion of the implications and limitations of our work. Brieﬂy, our work
+suggests that a proxy reward function must satisfy demanding standards in order for it to be safe to
+optimize. Thisin turnimpliesthatthereward functionslearnedbymethodssuchas rewardmodeling
+andinverse RLare perhapsbestviewedas auxiliaries topolicylearning,rather thanspeciﬁcations
+that should be optimized. This conclusion is weakened, however, by the conservativeness of our
+chosendeﬁnitions; futurework shouldexplorewhen hackableproxies can beshown tobe safeina
+probabilistic or approximate sense, or when subject to only limited optimization.
+
+2   Example: Cleaning Robot
+
+Consider a household robot tasked with cleaning a house with three rooms: Attic                           , Bedroom
+  , and Kitchen      . The robot’s (deterministic) policy is a vector indicating which rooms it cleans:
+π = [π1,π2,π3]∈{0,1}3. Therobot receives a (non-negative)reward ofr1,r2,r3 for cleaningthe
+attic, bedroom, andkitchen, respectively, and thetotal reward is given byJ(π) =π·r. For example,
+ifr = [1,2,3] and the robot cleans the attic and the kitchen, it receives a reward of1+3 = 4.
+
+
+
+
+
+
+
+
+
+
+Figure 1:  An illustration of hackable and unhackable proxy rewards arising from overlooking
+rewarding features.  A human wants their house cleaned.  In (a), the robot draws an incorrect
+conclusion because of the proxy; this could lead to hacking. In (b), no such hacking can occur: the
+proxy is unhackable.
+
+At least two ideas come to mind when thinking about “simplifying” a reward function. The ﬁrst one
+is overlookingrewardingfeatures: supposethe truerewardis equalfor allthe rooms,rtrue = [1,1,1],
+but we only ask the robot to clean the attic and bedroom,rproxy = [1,1,0]. In this case,rproxy and
+rtrue are unhackable. However, if we ask the robot to only clean the attic,rproxy = [1,0,0], this is
+hackablewithrespecttortrue. Tosee this, notethataccordingtorproxy cleaningtheattic(Jproxy = 1)
+is better than cleaning the bedroom and the kitchen (Jproxy = 0). Yet,rtrue says that cleaning the
+attic (Jtrue = 1) is worse than cleaning the bedroom and the kitchen (Jtrue = 2). This situation is
+illustrated in Figure 1.
+
+
+   1Thisassumption –although conservative –is reasonablebecause optimisationin state-of-the-artdeep RL
+methods is poorly understood and results are often highly stochastic and suboptimal.
+   2See Section 4.2 for formal deﬁnitions.
+
+
+                                                           2
+
+===== PDF PAGE 3 =====
+Thesecondseeminglynatural way tosimplifyarewardfunctionisoverlookingﬁnedetails: suppose
+rtrue = [1,1.5,2],andweasktherobottocleanalltherooms,rproxy = [1,1,1]. Forthesevalues,the
+proxy and true reward are unhackable. However, with a slightly less balanced true reward function
+suchasrtrue = [1,1.5,3] theproxydoes leadtohacking,sincethe robotwouldfalselycalculatethat
+it’s better to clean the attic and the bedroom than the kitchen alone.
+These two examples illustrate that while simpliﬁcation of reward functions is sometimes possible,
+attemptsatsimpliﬁcationcaneasilyleadtorewardhacking. Intuitively,omitting/overlookingdetails
+is okay so long as all these details are not as important together as any of the details that we do
+share. In general, it is not obvious what the proxy must look like to avoid reward hacking, suggesting
+we should take great care when using proxies. For this speciﬁc environment, a proxy and a true
+reward are hackable exactly when there are two sets of roomsS1,S2 such that the true reward gives
+strictly higher value to cleaningS1 than it does to cleaningS2, and the proxy says the opposite:
+J1(S1)>J1(S2) &J2(S1)<J2(S2). For a proof of this statement, see Appendix 11.2.1.
+
+3   Related Work
+
+Whileweare theﬁrsttodeﬁnehackability,wearefarfromtheﬁrstto
+study speciﬁcation hacking. Theobservationthat optimizingproxy met-
+rics tends to lead to perverse instantiations is often called “Goodhart’s
+Law”,andisattributedtoGoodhart(1975). ManheimandGarrabrant
+(2018) provide a list of four mechanisms underlying this observation.
+Examples of such unintended behavior abound in both RL and other
+areas of AI; Krakovna et al. (2020) provide an extensive list. Notable
+recent instances include a robot positioning itselfbetween the camera               Figure2: Anillustrationof
+and the object it is supposed to grasp in a way that tricks the reward              reward hacking when op-
+model(Amodeietal.,2017),thepreviouslymentionedboatraceexam-                         timizingahackableproxy.
+ple(ClarkandAmodei,2016),andamultitudeofexamplesofreward                            The  true  reward  ﬁrst  in-
+model hacking in Atari (Ibarz et al., 2018). Reward hacking can occur               creases and thendrops off,
+suddenly. Ibarzetal.(2018)andPanetal.(2022)showcaseplotssimilar                     while  the  proxy  reward
+tooneinFigure2,whereoptimizingtheproxy(eitheralearnedreward                         continues to increase.
+model or ahand-speciﬁed reward function) ﬁrst leadsto both proxy and
+truerewardsincreasing,and thentoasuddenphasetransitionwherethe
+true reward collapses while the proxy continues going up.
+Note that notall of these examples correspond tooptimal behavior according to the proxy. Indeed,
+convergence to suboptimal policies is a well-known issue in RL (Thrun and Schwartz, 1993). As
+a consequence, improving optimization often leads to unexpected, qualitative changes in behavior.
+For instance, Zhang et al. (2021) demonstrate a novel cartwheeling behavior in the widely studied
+Half-Cheetahenvironmentthatexceedspreviousperformancesogreatlythatitbreaksthesimulator.
+TheunpredictabilityofRLoptimizationisakeymotivationforourdeﬁnitionofhackability,sincewe
+cannotassumethatagentswillﬁndanoptimalpolicy. Neithercanweruleoutthepossibilityofsudden
+improvements in proxy reward and corresponding qualitative changes in behavior. Unhackability
+could provide conﬁdence that reward hacking will not occur despite these challenges.
+Despitetheprevalenceandpotentialseverityofrewardhacking,toourknowledgePanetal.(2022)
+providetheﬁrstpeer-reviewedworkthatfocusesspeciﬁcallyonit,althoughEverittetal.(2017)tackle
+thecloselyrelatedissueofrewardcorruption. TheworkofPanetal.(2022)ispurelyempirical; they
+manually construct proxy rewards for several diverse environments, and evaluate whether optimizing
+theseproxiesleadstorewardhacking;in5outof9oftheirsettings,itdoes. Inanothercloselyrelated
+work, Zhuangand Hadﬁeld-Menell(2020) examinewhat happenswhen theproxy reward function
+depends on a strict subset of features relevant for the true reward. They show that optimizing the
+proxyrewardcanleadtoarbitrarilylowtruerewardundersuitableassumptions. Thiscanbeseenas
+aseeminglyvalidsimpliﬁcationofthetruerewardthatturnsouttobe(highly)hackable. Whiletheir
+result only applies to environments with decreasing marginal utility and increasing opportunity cost,
+we demonstrate hackability is an issue in arbitrary MDPs.
+
+
+
+
+
+
+                                                         3
+
+===== PDF PAGE 4 =====
+Hackability is particularly concerning given arguments that reward optimizing behavior tends to
+be power-seeking (Turner et al., 2021). But Leike et al. (2018) establish that any desired behavior
+(power-seeking or not) can in principle be speciﬁed as optimal via a reward function.3 However,
+unlikeus, theydo notconsiderthe entirepolicypreference ordering. Meanwhile,Abel etal.(2021)
+note that Markov reward functions cannot specify arbitrary orderings over policies or trajectories,
+although they do not consider hackability. Previous works consider reward functions to be equivalent
+iftheypreservetheorderingoverpolicies(Ngetal.,1999,2000). Unhackabilityrelaxesthis,allowing
+equalities to be reﬁned to inequalities, and vice versa. Unhackability provides a notion of what it
+means to be “aligned enough”; Brown et al. (2020b) provide an alternative. They say a policy is
+ε-value aligned if its value at every state is close enough to optimal (according to the true reward
+function). Neither notion implies the other.
+Rewardtampering(Everittetal.,2017;Kumaretal.,2020;Uesatoetal.,2020;Everittetal.,2021)
+can be viewed as a special case of reward hacking, and refers to an agent corrupting the process
+generatingrewardsignals,e.g.bytamperingwithsensors,memoryregistersstoringtherewardsignal,
+or otherhardware. Everitt etal. (2017) introducethe CorruptReward MDP(CRMDP), to modelthis
+possibility. ACRMDPdistinguishescorruptedanduncorruptedrewards;theseareexactlyanalogous
+to the proxy and true reward discussed in our work and others.  Leike et al. (2018) distinguish
+reward tampering fromrewardgaming,wherean agentachievesinappropriatelyhighrewardwithout
+tampering. However, in principle, a reward function could prohibit all forms of tampering if the
+effects of tampering are captured in the state. So this distinction is somewhat imprecise, and the
+CRMDP framework is general enough to cover both forms of hacking.
+
+4   Preliminaries
+
+We begin with an overview of reinforcement learning (RL) to establish our notation and terminology.
+Section 4.2 introduces our novel deﬁnitions of hackability and simpliﬁcation.
+
+4.1   Reinforcement Learning
+
+We expect readers to be familiar with the basics of RL, which can be found in Sutton and Barto
+(2018). RLmethodsattempttosolveasequentialdecisionproblem,typicallyformalisedasaMarkov
+decision process (MDP) , which is a tuple (S,A,T,I,R,γ) whereS is a set of states,A is a set
+of actions,T :S×A→ ∆(S) is a transition function,I∈ ∆(S) is an initial state distribution,R
+is a reward function, the most general form of which isR :S×A×S→ ∆(R), andγ∈ [0,1]
+is the discount factor. Here ∆(X) is the set of all distributions overX. A stationary policy is a
+functionπ :S→ ∆(A) that speciﬁesa distribution overactions ineach state,and anon-stationary
+policyis afunctionπ : (S×A)∗×S→ ∆(A), where∗ isthe Kleenestar. Atrajectoryτ isa path
+s0,a0,r0,... through theMDP that ispossible accordingtoT,I, andR. Thereturn of atrajectory
+isthediscountedsumofrewardsG(τ).=∑∞t=0γtrt,andthevalueofapolicyistheexpectedreturn
+J(π).=Eτ∼π[G(τ)]. Wederive policy (preference) orderings fromrewardfunctionsbyordering
+policies according totheir value. In this paper, we assume thatS andA are ﬁnite, that|A|> 1, that
+all states are reachable, and thatR(s,a,s′) has ﬁnite mean for alls,a,s′.
+In our work, we consider various reward functions for a given environment, which is then formally
+a Markov decision process without rewardMDP\R .= (S,A,T,I,                              ,γ).  Having ﬁxed an
+MDP\R,anyrewardfunctioncanbeviewedasafunctionofonlythecurrentstateandactionby
+marginalizingovertransitions:R(s,a).=∑s′∼T(s′|s,a)R(s,a,s′),weadoptthisviewfromhereon.
+Wedeﬁnethe(discounted)visitcountsofapolicyasFπ(s,a).=Eτ∼π[∑∞i=0γi  1 (si =s,ai =a)].
+Note thatJ(π) = ∑s,aR(s,a)Fπ(s,a), which we also write as⟨R,Fπ⟩.  When considering
+multiple reward functions in anMDP\R, we deﬁneJR(π) .=⟨R,Fπ⟩ and sometimes use
+Ji(π).=⟨Ri,Fπ⟩ asshorthand. WealsouseF : Π→R|S||A| todenotetheembeddingofpolicies
+intoEuclideanspaceviatheirvisitcounts,anddeﬁneF(˙Π).={F(π :π∈ ˙Π)}forany ˙Π. Moreover,
+wealsouseasecondwaytoembedpoliciesintoEuclideanspace;letG(π)bethe|S||A|-dimensional
+vector whereG(π)[s,a] =π(a|s), and letG(˙Π).={G(π :π∈ ˙Π)}.
+
+
+   3Their result concerns non-stationary policies and use non-Markovian reward functions, but in Appendix 10,
+we show how an analogous construction can be used with stationary policies and Markovian rewards.
+
+
+                                                        4
+
+===== PDF PAGE 5 =====
+4.2   Deﬁnitions and Basic Properties of Hackability and Simpliﬁcation
+
+Here, we formally deﬁnehackabilityas a binary relation between reward functions.
+Deﬁnition 1.  A pair of reward functionsR1,R2 are hackable relative to policy set Π and an
+environment(S,A,T,I,           ,γ) if there existπ,π′∈ Πsuch that
+                                   J1(π)<J1(π′)  &J2(π)>J2(π′),
+else they areunhackable.
+
+Note that an unhackable reward pair can haveJ1(π)<J1(π′)  & J2(π) =J2(π′) or vice versa.
+Unhackabilityissymmetric;thiscanbeseenbeswappingπ andπ′ inDeﬁnition1. Itisnottransitive,
+however. Inparticular,theconstantrewardfunctionisunhackablewithrespecttoanyotherreward
+function,soifitweretransitive,anypairofpolicieswouldbeunhackable. Additionally,wesaythat
+R1 andR2 are equivalent on a set of policiesΠ ifJ1 andJ2 induce the same ordering ofΠ, and
+thatR is trivial onΠ ifJ(π) =J(π′) for allπ,π′∈ Π. It is clear thatR1 andR2 are unhackable
+whenever they areequivalent,or oneofthem istrivial,butthisisrelativelyuninteresting. Ourcentral
+question is if and when there are other unhackable reward pairs.
+Thesymmetricnatureofthisdeﬁnitioniscounter-intuitive,giventhatourmotivationdistinguishes
+the proxy and true reward functions.  We might break this symmetry by only considering policy
+sequencesthatmonotonicallyincreasetheproxy,however,thisisequivalenttoouroriginal deﬁnition
+of hackability: think ofR1 as the proxy, and consider the sequenceπ,π′. We could also restrict
+ourselves to policies thatare approximately optimal according to theproxy; Corollary 2 shows that
+Theorem1appliesregardlessofthisrestriction. Finally,wedeﬁnesimpliﬁcationasanasymmetric
+special-case of unhackability; Theorem 3 shows this is in fact a more demanding condition.
+Deﬁnition 2.R2 is a simpliﬁcationofR1 relative to policy setΠ if for allπ,π′∈ Π,
+         J1(π)<J1(π′)  =⇒J2(π)≤J2(π′)  &J1(π) =J1(π′)  =⇒J2(π) =J2(π′)
+and there existπ,π′∈ Π such thatJ2(π) =J2(π′) butJ1(π)̸=J1(π′). Moreover, ifR2 is trivial
+then we say that this is atrivial simpliﬁcation.
+
+Intuitively,whileunhackabilityallowsreplacinginequalitywithequality–orviceversa–asimpliﬁ-
+cation can only replace inequalities with equality, collapsing distinctions between policies. When
+R1 is a simpliﬁcation ofR2, we also say thatR2 is a reﬁnement ofR1. We denote this relation-
+ship asR1 ⊴R2 orR2 ⊵R1 ; the narrowing of the triangle atR1 represents the collapsing of
+distinctions betweenpolicies. IfR1⊴R2⊵R3, then wehave thatR1,R3 are unhackable,4 but if
+R1⊵R2⊴R3, then this is not necessarily the case.5
+Note that these deﬁnitions are given relative to someMDP\R, although we often assume the
+environment in question is clear from context and suppress this dependence. The dependence on the
+policy setΠ, on the other hand, plays a critical role in our results.
+
+5   Results
+
+Our results are aimed at understanding when it is possible to have an unhackable proxy reward
+function.  We ﬁrst establish (in Section 5.1) that (non-trivial) unhackability is impossible when
+consideringthesetofallpolicies. Wemightimaginethatrestrictingourselvestoasetofsufﬁciently
+good(accordingto theproxy)policieswouldremovethislimitation, but weshowthatthisisnot the
+case. Wethenanalyzeﬁnitepolicysets(withdeterministicpoliciesasaspecialcase),andestablish
+necessary and sufﬁcient conditions for unhackability and simpliﬁcation. Finally, we demonstrate via
+examplethatnon-trivial simpliﬁcationsarealsopossiblefor someinﬁnitepolicysets inSection5.3.
+
+
+
+
+
+
+
+
+
+   4IfJ3(π)>J3(π′) thenJ2(π)>J2(π′), sinceR2⊵R3, and ifJ2(π)>J2(π′) thenJ1(π)≥J1(π′),
+sinceR1⊴R2. It is therefore not possible thatJ3(π)>J3(π′) butJ1(π)<J1(π′).
+   5Consider the case whereR2 is trivial – thenR1⊵R2⊴R3 for anyR1,R3.
+
+
+                                                        5
+
+===== PDF PAGE 6 =====
+5.1   Non-trivial Unhackability Requires Restricting the Policy Set
+
+We start with a motivating example.  Consider the setting shown in
+Figure3,where theagentcanmoveleft/stay-still/rightandgetsareward
+depending on its state. Let the Gaussian (blue) be the true rewardR1
+and the step function (orange) be the proxyR2. These are hackable. To
+see this, consider being at stateB. Letπ(B) travel toA orC with 50/50
+chance, and compare with the policyπ′ that stays atB. Then we have                   Figure  3:   Two  reward
+thatJ1(π)>J1(π′) andJ2(π)<J2(π′).                                                    functions. While the step
+Generally,wemighthopethatsomeenvironmentsallowforunhackable                          function may seem like
+reward pairsthatarenot equivalentor trivial. Hereweshow thatthisis                   a  simpliﬁcation  of  the
+not the case, unless we impose restrictions on the set of policies we                Gaussian,  these  reward
+consider.                                                                            functions are hackable.
+Firstnotethatifweconsidernon-stationarypolicies,thisresultisrelativelystraightforward. Suppose
+R1 andR2 are unhackable and non-trivial on thesetΠN of allnon-stationary policies, and letπ⋆
+be a policy that maximises (R1 andR2) reward, andπ⊥ be a policy that minimises (R1 andR2)
+reward.  Then the policyπλ that playsπ⋆ with probabilityλ andπ⊥ with probability 1−λ is a
+policyinΠN. Moreover,foranyπ therearetwouniqueα,β∈ [0,1] suchthatJ1(π) =J1(πα) and
+J2(π) =J2(πβ). Now, ifα̸=β, then eitherJ1(π)<J1(πδ) andJ2(π)>J2(πδ), or vice versa,
+forδ = (α+β)/2. IfR1 andR2 are unhackablethen this cannothappen, so it mustbe thatα =β.
+This, in turn, implies thatJ1(π) =J1(π′) iffJ2(π) =J2(π′), and soR1 andR2 are equivalent.
+This means that no interesting unhackability can occur on the set of all non-stationary policies.
+The same argument cannot be applied to the set of stationary policies, becauseπλ is typically not
+stationary, and mixing stationary policies’ action probabilities does not have the same effect. For
+instance, considera hallway environment wherean agentcan eithermoveleft orright. Mixingthe
+“alwaysgoleft”and“alwaysgoright”policiescorrespondstopickingadirectionandstickingwithit,
+whereasmixing theiractionprobabilitiescorresponds tochoosingto goleftorright independently
+ateverytime-step. However,wewillseethattherestillcannotbeanyinterestingunhackabilityon
+this policy set, and, more generally, that there cannot be any interesting unhackability on any set of
+policieswhichcontainsanopensubset. Formally,asetof(stationary)policies ˙ΠisopenifG(˙Π)is
+open in thesmallest afﬁne spacethat containsG(Π), for theset of all stationarypoliciesΠ. We will
+use the following lemma:
+Lemma 1. In anyMDP\R, if ˙Π isan open setof policies, thenF(˙Π) isopen inR|S|(|A|−1), and
+F is a homeomorphism betweenG(˙Π) andF(˙Π).
+
+Usingthislemma,wecanshowthatinterestingunhackabilityisimpossibleonanysetofstationary
+policies ˆΠwhichcontainsanopensubset ˙Π. Roughly,ifF(˙Π)isopen,andR1 andR2 arenon-trivial
+andunhackable on ˙Π,then thefact thatJ1 andJ2 havealinear structureonF(ˆΠ) impliesthatR1
+andR2 mustbeequivalenton ˙Π. Fromthis,andthefactthatF(˙Π) isopen,itfollowsthatR1 and
+R2 are equivalent everywhere.
+Theorem1. InanyMDP\R,if ˆΠcontainsanopenset,thenanypairofrewardfunctionsthatare
+unhackable and non-trivial on ˆΠ are equivalent on ˆΠ.
+
+Sincesimpliﬁcationisaspecialcaseofunhackability,thisalsoimpliesthatnon-trivialsimpliﬁcation
+is impossible for any such policy set. Also note that Theorem 1 makes no assumptions about the
+transition function, etc.  From this result, we can show that interesting unhackability always is
+impossible on the setΠ of all (stationary) policies. In particular, note that the set ˜Π of all policies
+that always take each action with positive probability is an open set, and that ˜Π⊂ Π.
+Corollary1. InanyMDP\R,anypairofrewardfunctionsthatareunhackableandnon-trivialon
+the set of all (stationary) policiesΠare equivalent onΠ.
+
+Theorem1canalsobe appliedtomanyotherpolicysets. For example,wemightnotcareaboutthe
+hackabilityresultingfrompolicieswithlowproxyreward,aswewouldnotexpectasufﬁcientlygood
+learning algorithm to learn such policies. This leads us to consider the following deﬁnition:
+
+
+
+
+                                                        6
+
+===== PDF PAGE 7 =====
+Deﬁnition 3. A (stationary) policyπ isε-suboptimal ifJ(π)≥J(π⋆)−ε.
+
+Alternatively,ifthelearningalgorithmalwaysusesapolicythatis“nearly”deterministic(butwith
+some probability of exploration), then we might not care about hackability resulting from very
+stochastic policies, leading us to consider the following deﬁnition:
+Deﬁnition 4. A (stationary) policyπ isδ-deterministic if∀s∈S∃a∈A :P(π(s) =a)≥δ.
+Unfortunately, both of these sets contain open subsets, which means they are subject to Theorem 1.
+Corollary 2. InanyMDP\R,anypairofrewardfunctionsthatareunhackableandnon-trivial
+on the set of allε-suboptimal policies (ε> 0) Πε are equivalent on Πε, and any pair of reward
+functionsthatareunhackableandnon-trivialonthesetofallδ-deterministicpolicies(δ< 1)Πδ are
+equivalent onΠδ.
+Intuitively, Theorem 1 can be applied to any policy set with “volume” in policy space.
+
+5.2   Finite Policy Sets
+
+Having established that interesting unhackability is impossible relative to the set of all policies,
+we now turn our attention to the case of ﬁnite policy sets.  Note that this includes the set of all
+deterministic policies, since we restrict our analysis to ﬁnite MDPs. Surprisingly, here we ﬁnd that
+non-trivial non-equivalent unhackable reward pairsalways exist.
+Theorem 2.  ForanyMDP\R, anyﬁnite setof policies ˆΠ containing atleast twoπ,π′ such that
+F(π)̸=F(π′), andany reward functionR1, there is anon-trivial reward functionR2 suchthatR1
+andR2 are unhackable but not equivalent.
+ThisproofproceedsbyﬁndingapathfromR1 to
+another reward functionR3 that is hackable with
+respect toR1.  Along the way to reversing one
+ofR1’s inequalities, we must encounter a reward
+functionR2 that instead replaces it with equality.
+Inthecasethatdim(ˆΠ) = 3,wecanvisualizemov-
+ingalongthispathasrotatingthecontourlinesof
+a reward function deﬁned on the space containing             Figure 4: Anillustration of thestate-action oc-
+the policies’ discounted state-action occupancies,           cupancy space with a reward function deﬁned
+see Figure4. Thispath can beconstructed so asto              over it.  Points correspond to policies’ state-
+avoid any rewardfunctions thatproducetrivialpol-             actionoccupancies. Shadingintensityindicates
+icy orderings, thus guaranteeingR2 is non-trivial.           expectedreward. Rotatingtherewardfunction
+For a simpliﬁcation to exist, we require some fur-           to makeJ(π3)>J(π4) passes through a re-
+ther conditions, as established by the following             ward function that setsJ(π1) =J(π2). Solid
+theorem:                                                     black lines are contour lines of the original re-
+Theorem 3.  Let ˆΠ be a ﬁnite set of policies, and           ward function, dotted blue lines are contour
+R1 arewardfunction. Thefollowingprocedurede-                 lines of the rotated reward function.
+terminesifthereexistsanon-trivialsimpliﬁcation
+ofR1 in a givenMDP\R:
+
+      1.Let E1...Em be the partition of ˆΠ whereπ,π′ belong to the same set iffJ(π) =J(π′).
+      2.  ForeachsuchsetEi,selectapolicyπi∈Ei andletZi bethesetofvectorsthatisobtained
+          by subtractingF(πi) from each element ofF(Ei).
+
+Then there is a non-trivial simpliﬁcation ofR iff dim(Z1∪···∪Zm)≤ dim(F(ˆΠ))−2, where
+dim(S) is the number of linearly independent vectors inS.
+The proof proceeds similarly to Theorem 2. However, in Theorem 2 it was sufﬁcient to show that
+there are no trivial reward functions along the path fromR1 toR3, whereas here we additionally
+needthat ifJ(π) =J(π′) thenJ′(π) =J′(π′) forall functionsR2 onthe path— thisis whatthe
+extra conditions ensure.
+Theorem 3 is opaque, but intuitively, the cases whereR1 cannot be simpliﬁed are those whereR1
+imposes many different equality constraints that are difﬁcult to satisfy simultaneously. We can think
+
+
+                                                         7
+
+===== PDF PAGE 8 =====
+ofdim(F(Π))asmeasuringhowdiversethebehavioursofpoliciesinpolicysetΠare. Havingaless
+diversepolicysetmeansthatagivenpolicyorderingimposesfewerconstraintsontherewardfunction,
+creatingmorepotentialforsimpliﬁcation. Thetechnicalconditionsofthisproofdeterminewhenthe
+diversity ofΠ is or is not sufﬁcient to prohibit simpliﬁcation, as measured bydim(Z1∪···∪Zm).
+ProjectingEi toZi simply moves these spacesto the origin, so that wecan compare the directionsin
+whichtheyvary(i.e.theirspan). Byassumption,Ei∩Ej ={},butspan(Zi)∩span(Zj)willinclude
+theorigin,andmayalsocontainlinearsubspacesofdimensiongreaterthan0. Thisisthecaseexactly
+whenthere area pairof policies inEi anda pairof policiesinEj thatdiffer bythe samevisitcounts,
+for example, when the environment contains an obstacle that could be circumnavigated in several
+differentways(withanimpactonvisitcounts,butnoimpactonreward),andthepoliciesinEi andEj
+both need to circumnavigate it before doing something else. Roughly speaking,dim(Z1∪···∪Zm)
+is large when either (i) we have very large and diverse sets of policies in ˆΠ that get the same reward
+accordingtoR,or(ii)wehavealargenumberofdifferentsetsofpoliciesthatgetthesamereward
+according toR, and where there are different kinds of diversity in the behaviour of the policies in
+each set. There are also intuitive special cases of Theorem 3. For example, as noted before, ifEi is a
+singleton thenZi has no impact ondim(Z1∪···∪Zm). This implies the following corollary:
+
+Corollary3. Foranyﬁnitesetofpolicies ˆΠ,anyenvironment,andanyrewardfunctionR,if|ˆΠ|≥ 2
+andJ(π)̸=J(π′) for allπ,π′∈ ˆΠ then there is a non-trivial simpliﬁcation ofR.
+
+A naturalquestion iswhether any rewardfunction is guaranteedto have anon-trivial simpliﬁcation
+onthesetofalldeterministicpolicies. Asitturnsout,thisisnotthecase. Forconcreteness,andto
+build intuition for this result, we examine the set of deterministic policies in a simpleMDP\R
+withS ={0,1},A ={0,1},T(s,a) =a,I ={0 : 0.5,1 : 0.5},γ = 0.5. Denoteπij the policy
+thattakesactionifromstate0andactionj fromstate1. Thereareexactlyfourdeterministicpolicies.
+We ﬁnd that of the4! = 24 possible policy orderings, 12 are realizable via some reward function. In
+eachofthose12orderings,exactlytwopolicies(ofthesixavailablepairsofpoliciesintheordering)
+canbesettoequalvaluewithoutresultinginthetrivialrewardfunction(whichpaircanbeequated
+dependsontheorderinginconsideration). Attemptingtosetthreepoliciesequalalwaysresultsinthe
+trivial reward simpliﬁcation.
+For example, given the orderingπ00≤π01≤π11≤π10, the simpliﬁcationπ00 =π01<π11<π10
+isrepresentedbyR = [0 32 1],whereR(s,a) =R[s,a]: forexample,heretakingaction1fromstate0
+gives rewardR(0,1) = 3. But there is no reward function representing a non-trivial simpliﬁcation
+of this ordering withπ01 =π11. We develop and release a software suite to compute these results.
+Givenanenvironmentandasetofpolicies,itcan calculateallpolicyorderingsrepresentedbysome
+reward function. Also, fora given policyordering, it cancalculate allnontrivialsimpliﬁcations and
+rewardfunctionsthatrepresentthem. Foralinktotherepository,aswellasafullexplorationofthese
+policies, orderings, and simpliﬁcations, see Appendix 11.3.
+
+
+5.3   Unhackability in Inﬁnite Policy Sets
+
+TheresultsinSection5.1donotcharacterizeunhackabilityforinﬁnitepolicysetsthatdonotcontain
+open sets.  Here, we provide two examples of such policy sets; one of them admits unhackable
+reward pairs and the other does not.  Consider policiesA,B,C, and reward functionsR1 with
+J1(C)<J1(B)<J1(A) andR2 withJ2(C) =J2(B)<J2(A). Policy setsΠa ={A}∪{λB+
+(1−λ)C :λ∈ [0,1]} andΠb ={A}∪{λB+(1−λ)C :λ∈ [0,1]} aredepicted inFigure5; the
+verticalaxis represents policies’valuesaccording toR1 andR2. ForΠa,R2 isasimpliﬁcationof
+R1, but forΠb, it is not, sinceJ1(X)<J1(Y) andJ2(X)>J2(Y).
+
+
+6   Discussion
+
+
+We reﬂect on our results and identify limitations in Section 6.1. In Section 6.2, we discuss how our
+work can inform discussions about the appropriateness, potential risks, and limitations of using of
+reward functions as speciﬁcations of desired behavior.
+
+
+                                                       8
+
+===== PDF PAGE 9 =====
+                                  (a)                                        (b)
+Figure 5: Inﬁnite policy sets that do not contain open sets sometimes allow simpliﬁcation (a), but
+not always (b). Points A, B, C represent deterministic policies, while the bold lines between them
+representstochasticpolicies. They-axisgivesthevaluesofthepoliciesaccordingtorewardfunctions
+R1 andR2. WeattempttosimplifyR1 byrotatingtherewardfunctionsuchthatJ2(B) =J2(C);in
+the ﬁgure,we instead (equivalently) rotate thetriangle along theAB axis, leading tothe red triangle.
+In(a),R2 simpliﬁesR1,settingallpoliciesalongtheBCsegmentequalinvalue(butstilllowerthan
+A). In (b),R2 swaps the relative value of policies X and Y (J1(X)<J    1(Y) =J2(Y)<J    2(X))
+and so does not simplifyR1.
+
+
+6.1   Limitations
+
+Our work has a number of limitations. We have only considered ﬁnite MDPs and Markov reward
+functions,leavingmoregeneralenvironmentsfor futurework. Whilewe characterizedhackability
+andsimpliﬁcationforﬁnitepolicysets,theconditionsforsimpliﬁcationaresomewhatopaque,and
+our characterization of inﬁnite policy sets remains incomplete.
+As previously discussed, our deﬁnition of hackability is strict, arguably too strict. Nonetheless, we
+believethatunderstandingtheconsequencesofthisstrictdeﬁnitionisanimportantstartingpointfor
+further theoretical work in this area.
+Themainissuewiththestrictnessofourdeﬁnitionhastodowiththesymmetricnatureofhackability.
+Theexistenceof complexbehaviors thatyield low proxyreward andhigh truerewardis muchless
+concerningthan thereverse, asthese behaviorsare unlikelyto bediscoveredwhile optimizingthe
+proxy. For example, it is very unlikely that our agent would solve climate change in the course of
+learning how to wash dishes. Note that the existence of simple behaviors with low proxy reward
+andhightruerewardis concerning;thesecouldarise earlyintraining,leadingustotrustthe proxy,
+only to later see the true reward decrease as the proxy is further optimized.  To account for this
+issue,futurework shouldexploremorerealisticassumptionsabout theprobabilityofencountering a
+givensequenceofpolicieswhenoptimizingtheproxy,andmeasurehackabilityinproportionto this
+probability.
+Wecouldallowforapproximateunhackabilitybyonlyconsideringpairsofpoliciesrankeddifferently
+by the true and proxy reward functions as evidence of hacking iff their value according to the true
+rewardfunctiondiffersbymorethansomeε. Probabilisticunhackabilitycouldbedeﬁnedbylooking
+at the number of misordered policies; this would seem to require making assumptions about the
+probability of encountering a given policy when optimizing the proxy.
+Finally, while unhackability is a guarantee that no hacking will occur, hackability is far from a
+guarantee of hacking. Extensive empirical work is necessary to better understand the factors that
+inﬂuence the occurrence and severity of reward hacking in practice.
+
+6.2   Implications
+
+HowshouldwespecifyourpreferencesforAIsystems’behavior? Andhowdetailedaspeciﬁcation
+is required to achieve a good outcome? In reinforcement learning, the goal of maximizing (some)
+rewardfunctionisoftentakenforgranted,butanumberofauthorshaveexpressedreservationsabout
+
+
+                                                        9
+
+===== PDF PAGE 10 =====
+this approach (Gabriel, 2020; Dobbe et al., 2021; Hadﬁeld-Menell et al., 2016b, 2017; Bostrom,
+2014). Ourworkhasseveralimplicationsforthisdiscussion,althoughwecautionagainstdrawing
+any strong conclusions due to the limitations mentioned in Section 6.1.
+Onesourceofconfusionanddisagreementistheroleoftherewardfunction;itisvariouslyconsidered
+asameansofspecifyingatask(Leikeetal.,2018)orencodingbroadhumanvalues(Dewey,2011);
+such distinctions are discussed by Christiano (2019) and Gabriel (2020).  We might hope to use
+Markovrewardfunctionstospecifynarrowtaskswithoutriskingbehaviorthatgoesagainstourbroad
+values. However, if we consider the “narrow task” reward function as a proxy for the true “broad
+values”rewardfunction,ourresultsindicatethatthisisnotpossible: thesetworewardfunctionswill
+invariably be hackable. Such reasoning suggests that reward functions must instead encode broad
+human values, or risk being hacked. This seems challenging, perhaps intractably so, indicating that
+alternatives to reward optimization may be more promising. Potential alternatives include imitation
+learning (Ross et al., 2011), constrained RL (Szepesvári, 2020), quantilizers (Taylor, 2016), and
+incentive management (Everitt et al., 2019).
+Scholars have alsocriticized theassumption that humanvalues can beencoded asrewards (Dobbe
+etal., 2021),andchallengedthe useofmetrics morebroadly(O’Neil,2016; ThomasandUminsky,
+2022),citingGoodhart’sLaw(ManheimandGarrabrant,2018;Goodhart,1975). Aconcernmore
+speciﬁctotheoptimizationofrewardfunctionsispower-seeking(Turneretal.,2021;Bostrom,2012;
+Omohundro, 2008).  Turner et al. (2021) prove that optimal policies tend to seek power in most
+MDPs and for most reward functions. Such behavior could lead to human disempowerment; for
+instance, an AI system might disable its off-switch (Hadﬁeld-Menell et al., 2016a). Bostrom (2014)
+and others have argued that power-seeking makes even slight misspeciﬁcation of rewards potentially
+catastrophic, although this has yet to be rigorously established.
+Despitesuchconcerns,approachestospeciﬁcationbasedonlearningrewardfunctionsremainpopular
+(Fuetal.,2017;Stiennonetal.,2020;Nakanoetal.,2021). Sofar,rewardhackinghasusuallybeen
+avoidable inpractice, although somecare mustbe taken (Stiennonet al., 2020). Proponents of such
+approaches have emphasized the importance of learning a reward model in order to exceed human
+performance and generalizeto new settings (Brown et al., 2020a;Leike et al., 2018). But our work
+indicatesthatsuchlearnedrewardsarealmostcertainlyhackable,andsocannotbesafelyoptimized.
+Thuswerecommendviewingsuchapproachesasameansoflearningapolicyinasafeandcontrolled
+setting, which should then be validated before being deployed.
+
+7   Conclusion
+
+Our work begins the formal study of reward hacking in reinforcement learning. We formally deﬁne
+hackability andsimpliﬁcation of reward functions, andshow conditions for the (non-)existenceof
+non-trivialexamplesofeach. Weﬁndthatunhackabilityisquiteastrictcondition,asthesetofall
+policies never contains non-trivial unhackable pairs of reward functions. Thus in practice, reward
+hacking must be prevented by limiting the set of possible policies, or controlling (e.g. limiting)
+optimization. Alternatively, we could pursue approaches not based on optimizing reward functions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                        10
+
+===== PDF PAGE 11 =====
+References
+Abel,D.,Dabney,W.,Harutyunyan,A.,Ho,M.K.,Littman,M.,Precup,D.,andSingh,S.(2021).
+  OntheExpressivityofMarkovReward. AdvancesinNeuralInformationProcessingSystems,34.
+Amodei, D., Christiano, P., and Ray, A. (2017). Learning from Human Preferences. OpenAIhttps:
+  //openai.com/blog/deep-reinforcement-learning-from-human-preferences/.
+Bird, J. and Layzell, P. (2002). The evolved radio and its implications for modelling the evolution of
+  novel sensors. In Proceedings of the 2002 Congress on Evolutionary Computation. CEC’02 (Cat.
+  No. 02TH8600), volume 2, pages 1836–1841. IEEE.
+Bostrom, N. (2012). The superintelligent will: Motivation and instrumental rationality in advanced
+  artiﬁcial agents.Minds and Machines, 22(2):71–85.
+Bostrom, N. (2014). Superintelligence: Paths, Dangers, Strategies.
+Brown, D. S., Goo, W., and Niekum, S. (2020a). Better-than-demonstrator imitation learning via
+  automatically-ranked demonstrations. InConference on robot learning, pages 330–359. PMLR.
+Brown,D.S.,Schneider,J.,Dragan,A.D.,andNiekum,S.(2020b). ValueAlignmentVeriﬁcation.
+  CoRR, abs/2012.01557.
+Christiano,    P.   (2019).          Ambitious   vs.   narrow   value   learning.          AI   Alignment
+  Forum.                           https://www.alignmentforum.org/posts/SvuLhtREMy8wRBzpC/
+  ambitious-vs-narrow-value-learning.
+Clark, J. and Amodei, D. (2016).  Faulty Reward Functions in the Wild.  OpenAI Codex https:
+  //openai.com/blog/faulty-reward-functions/.
+Dewey, D. (2011). Learning What toValue. In Schmidhuber,J., Thórisson, K. R.,and Looks, M.,
+  editors,ArtiﬁcialGeneralIntelligence: 4thInternationalConference,AGI2011,pages309–314,
+  Berlin, Heidelberg. Springer Berlin Heidelberg.
+Dobbe, R., Gilbert, T. K., and Mintz, Y. (2021).  Hard Choices in Artiﬁcial Intelligence. CoRR,
+  abs/2106.11022.
+Everitt,T.,Hutter,M.,Kumar,R.,andKrakovna,V.(2021). Rewardtamperingproblemsandsolutions
+  inreinforcementlearning: Acausalinﬂuencediagramperspective.  Synthese,198(27):6435–6467.
+Everitt, T., Krakovna, V., Orseau, L., Hutter, M., and Legg, S. (2017). Reinforcement learning with a
+  corrupted reward channel. arXiv preprint arXiv:1705.08417.
+Everitt, T., Ortega, P. A., Barnes, E., and Legg, S. (2019). Understanding agent incentives using
+  causal inﬂuence diagrams. Part I: Single action settings.  arXiv preprint arXiv:1902.09980.
+Fu,J.,Luo,K.,andLevine,S.(2017). Learningrobustrewardswithadversarialinversereinforcement
+  learning. arXiv preprint arXiv:1710.11248.
+Gabriel,I.(2020). Artiﬁcialintelligence,values,andalignment.Mindsandmachines,30(3):411–437.
+Golden,  D. (2001).    Glass Floor:  Colleges Reject Top Applicants,  Accepting Only the Stu-
+  dents  Likely  to  Enroll.     The  Wall  Street  Journal.     https://www.wsj.com/articles/
+  SB991083160294634500.
+Goodhart, C. A. (1975). Problems of monetary management: the UK experience. In of Australia,
+  R. B., editor,Papers in monetary economics. Reserve Bank of Australia.
+Hadﬁeld-Menell, D., Dragan,A., Abbeel, P., and Russell,S. (2016a). The Off-SwitchGame.CoRR,
+  abs/1611.08219.
+Hadﬁeld-Menell, D., Dragan, A. D., Abbeel, P., and Russell, S. J. (2016b).  Cooperative Inverse
+  Reinforcement Learning. CoRR, abs/1606.03137.
+Hadﬁeld-Menell, D., Milli, S., Abbeel, P., Russell, S. J., and Dragan, A. (2017).  Inverse reward
+  design. Advances in neural information processing systems, 30.
+
+
+                                                       11
+
+===== PDF PAGE 12 =====
+Ibarz, B., Leike, J., Pohlen, T., Irving, G., Legg, S., and Amodei, D. (2018). Reward learning from
+  humanpreferencesanddemonstrationsinatari. Advancesinneuralinformationprocessingsystems,
+  31.
+Krakovna, V.,Orseau, L., Kumar, R., Martic, M., and Legg, S. (2018). Penalizingside effects using
+  stepwise relative reachability. CoRR, abs/1806.01186.
+Krakovna, V., Uesato, J., Mikulik, V., Rahtz, M., Everitt, T., Kumar, R., Kenton, Z., Leike, J., and
+  Legg, S. (2020). Speciﬁcation gaming: the ﬂip side of AI ingenuity.
+Kumar, R., Uesato, J., Ngo, R., Everitt, T., Krakovna, V., and Legg, S. (2020). Realab: An embedded
+  perspective on tampering. arXiv preprint arXiv:2011.08820.
+Leike, J., Krueger, D., Everitt, T., Martic, M., Maini, V., and Legg, S. (2018).  Scalable agent
+  alignment via reward modeling: a research direction. CoRR, abs/1811.07871.
+Manheim, D. and Garrabrant, S. (2018).   Categorizing Variants of Goodhart’s Law.   CoRR,
+  abs/1803.04585.
+Nakano, R., Hilton, J., Balaji, S., Wu, J., Ouyang, L., Kim, C., Hesse, C., Jain, S., Kosaraju, V.,
+  Saunders, W., et al. (2021). WebGPT: Browser-assisted question-answering with human feedback.
+  arXiv preprint arXiv:2112.09332.
+Ng, A. Y., Harada, D., and Russell, S. (1999).  Policy invariance under reward transformations:
+  Theory and application to reward shaping. InIcml, volume 99, pages 278–287.
+Ng, A. Y., Russell, S. J., et al. (2000).  Algorithms for inverse reinforcement learning.  In Icml,
+  volume 1, page 2.
+Omohundro, S. M. (2008). The basic AI drives.
+O’Neil,C.(2016). Weaponsofmathdestruction: Howbigdataincreasesinequalityandthreatens
+  democracy. Crown Publishing Group.
+Pan, A., Bhatia, K., and Steinhardt, J. (2022). The Effects of Reward Misspeciﬁcation: Mapping and
+  Mitigating Misaligned Models. arXiv preprint arXiv:2201.03544.
+Ross, S., Gordon, G., and Bagnell, D. (2011).  A reduction of imitation learning and structured
+  predictiontono-regretonlinelearning. InProceedingsofthefourteenthinternationalconferenceon
+  artiﬁcialintelligenceandstatistics,pages627–635.JMLRWorkshopandConferenceProceedings.
+Stiennon, N., Ouyang, L., Wu, J., Ziegler, D., Lowe, R., Voss, C., Radford, A., Amodei, D., and
+  Christiano, P. F. (2020).  Learning to summarize with human feedback.  Advances in Neural
+  Information Processing Systems, 33:3008–3021.
+Sutton, R. S. and Barto, A. G. (2018). Reinforcement learning: An introduction. MIT press.
+Szepesvári, C. (2020).   Constrained MDPs and the reward hypothesis.   http://readingsml.
+  blogspot.com/2020/03/constrained-mdps-and-reward-hypothesis.html.
+Taylor, J. (2016).  Quantilizers:  A safer alternative to maximizers for limited optimization.  In
+  Workshops at the Thirtieth AAAI Conference on Artiﬁcial Intelligence.
+Thomas, R. L. and Uminsky, D. (2022).  Reliance on metrics is a fundamental challenge for AI.
+  Patterns, 3(5):100476.
+Thrun,S.andSchwartz,A.(1993). Issuesinusingfunctionapproximationforreinforcementlearning.
+  InProceedingsofthe1993ConnectionistModelsSummerSchoolHillsdale,NJ.LawrenceErlbaum,
+  volume 6.
+Turner, A.M., Hadﬁeld-Menell,D., andTadepalli, P. (2019). ConservativeAgency viaAttainable
+  Utility Preservation. CoRR, abs/1902.09725.
+Turner, A. M., Smith, L., Shah, R., Critch, A., and Tadepalli, P. (2021). Optimal Policies Tend to
+  Seek Power. Advances in Neural Information Processing Systems.
+
+
+                                                        12
+
+===== PDF PAGE 13 =====
+Uesato,J.,Kumar,R.,Krakovna,V.,Everitt,T.,Ngo,R.,andLegg,S.(2020). Avoidingtampering
+  incentives in deep rl via decoupled approval. arXiv preprint arXiv:2011.08827.
+Zhang, B., Rajan,R., Pineda, L., Lambert, N.,Biedenkapp, A., Chua, K., Hutter, F., and Calandra,
+  R. (2021). On the Importance of Hyperparameter Optimization for Model-based Reinforcement
+  Learning. CoRR, abs/2102.13651.
+Zhuang,S. andHadﬁeld-Menell, D.(2020). Consequencesof misalignedAI.Advancesin Neural
+  Information Processing Systems, 33:15763–15773.
+Ziebart,B.D.(2010). Modelingpurposefuladaptivebehaviorwiththeprincipleofmaximumcausal
+  entropy. Carnegie Mellon University.
+
+Checklist
+      1.For all authors...
+           (a)  Dothemainclaimsmadeintheabstractandintroductionaccuratelyreﬂectthepaper’s
+                contributions and scope?[Yes]
+           (b)Did you describe the limitations of your work?[Yes]
+           (c)  Did you discuss any potential negative societal impacts of your work?[Yes]See
+                Section 6.2
+           (d)  Haveyoureadtheethicsreviewguidelinesandensuredthatyourpaperconformsto
+                them?[Yes]
+      2.If you are including theoretical results...
+           (a)Did you state the full set of assumptions of all theoretical results?[Yes]
+           (b)  Did you include complete proofs of all theoretical results?[Yes]Some of the proofs
+                are in the Appendix.
+      3.If you ran experiments...
+           (a)  Didyouincludethecode,data,andinstructionsneededtoreproducethemainexperi-
+                mentalresults(eitherinthesupplementalmaterialorasaURL)?[Yes]Thecodeand
+                instructions forrunning it areavailablein the supplementarymaterials. The code does
+                not use any datasets.
+           (b)  Did you specify all the training details (e.g., data splits, hyperparameters, how they
+                were chosen)?[N/A]We do not perform model training in this work.
+           (c)  Did you report error bars (e.g., with respect to the random seed after running experi-
+                ments multiple times)?[N/A]
+           (d)  Didyouinclude thetotalamountof computeandthetypeof resourcesused(e.g.,type
+                of GPUs, internal cluster, or cloud provider)?[N/A]No compute beyond a personal
+                laptop (with integrated graphics) was used.
+      4.If you are using existing assets (e.g., code, data, models) or curating/releasing new assets...
+           (a)  Ifyourworkusesexistingassets,didyoucitethecreators?[N/A]Thecodebasewas
+                written from scratch.
+           (b)Did you mention the license of the assets?[N/A]
+           (c)  Did you include any new assets either in the supplemental material or as a URL?[Yes]
+                The codebase is available in the supplemental material.
+           (d)  Didyoudiscusswhetherandhowconsentwasobtainedfrompeoplewhosedatayou’re
+                using/curating?[N/A]
+           (e)  Didyoudiscusswhetherthedatayouareusing/curatingcontainspersonallyidentiﬁable
+                information or offensive content?[N/A]
+      5.If you used crowdsourcing or conducted research with human subjects...
+           (a)  Did you include the full text of instructions given to participants and screenshots, if
+                applicable?[N/A]
+           (b)  Did you describe any potential participant risks, with links to Institutional Review
+                Board (IRB) approvals, if applicable?[N/A]
+           (c)  Did youinclude theestimated hourlywage paidto participantsand thetotal amount
+                spent on participant compensation?[N/A]
+
+
+                                                         13
+
+===== PDF PAGE 14 =====
+8   Overview
+
+Section9contains proofsofthemaintheoreticalresults. Section11 expandsonexamples givenin
+the main text. Section 12 presents an unhackability diagramfor a generic set of three policiesa,b,c;
+Section 13 shows a simpliﬁcation diagram of the same policies.
+
+9   Proofs
+
+Before proving our results, we restate assumptions and deﬁnitions. First, recall the preliminaries
+fromSection 4.1,and inparticular, thatwe useF : Π→R|S||A| todenote theembedding ofpolicies
+into Euclidean space via their discounted state-action visit counts, i.e.;
+
+                                                  ∞∑
+                                  F(π)[s,a] =         γtP(St =s,At =a).
+                                                 t=0
+Givena reward functionR, let⃗R∈R|S||A| be thevector where⃗R[s,a] =ES′∼T(s,a)[R(s,a,S′)].
+Note thatJ(π) =F(π)·⃗R.
+WesayR1 andR2 are equivalent on aset of policiesΠ ifJ1 andJ2 induce thesame ordering ofΠ,
+andthatR istrivialonΠifJ(π) =J(π′) forallπ,π′∈ Π. Wealso have thefollowing deﬁnitions
+from Sections 4 and 5:
+Deﬁnition 1.  A pair of reward functionsR1,R2 are hackable relative to policy set Π and an
+environment(S,A,T,I,          ,γ) if there existπ,π′∈ Πsuch that
+                                   J1(π)<J1(π′)  &J2(π)>J2(π′),
+else they areunhackable.
+Deﬁnition 2.R2 is a simpliﬁcationofR1 relative to policy setΠ if for allπ,π′∈ Π,
+         J1(π)<J1(π′)  =⇒J2(π)≤J2(π′)  &J1(π) =J1(π′)  =⇒J2(π) =J2(π′)
+and there existπ,π′∈ Π such thatJ2(π) =J2(π′) butJ1(π)̸=J1(π′). Moreover, ifR2 is trivial
+then we say that this is atrivial simpliﬁcation.
+
+Note that thesedeﬁnitions only depend on thepolicyorderings associated withR2 andR1, and so
+wecan (anddo)also speakof(ordered) pairsofpolicyorderingsbeing simpliﬁcationsorhackable.
+We also make use of the following deﬁnitions:
+Deﬁnition 3. A (stationary) policyπ isε-suboptimal ifJ(π)≥J(π⋆)−ε, whereε> 0
+Deﬁnition4. A(stationary)policyπ isδ-deterministicif∀s∈S∃a∈A :P(π(s) =a)≥δ,where
+δ< 1.
+
+9.1   Non-trivial Unhackability Requires Restricting the Policy Set
+
+Formally, a set of (stationary) policies ˙Π is open ifV(˙Π) is open in the smallest afﬁne space that
+containsV(Π), where Π is the set of all stationary policies. Note that this space is|S|(|A|−1)-
+dimensional, since all action probabilities sum to 1.
+We require two more propositions for the proof of this lemma.
+Proposition 1. If ˙Π is open thenF is injective on ˙Π.
+
+Proof. Firstnotethat,sinceπ(a|s)≥ 0,wehavethatif ˙Π isopenthenπ(a|s)> 0 foralls,a for
+allπ∈ ˙Π. In other words, all policies in ˙Πtake each action with positive probability in each state.
+Now supposeF(π) =F(π′) for someπ,π′∈ ˜Π. Next, deﬁnewπ as
+
+                                                  ∞∑
+                                      wπ(s) =         γtPτ∼π(St =s).
+                                                  t=0
+
+                                                       14
+
+===== PDF PAGE 15 =====
+Note that ifF(π) =F(π′) thenwπ =wπ′, and moreover that
+                                       F(π)[s,a] =wπ(s)π(a|s).
+Next,sinceπ takeseachactionwithpositiveprobabilityineachstate,wehavethatπ visitseverystate
+withpositiveprobability. Thisimpliesthatwπ(s)̸= 0foralls,whichmeansthatwecanexpressπ as
+
+                                          π(a|s) =F(π)[s,a]wπ(s) .
+
+This means that ifF(π) =F(π′) for someπ,π′∈ ˜Π thenπ =π′.
+
+NotethatF isnot injectiveonΠ;ifthereissomestates thatπ reacheswithprobability0,thenwe
+can alter the behaviour ofπ ats without changingF(π). But every policy in an open policy set
+˙Π visits every state with positive probability, which then makesF injective. In fact, Proposition 1
+straightforwardly generalises to the set of all policies that visit all states with positive probability
+(although this will not be important for our purposes).
+Proposition 2. Im(F) is located in an afﬁne subspace with|S|(|A|−1) dimensions.
+
+Proof. To show thatIm(F) is located in an afﬁne subspace with|S|(|A|−1) dimensions, ﬁrst note
+that                          ∑                          ∞∑
+                                         F(π)[s,a] =         γt =    11−γ
+                                     s,a                 t=0
+for allπ. That is,Im(F) is locatedin an afﬁne spaceof points with aﬁxedℓ1-norm, and thisspace
+does not contain the origin.
+Next, note thatJ(π) =F(π)·⃗R. This means that if knowing the value ofJ for allπ determines
+⃗R modulo at leastn free variables, then Im(F) contains at most|S||A|−n linearly independent
+vectors. Next recall potential shaping (Ng et al., 1999). In brief, given a reward functionR and a
+potential functionΦ :S→R, we can deﬁne ashaped reward functionR′ by
+                               R′(s,a,s′) =R(s,a,s′)+γΦ(s′)−Φ(s),
+or, alternatively, if we wishR′ to be deﬁned over the domainS×A,
+                           R′(s,a) =R(s,a)+γES′∼T(s,a)[Φ(S′)]−Φ(s).
+Ineithercase,itispossibletoshowthatifR′ isproducedbyshapingRwithΦ,andES0∼I[Φ(S0)] =
+0,thenJ(π) =J′(π) forallπ. This meansthatknowingthe valueofJ(π) forallπ determines⃗R
+moduloatleast|S|−1freevariables,whichmeansthatIm(F)containsatmost|S||A|−(|S|−1) =
+|S|(|A|−1)+1 linearly independent vectors. Since the smallest afﬁne space that containsIm(F)
+does not contain the origin, this in turn means that Im(F) is located in an afﬁne subspace with
+=|S|(|A|−1)+1−1 =|S|(|A|−1) dimensions.
+
+Lemma 1. In anyMDP\R, if ˙Π isan open setof policies, thenF(˙Π) isopen inR|S|(|A|−1), and
+F is a homeomorphism betweenV(˙Π) andF(˙Π).
+
+Proof. By the Invariance of Domain Theorem, if
+
+      1.U is an open subset ofRn, and
+      2.f :U→Rn is an injective continuous map,
+
+thenf(U) is open inRn andf is a homeomorphism betweenU andf(U). We will show thatF and
+˙Π satisfy the requirements of this theorem.
+
+Webeginby notingthat ˙Πcanberepresentedasa setofpointsinR|S|(|A|−1). First,project ˙Πinto
+R|S||A| viaV. Next,since∑a∈Aπ(a|s) = 1foralls,Im(V)isinfactlocatedinanafﬁnesubspace
+with|S|(|A|−1) dimensions,which directlygivesa representation inR|S|(|A|−1). Concretely,this
+represents each policyπ as a vectorV(π) with one entry containing the valueπ(a|s) for each
+
+
+                                                      15
+
+===== PDF PAGE 16 =====
+state-actionpairs,a,butwithoneactionleftoutforeachstate,sincethisvaluecanbedetermined
+from the remaining values. We will assume that ˙Π is embedded inR|S|(|A|−1) in this way.
+By assumption,V(˙Π) is anopen setinR|S|(|A|−1). Moreover,by Proposition2, we have thatF is
+(isomorphic to) a mapping ˙Π→R|S|(|A|−1). By Proposition 1, we have thatF is injective on ˙Π.
+Finally,F iscontinuous;thiscanbeseenfromitsdeﬁnition. WecanthereforeapplytheInvariance
+of Domain Theorem, and obtain thatF(˙Π) is open inR|S|(|A|−1), and thatF is a homeomorphism
+betweenV(˙Π) andF(˙Π).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Figure 6: Illustration of the various realizable feature counts used in the proof of Theorem 1.
+
+Theorem1. InanyMDP\R,if ˆΠcontainsanopenset,thenanypairofrewardfunctionsthatare
+unhackable and non-trivial on ˆΠ are equivalent on ˆΠ.
+
+Proof. LetR1 andR2 be any two unhackable and non-trivial reward functions.  We will show
+that, for anyπ,π′∈ ˆΠ, we haveJ1(π) =J1(π′)  =⇒ J2(π) =J2(π′), and thus, by symmetry,
+J1(π) =J1(π′)⇐⇒J2(π) =J2(π′). SinceR1 andR2 are unhackable, this further means that
+they have exactly the same policy order, i.e. that they are equivalent.
+Choosetwoarbitraryπ,π′∈ ˆΠ withJ1(π) =J1(π′) andletf.=F(π),f′.=F(π′). Theproofhas
+3 steps:
+
+       1.We ﬁnd analogues for f andf′, ˜f and ˜f′, within the same open ball inF(ˆΠ).
+
+       2.  Weshowthatthetangenthyperplanesof⃗R1 and⃗R2 at ˜f mustbeequaltopreventneighbors
+          of ˜f from makingR1 andR2 hackable.
+       3.We use linearity to show that this implies that J2(π) =J2(π′).
+
+Step 1: By assumption, ˆΠ contains an open set ˙Π. Let ˆπ be some policy in ˙Π, and let ˆf .=F(ˆπ).
+Since ˙Π is open, Lemma1 implies thatF(˙Π) is open inR|S|(|A|−1). Thismeans that, ifv,v′ are the
+vectors such that ˆf +v =f and ˆf +v′ =f′, then there is a positive but sufﬁciently smallδ such
+that ˜f.= ˆf +δv and ˜f′.= ˆf +δv′ both arelocated inF(˙Π), seeFigure 6. This furtherimplies that
+there are policies ˜π, ˜π′∈ ˙Πsuch thatF(˜π) = ˜f andF(˜π′) = ˜f′.
+Step  2:    Recall  thatJ(π)   =F(π)· ⃗R.     SinceR1  is  non-trivial  on  ˆΠ,  it  induces  a
+(|S|(|A|−1)−1)-dimensionalhyperplanetangentto⃗R1 correspondingtoallpointsx∈R|S|(|A|−1)
+such thatx·⃗R1 = ˜f·⃗R1, and similarly forR2. Call these hyperplanesH1 andH2, respectively.
+Note that ˜f is contained in bothH1 andH2.
+Next supposeH1̸=H2. Then,we would beable to ﬁnda pointf12∈F(˙Π), suchthatf12·⃗R1>
+˜f·⃗R1butf12·⃗R2< ˜f·⃗R2. This,inturn,meansthatthereisapolicyπ12∈ ˙ΠsuchthatF(π12) =f12,
+
+
+                                                       16
+
+===== PDF PAGE 17 =====
+and such thatJ1(π12)>J1(˜π) butJ2(π12)<J2(˜π). SinceR1 andR2 are unhackable, this is a
+contradiction. ThusH1 =H2.
+Step 3:  SinceJ1(π) =J1(π′), we have thatf·⃗R1 =f′·⃗R1.  By linearity, this implies that
+˜f·⃗R1 =  ˜f′·⃗R1; we can see this by expanding ˜f =  ˆf +δv and ˜f′ =  ˆf +δv′. This means that
+˜f′∈H1. Now,sinceH1 =H2,thismeansthat ˜f′∈H2,whichinturnimpliesthat ˜f·⃗R2 = ˜f′·⃗R2.
+Bylinearity,thisthen furtherimplies thatf·⃗R2 =f′·⃗R2,and hencethatJ2(π) =J2(π′). Since
+π,π′ were chosen arbitrarily, this means thatJ1(π) =J1(π′)  =⇒J2(π) =J2(π′).
+Corollary1. InanyMDP\R,anypairofrewardfunctionsthatareunhackableandnon-trivialon
+the set of all (stationary) policiesΠare equivalent onΠ.
+
+Proof. This corollary follows from Theorem 1, if we note that the set of all policies does contain an
+openset. Thisincludes,forexample,thesetofallpoliciesinanϵ-ballaroundthepolicythattakesall
+actions with equal probability in each state.
+Corollary 2. InanyMDP\R,anypairofrewardfunctionsthatareunhackableandnon-trivial
+on the set of allε-suboptimal policies (ε> 0) Πε are equivalent on Πε, and any pair of reward
+functionsthatareunhackableandnon-trivialonthesetofallδ-deterministicpolicies(δ< 1)Πδ are
+equivalent onΠδ.
+
+Proof. Toprovethis,wewillestablishthatbothΠε andΠδ containopenpolicysets,andthenapply
+Theorem 1.
+LetusbeginwithΠδ. First,letπ besomedeterministicpolicy,andletπϵ bethepolicythatineach
+state withprobability1−ϵ takes thesame action asπ, andotherwise samplesan action uniformly.
+Then ifδ<ϵ< 1,πϵ is the center of an open ball inΠδ. ThusΠδ contains an open set, and we can
+apply Theorem 1.
+ForΠε, letπ⋆ be an optimal policy, and apply an analogous argument.
+
+9.2   Finite Policy Sets
+
+Theorem 2.  ForanyMDP\R, anyﬁnite setof policies ˆΠ containing atleast twoπ,π′ such that
+F(π)̸=F(π′), andany reward functionR1, there is anon-trivial reward functionR2 suchthatR1
+andR2 are unhackable but not equivalent.
+
+Proof. IfR1 is trivial, then simply choose any non-trivialR2. Otherwise, the proof proceeds by
+ﬁnding a path from⃗R1 to−⃗R1, and showing that there must be an⃗R2 on this path such thatR2 is
+non-trivial and unhackable with respect toR1, but not equivalent toR1.
+ThekeytechnicaldifﬁcultyistoshowthatthereexistsacontinuouspathfromR1 to−R1 inR|S||A|
+thatdoesnotincludeanytrivialrewardfunctions. Oncewe’veestablishedthat,wecansimplylookfor
+theﬁrstplacewhereaninequalityisreversed–becauseofcontinuity,itﬁrstbecomesanequality. We
+call the reward function at thatpointR2, and note thatR2 is unhackable wrtR1 and not equivalent
+toR1. We now walk through the technical details of these steps.
+First,notethatJ(π) =F(π)·⃗Riscontinuousin⃗R. ThismeansthatifJ1(π)>J2(π′)thenthereis
+auniqueﬁrstvector⃗R2 onanypathfrom⃗R1 to−⃗R1 suchthatF(π)·⃗R2̸>F(π)·⃗R2,andforthis
+vectorwehavethatF(π)·⃗R2 =F(π)·⃗R2. Since ˆΠisﬁnite,andsinceR1 isnottrivial,thismeans
+that on any path from⃗R1 to−⃗R1 there is a unique ﬁrst vector⃗R2 such thatR2 is not equivalent to
+R1, and thenR2 must also be a unhackable with respect toR1.
+Itremainstoshowthatthereisapathfrom⃗R1 to−⃗R1 suchthatnovectoralongthispathcorresponds
+toatrivialrewardfunction. Oncewehavesuchapath,theargumentaboveimpliesthatR2 mustbea
+non-trivialrewardfunctionthatisunhackablewithrespecttoR1. Wedothisusingadimensionality
+argument. IfR is trivial on ˆΠ, then thereis somec∈R such thatF(π)·⃗R =c for allπ∈ ˆΠ. This
+means that ifF(ˆΠ) has at leastd linearly independent vectors, then the set of all such vectors⃗R
+forms a linear subspace with at most|S||A|−d dimensions. Now, since ˆΠ contains at least two
+π,π′ such thatF(π)̸=F(π′), we have thatF(ˆΠ) has at least2 linearly independent vectors, and
+
+
+                                                      17
+
+===== PDF PAGE 18 =====
+hencethatthesetofallrewardfunctionsthataretrivialon ˆΠformsalinearsubspacewithatmost
+|S||A|−2 dimensions. This means that there must exist a path from⃗R1 to−⃗R1 that avoids this
+subspace,sinceonlyahyperplane(withdimension|S||A|−1)cansplitR|S||A| intotwodisconnected
+components.
+
+Theorem 3.  Let ˆΠ be a ﬁnite set of policies, andR a reward function. The following procedure
+determines if there exists a non-trivial simpliﬁcation ofR in a givenMDP\R:
+
+       1.Let E1...Em be the partition of ˆΠwhereπ,π′ belong to the same set iffJ(π) =J(π′).
+       2.  ForeachsuchsetEi,selectapolicyπi∈Ei andletZi bethesetofvectorsthatisobtained
+          by subtractingF(πi) from each element ofF(Ei).
+
+Then there is a non-trivial simpliﬁcation ofR iff dim(Z1∪···∪Zm)≤ dim(F(ˆΠ))−2, where
+dim(S) is the number of linearly independent vectors inS.
+
+Proof. This proof uses a similar proof strategy as Theorem 2.  However, in addition to avoiding
+trivial reward functions on the path from⃗R1 to−⃗R1, we must also ensure that we stay within the
+“equality-preserving space”, to be deﬁned below.
+FirstrecallthatF(ˆΠ)isasetofvectorsinR|S||A|. Ifdim(F(ˆΠ)) =D thenthesevectorsarelocated
+in aD-dimensional linear subspace. Therefore, we will considerF(ˆΠ) to be a set of vectors inRD.
+Next, recall that any reward functionR induces a linear functionL onRD, such thatJ =L◦F,
+andnotethatthereisaD-dimensionalvector⃗R thatdeterminestheordering thatR inducesoverall
+pointsinRD. TodeterminethevaluesofJ onallpointsinRD wewouldneeda(D+1)-dimensional
+vector, but to determine the ordering, we can ignore the height of the function.  In other words,
+L(x) =x·⃗R+L(⃗0), foranyx∈RD. Notethat this isa differentvectorrepresentation ofreward
+functions than that which was used in Theorem 2 and before.
+SupposeR2 isarewardfunctionsuchthatifJ1(π) =J1(π′)thenJ2(π) =J2(π′),forallπ,π′∈ ˆΠ.
+ThisisequivalenttosayingthatL2(F(π)) =L2(F(π′))ifπ,π′∈Ei forsomeEi. Bytheproperties
+oflinearfunctions,thisimpliesthatifF(Ei)containsdi linearlyindependentvectorsthenitspeciﬁes
+a(di−1)-dimensionalafﬁne spaceSi suchthatL2(x) =L2(x′) for allpointsx,x′∈Si. Note that
+this is the smallestafﬁne space which contains all points inEi. Moreover,L2 is also constant forany
+afﬁne space¯Si parallel toSi. Formally, we say that ¯Si is parallel toSi if there is a vectorz such that
+for anyy∈ ¯Si there is anx∈Si such thaty =x+z. From the properties of linear functions, if
+L2(x) =L2(x′) thenL2(x+z) =L2(x′+z).
+Next,fromthetransitivityofequality,ifwehavetwoafﬁnespaces¯Si and ¯Sj,suchthatL2 isconstant
+over each of ¯Si and  ¯Sj, and such that ¯Si and  ¯Sj intersect, thenL2 is constant over all points in¯Si∪ ¯Sj. Fromthepropertiesoflinearfunctions,thisthenimpliesthatL2 isconstantoverallpointsin
+
+thesmallestafﬁne space¯Si⊗ ¯Sj containing ¯Si and ¯Sj,givenbycombiningthe linearlyindependent
+vectors in ¯Si and  ¯Sj. Note that ¯Si⊗ ¯Sj has between max(di,dj) and (di +dj−1) dimensions.
+Inparticular,sincetheafﬁnespacesofZ1...Zm intersect(attheorigin),andsinceL2 isconstant
+over these spaces, we have thatL2 must be constant for all points in the afﬁne spaceZ which is
+the smallest afﬁne space containingZ1∪···∪Zm. That is, ifR2 is a reward function such that
+J1(π) =J1(π′)  =⇒ J2(π) =J2(π′) for allπ,π′∈ ˆΠ, thenL2 is constant overZ. Moreover,
+ifL2 is constant overZ thenL2 is also constant over each ofE1...Em, since each ofE1...Em
+is parallel toZ. This means thatR2 satisﬁes thatJ1(π) =J1(π′)  =⇒ J2(π) =J2(π′) for all
+π,π′∈ ˆΠ if and only ifL2 is constant overZ.
+Ifdim(Z) =D′ then there is a linear subspace withD−D′ dimensions, which contains the (D-
+dimensional)vector⃗R2 ofanyrewardfunctionR2 whereJ1(π) =J1(π′)  =⇒J2(π) =J2(π′)for
+π,π′∈ ˆΠ. This is becauseR2 is constantoverZ if andonly if⃗R2·v = 0 for allv∈Z. Then ifZ
+containsD′ linearlyindependentvectorsvi...vD′,thenthesolutionstothecorrespondingsystemof
+linearequationsforma(D−D′)dimensionalsubspaceofRD. Callthisspacetheequality-preserving
+space. Next, note thatR2 is trivial on ˆΠ if and only if⃗R2 is the zero vector⃗0.
+Now we show that if the conditions are not satisﬁed, then there is no non-trivial simpliﬁcation.
+SupposeD′≥D−1, and thatR2 is a simpliﬁcation ofR1. Note that ifR2 simpliﬁesR1 then
+
+
+                                                       18
+
+===== PDF PAGE 19 =====
+⃗R2 is in the equality-preserving space.  Now, ifD′ =D thenL2 (andL1) must be constant for
+all points inRD, which implies thatR2 (andR1) are trivial on ˆΠ. Next, ifD′ =D−1 then the
+equality-preserving space is one-dimensional. Note that we can always preserve all equalities of
+R1 by scalingR1 by aconstant factor. That is, ifR2 =c·R1 for some(possibly negative)c∈R
+thenJ1(π) =J1(π′)   =⇒ J2(π) =J2(π′) for allπ,π′∈  ˆΠ.  This means that the parameter
+which corresponds to the dimension of the equality-preserving space in this case must be the scaling
+of⃗R2. However, the only simpliﬁcation ofR1 that is obtainable by uniform scaling is the trivial
+simpliﬁcation. This means that ifD′≥D−1 thenR1 has no non-trivial simpliﬁcations onˆΠ.
+For the other direction, supposeD′≤D− 2.  Note that this implies thatR1 is not trivial.  Let
+R3 =−R1. Now both⃗R1 and⃗R3 are located in the equality-preserving space. Next, since the
+equality-preserving space has at least two dimensions, this means that there is a continuous path
+from⃗R1 to⃗R3 throughtheequality-preservingspace thatdoesnotpasstheorigin. Now,note that
+Ji(π) =F(π)·⃗Ri is continuousin⃗Ri. This meansthat there, onthe path from⃗R1 to⃗R3 is aﬁrst
+vector⃗R2 such thatF(π)·⃗R2 =F(π′)·⃗R2 butF(π)·⃗R1̸=F(π′)·⃗R1 for someπ,π′∈ ˆΠ. Let
+R2 be arewardfunction corresponding to⃗R2. Since⃗R2 is not⃗0, wehave thatR2 is nottrivialon
+ˆΠ. Moreover, since⃗R2 isin theequality-preservingspace, andsinceF(π)·⃗R2 =F(π′)·⃗R2 but
+F(π)·⃗R1̸=F(π′)·⃗R1 for someπ,π′∈ ˆΠ, we have thatR2 is a non-trivial simpliﬁcation ofR1.
+Therefore, ifD′≤D−2 then there exists a non-trivial simpliﬁcation ofR1.
+We have thus proven both directions, which completes the proof.
+
+Corollary3. Foranyﬁnitesetofpolicies ˆΠ,anyenvironment,andanyrewardfunctionR,if|ˆΠ|≥ 2
+andJ(π)̸=J(π′) for allπ,π′∈ ˆΠ, then there is a non-trivial simpliﬁcation ofR.
+
+Proof. Note that ifEi is a singleton set thenZi ={⃗0}. Hence, if eachEi is a singleton set then
+dim(Z1∪···∪Zm) = 0. If ˆΠ contains at least twoπ,π′, andJ(π)̸=J(π′), thenF(π)̸=F(π′).
+This means thatdim(F(ˆΠ))≥ 2. Thus the conditions of Theorem 3 are satisﬁed.
+
+10   Any Policy Can Be Made Optimal
+
+In this section, we show that any policy is optimal under some reward function.
+Proposition 3.  Forany rewardlessMDP(S,A,T,I,                  ,γ) andanypolicyπ,thereexistsareward
+functionR such thatπ is optimal in the corresponding MDP(S,A,T,I,R,γ).
+
+Proof. LetR(s,a,s′) = 0 ifa∈ Support(π(s)), and−1 otherwise.
+
+Thisshowsthatanypolicyisrationalisedbysomerewardfunctioninanyenvironment. Anypolicythat
+gives0 probability to any action whichπ takes with0 probability is optimal under this construction.
+This means that ifπ is deterministic, then it will be the only optimal policy in(S,A,T,I,R,γ).
+
+11   Examples
+
+In thissection, we takea closer look at twopreviously-seen examples: the two-stateMDP\R and
+the cleaning robot.
+
+11.1   Two-stateMDP\R example
+
+Let us explore in more detail the two-state system introduced in the main text. We decsribe this
+inﬁnite-horizonMDP\R in Table 1.
+We denoteπij (i,j∈{0,1}) the policy which takes actioni when in state 0 and actionj when in
+state 1. This gives us four possible deterministic policies:
+                                            {π00,π01,π10,π11}.
+
+
+                                                       19
+
+===== PDF PAGE 20 =====
+                       States            S ={0,1}
+                       Actions           A ={0,1}
+                       Dynamics         T(s,a) =a fors∈S,a∈A
+                       Initial state distribution    Pr(start ins) = 0.5 fors∈S
+                       Discount factor      γ = 0.5
+                          Table 1: The two-stateMDP\R in consideration.
+
+
+
+Thereare4! = 24waysoforderingthesepolicieswithstrictinequalities. Arbitrarilysettingπ00<π11
+breaksasymmetry andreducesthenumberofpolicyorderings to12. Whena policy orderingcanbe
+derivedfromsomerewardfunctionR,wesay thatR representsit,andthat thepolicyordering is
+representable. Of these 12 policy orderings with strict inequalities, six are representable:
+                                         π00<π01<π10<π11,
+                                         π00<π01<π11<π10,
+                                         π00<π10<π01<π11,
+                                         π01<π00<π11<π10,
+                                         π10<π00<π01<π11,
+                                         π10<π00<π11<π01.
+
+Simpliﬁcation in this environment is nontrivial – given a policy ordering, it is not obvious which
+strictinequalitiescanbesettoequalitiessuchthatthereisarewardfunctionwhichrepresentsthenew
+ordering. Through a computational approach (see Section 11.3) we ﬁnd the following representable
+orderings, each of which is a simpliﬁcation of one of the above strict orderings.
+                                         π00 =π01<π11<π10,
+                                         π00 =π10<π01<π11,
+                                         π00<π01 =π10<π11,
+                                         π01<π00 =π11<π10,
+                                         π10<π00 =π11<π01,
+                                         π00<π01<π10 =π11,
+                                         π10<π00<π01 =π11,
+                                         π00 =π01 =π10 =π11.
+
+Furthermore, for this environment, we ﬁnd that any reward function which sets the value of three
+policies equal necessarily forces the value of the fourth policy to be equal as well.
+
+11.2   Cleaning robot example
+
+Recall the cleaning robot example in which a robot can choose to clean a combination of three
+rooms,and receivesanonnegativerewardfor eachroom cleaned. Thissetting canbe thoughtof asa
+single-step eight-armed bandit with special reward structure.
+
+11.2.1   Hackability
+Webegin ourexplorationofthisenvironmentwith astatementregardingexactlywhentwo policies
+arehackable. Infact,thepropositionisslightlymoregeneral,extendingtoanarbitrary(ﬁnite)number
+of rooms.
+Proposition 4.  Consider a cleaning robot which can cleanN different rooms, and identify each
+roomwithauniqueindexin{1,...,N}. Cleaningroomi givesrewardr(i)≥ 0. Cleaningmultiple
+roomsgivesrewardequaltothesumoftherewardsoftheroomscleaned. ThevalueofapolicyπS
+which cleans a collection of roomsS is the sum of the rewards corresponding to the rooms cleaned:
+J(πS) =∑i∈Sr(i). For roomi, the true reward function assigns a valuertrue(i), while the proxy
+reward function assigns it rewardrproxy(i). The proxy reward is hackable with respect to the true
+
+
+                                                     20
+
+===== PDF PAGE 21 =====
+                                   rewardifandonly iftherearetwosets ofroomsS1,S2 suchthat∑i∈S1rproxy(i)<∑i∈S2rproxy(i)
+                                   and∑i∈S1rtrue(i)>∑i∈S2rtrue(i).
+
+                                   Proof. We show the two directions of the double implication.
+
+                                         ⇐ Suppose there are two sets of roomsS1,S2 satisfying∑i∈S1rproxy(i)<∑i∈S2rproxy(i)
+                                              and∑i∈S1rtrue(i)>∑i∈S2rtrue(i). The policiesπSi = “clean exactly the rooms inSi”
+                                              fori∈{1,2}demonstratethatrproxy,rtrue arehackable. Toseethis,rememberthatJ(πS) =
+                                              ∑
+                                                 i∈Sr(i). Combining this with the premise immediately givesJproxy(πS1)<Jproxy(πS2)
+                                              andJtrue(πS1)>Jtrue(πS2).
+                                         ⇒ Ifrproxy,rtrue arehackable,thentheremustbeapairofpoliciesπ1,π2 suchthatJproxy(π1)<
+                                              Jproxy(π2) andJtrue(π1)>Jtrue(π2). LetS1 be the set of rooms cleaned byπ1 andS2 be
+                                              theset ofrooms cleanedbyπ2. Againremembering thatJ(πS) =∑i∈Sr(i) immediately
+                                              gives us that∑i∈S1rproxy(i)<∑i∈S2rproxy(i) and∑i∈S1rtrue(i)>∑i∈S2rtrue(i).
+
+
+
+                                   Inthemaintext,wesawtwointuitivewaysofmodifyingtherewardfunctioninthecleaningrobot
+                                   example: omitting information and overlooking ﬁne details.  Unfortunately, there is no obvious
+                                   mapping ofProposition 4 onto simplerules concerning how tosafely omit informationor overlook
+                                   ﬁne details: it seems that one must resort to ensuringthat no two sets of rooms satisfy theconditions
+                                   for hackability described in the proposition.
+
+                                   11.2.2   Simpliﬁcation
+                                   We now consider simpliﬁcation in this environment. Since we know the reward for cleaning each
+                                   room is nonnegative, there will be some structure underneath all the possible orderings over the
+                                   policies. Thisstructureisshown inFigure7: regardlessofthevalue assignedtoeachroom, apolicy
+                                   at the tail of an arrow can only be at most as good as a policy at the head of the arrow.
+
+
+
+
+
+
+
+                                   Figure7: Thestructureunderlying allpossiblepolicyorderings(assuming nonnegative roomvalue).
+                                   The policy at the tail of the arrow is at most as good as the policy at the head of the arrow.
+
+
+                                   Ifwedecidetosimplifyanorderingbyequatingtwopoliciesconnectedbyanarrow,thestructureof
+                                   therewardcalculationwillforceotherpoliciestoalsobeequated. Speciﬁcally,iftheequatedpolicies
+                                   differ only inpositioni, then all pairsof policies which differ onlyin positioni will also beset equal.
+                                   Forexample,imaginewesimplifytherewardbysaying wedon’tcareiftheatticiscleanedornot,
+                                   so long as the other two rooms are cleaned (recall that we named the rooms Attic, Bedroom and
+                                   Kitchen). ThisamountstosayingthatJ([0,1,1]) =J([1,1,1]). Becausethepolicyvaluefunction
+                                   is of the form
+                                                                    J(π) =J([x,y,z]) = [x,y,z]·[r1,r2,r3]
+                                   wherex,y,z∈{0,1}, this simpliﬁcation forcesr1 = 0. In turn, this implies thatJ([0,0,0]) =
+                                   J([1,0,0]) andJ([0,1,0]) =J([1,1,0]). Thenewstructureunderlyingtheorderingoverpoliciesis
+                                   shown in Figure 8.
+
+
+
+
+
+                                   Figure8: Theupdatedorderingstructureafterequating“cleanalltherooms”and“cleanalltherooms
+                                   except the attic”. X can take either value in {0, 1}.
+
+
+                                                                                           21
+
+                         [0, 0, 1]                 [0, 1, 1]
+[X, 0, 0][0, 0, 0]       [X, 0, 1][0, 1, 0]        [X, 1, 1][1, 0, 1]        [1, 1, 1]
+                         [X, 1, 0]
+                         [1, 0, 0]                 [1, 1, 0]
+
+===== PDF PAGE 22 =====
+Analternativewaytothinkaboutsimpliﬁcationinthisproblemisbyimaginingpoliciesascornersof
+acube,andsimpliﬁcationasﬂatteningofthecubealongonedimension–simpliﬁcationcollapses
+this cube into a square.
+
+11.3   Software repository
+
+Thesoftwaresuitedescribedinthepaper(andusedtocalculatetherepresentablepolicyorderingsand
+simpliﬁcationsofthetwo-stateMDP\R)canbefoundathttps://anonymous.4open.science/
+r/simplified-reward-5130.
+
+12   Unhackability Diagram
+
+Consider a setting with three policiesa,b,c.  We allow all possible orderings of the policies.  In
+general, these orderings might not all be representable; a concrete case in which they are is when
+a,b,c represent different deterministic policies in a 3-armed bandit.
+Wecanrepresentallunhackablepairsofpolicyorderingswithanundirectedgraph,whichwecallan
+unhackabilitydiagram. Thisincludesanodeforeveryrepresentableorderingandedgesconnecting
+orderings which are unhackable. Figure 9 shows an unhackability diagram including all possible
+orderings of the three policiesa,b,c.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 9: Illustration of the unhackable pairs of policy orderings when considering all possible
+orderings over three policiesa,b,c. Edges of the graph connect unhackable policy orderings.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                      22
+
+===== PDF PAGE 23 =====
+13   Simpliﬁcation Diagram
+
+We can also represent all possible simpliﬁcations using a directed graph, which we call asimpli-
+ﬁcation diagram. This includes a node for every representable ordering and edges pointing from
+orderings totheir simpliﬁcations. Figure 10 presents a simpliﬁcationdiagram includingall possible
+orderings of three policiesa,b,c.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 10: Illustration of the simpliﬁcations present when considering all possible orderings over
+threepoliciesa,b,c. Arrowsrepresentsimpliﬁcation: thepolicyorderingattheheadofanarrowisa
+simpliﬁcation of the policy ordering at the tail of the arrow.
+
+We note that the simpliﬁcation graph is a subgraph of the unhackability graph. This will always be
+the case, since simpliﬁcation can never lead to reward hacking.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                         23

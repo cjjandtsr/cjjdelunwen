@@ -1,0 +1,964 @@
+
+===== PAGE 1 =====
+Accelerating Online Reinforcement Learning with
+Ofﬂine Datasets
+Ashvin Nair
+EECS Department
+UC Berkeley
+anair17@berkeley.edu
+Murtaza Dalal
+EECS Department
+UC Berkeley
+mdalal@berkeley.edu
+Abhishek Gupta
+EECS Department
+UC Berkeley
+abhigupta@eecs.berkeley.edu
+Sergey Levine
+EECS Department
+UC Berkeley
+svlevine@eecs.berkeley.edu
+Abstract
+Reinforcement learning provides an appealing formalism for learning control
+policies from experience. However, the classic active formulation of reinforcement
+learning necessitates a lengthy active exploration process for each behavior, making
+it difﬁcult to apply in real-world settings. If we can instead allow reinforcement
+learning to effectively use previously collected data to aid the online learning
+process, where the data could be expert demonstrations or more generally any
+prior experience, we could make reinforcement learning a substantially more
+practical tool. While a number of recent methods have sought to learn ofﬂine from
+previously collected data, it remains exceptionally difﬁcult to train a policy with
+ofﬂine data and improve it further with online reinforcement learning. In this paper
+we systematically analyze why this problem is so challenging, and propose a novel
+algorithm that combines sample-efﬁcient dynamic programming with maximum
+likelihood policy updates, providing a simple and effective framework that is able to
+leverage large amounts of ofﬂine data and then quickly perform online ﬁne-tuning
+of reinforcement learning policies. We show that our method enables rapid learning
+of skills with a combination of prior demonstration data and online experience
+across a suite of difﬁcult dexterous manipulation and benchmark tasks.
+1 Introduction
+Learning models that generalize effectively to complex open-world settings, from image recogni-
+tion [20] to natural language processing [6], relies on large, high-capacity models and large, diverse,
+and representative datasets. Leveraging this recipe for reinforcement learning (RL) has the potential
+to yield powerful policies for real-world control applications such as robotics. However, while
+deep RL algorithms enable the use of large models, the use of large datasets for real-world RL is
+conceptually challenging. Most RL algorithms collect new data online every time a new policy is
+learned, which limits the size and diversity of the datasets for RL. In the same way that powerful
+models in computer vision and NLP are often pre-trained on large, general-purpose datasets and then
+ﬁne-tuned on task-speciﬁc data, RL policies that generalize effectively to open-world settings will
+need to be able to incorporate large amounts of prior data effectively into the learning process, while
+still collecting additional data online for the task at hand.
+For data-driven reinforcement learning, ofﬂine datasets consist of trajectories of states, actions and
+associated rewards. This data can potentially come from demonstrations for the desired task [37, 2],
+suboptimal policies [9], demonstrations for related tasks [ 49], or even just random exploration in
+Preprint. Under review.
+arXiv:2006.09359v1  [cs.LG]  16 Jun 2020
+
+===== PAGE 2 =====
+the environment. Depending on the quality of the data that is provided, useful knowledge can be
+extracted about the dynamics of the world, about the task being solved, or both. Effective data-driven
+methods for deep reinforcement learning should be able to use this data to pre-train ofﬂine while
+improving with online ﬁne-tuning.
+Since this prior data can come from a variety of sources, we require an algorithm that does not
+utilize different types of data in any privileged way. For example, prior methods that incorporate
+demonstrations into RL directly aim to mimic these demonstrations [28], which is desirable when
+the demonstrations are known to be optimal, but can cause undesirable bias when the prior data
+is not optimal. While prior methods for fully ofﬂine RL provide a mechanism for utilizing ofﬂine
+data [8, 21], as we will show in our experiments, such methods generally are not effective for ﬁne-
+tuning with online data as they are often too conservative. In effect, prior methods require us to
+choose: Do we assume prior data is optimal or not? Do we use only ofﬂine data, or only online data?
+To make it feasible to learn policies for open-world settings, we need algorithms that contain all of
+the aforementioned qualities.
+In this work, we study how to build RL algorithms that are effective for pre-training from a variety
+of off-policy datasets, but also well suited to continuous improvement with online data collection.
+We systematically analyze the challenges with using standard off-policy RL algorithms [11, 21, 1]
+for this problem, and introduce a simple actor critic algorithm that elegantly bridges data-driven
+pre-training from ofﬂine data and improvement with online data collection. Our method, which uses
+dynamic programming to train a critic but a supervised update to train a constrained actor, combines
+the best of supervised learning and actor-critic algorithms. Dynamic programming can leverage
+off-policy data and enable sample-efﬁcient learning. The simple supervised actor update implicitly
+enforces a constraint that mitigates the effects of out-of-distribution actions when learning from ofﬂine
+data [8, 21], while avoiding overly conservative updates. We evaluate our algorithm on a wide variety
+of robotic control and benchmark tasks across three simulated domains: dexterous manipulation,
+tabletop manipulation, and MuJoCo control tasks. We see that our algorithm, Advantage Weighted
+Actor Critic (AW AC), is able to quickly learn successful policies on difﬁcult tasks with high action
+dimension and binary sparse rewards, signiﬁcantly better than prior methods for off-policy and
+ofﬂine reinforcement learning. Moreover, we see that AW AC can utilize different types of prior data:
+demonstrations, suboptimal data, and random exploration data.
+2 Preliminaries
+We consider the standard reinforcement learning notation, with states s, actions a, policyπ(a|s),
+rewardsr(s, a), and dynamicsp(s′|s, a). The discounted return is deﬁned asRt =∑T
+i=tγir(si, ai),
+for a discount factor γ and horizon T which may be inﬁnite. The objective of an RL agent is to
+maximize the expected discounted return J(π) = Epπ(τ)[R0] under the distribution induced by
+the policy. The optimal policy can be learned by direct optimization of this objective using the
+policy gradient, estimating ∇J(π) [45], but this is often ineffective due to high variance of the
+estimator. Many algorithms attempt to reduce this variance by making use of the value function
+Vπ(s) = Epπ(τ)[Rt|s], action-value functionQπ(s, a) = Epπ(τ)[Rt|s, a], or advantageAπ(s, a) =
+Qπ(s, a) −Vπ(s). The action-value function for a policy can be written recursively via the Bellman
+equation:
+Qπ(s, a) = r(s, a) +γEp(s′|s,a)[Vπ(s′)] = r(s, a) +γEp(s′|s,a)[Eπ(a′|s′)[Qπ(s′, a′)]]. (1)
+Instead of estimating policy gradients directly, actor-critic algorithms maximize returns by alternating
+between two phases [19]: policy evaluation and policy improvement. During the policy evaluation
+phase, the criticQπ(s, a) is estimated for the current policyπ. This can be accomplished by repeatedly
+applying the Bellman operator B, corresponding to the right-hand side of Equation 1, as deﬁned
+below:
+BπQ(s, a) = r(s, a) +γEp(s′|s,a)[Eπ(a′|s′)[Qπ(s′, a′)]]. (2)
+By iterating according toQk+1 = BπQk,Qk converges toQπ [39]. With function approximation,
+we cannot apply the Bellman operator exactly, and instead minimize the Bellman error with respect
+to Q-function parametersφk:
+φk = arg min
+φ
+ED[(Qφ(s, a) −y)2],y =r(s, a) +γEs′,a′[Qφk−1 (s′, a′)]. (3)
+2
+
+===== PAGE 3 =====
+D = {(s, a, s
+0
+,r )j}
+⇡✓(a|s)
+Update
+⇡✓
+p(s
+0
+|s, a )
+(s, a, s
+0
+,r)
+Q   Update
+⇡✓ Q  
+ 
+-off-policy data 
+-expert demos 
+-prior runs of  RL
+1. O ✏ ine Learning 2. Online Fine-tuning
+ 
+Figure 1: We study learning policies by ofﬂine learning on a prior datasetD and then ﬁne-tuning with online
+interaction. The prior data could be obtained via prior runs of RL, expert demonstrations, or any other source of
+transitions. Our method, advantage weighted actor critic (AW AC) is able to learn effectively from ofﬂine data
+and ﬁne-tune in order to reach expert-level performance after collecting a limited amount of interaction data
+During policy improvement, the actorπ is typically updated based on the current estimate ofQπ. A
+commonly used technique [24, 7, 11] is to update the actor via likelihood ratio or pathwise derivatives
+to optimize the following objective, such that the expected value of the Q-functionQπ is maximized:
+πθk (a|s) = arg max
+θ
+Es∼D[Eπθ(a|s)[Qφk (s, a)]] (4)
+Actor-critic algorithms are widely used in deep RL [25, 24, 11, 7]. With a Q-function estimator, they
+can in principle utilize off-policy data when used with a replay buffer for storing prior transition
+tuples, which we will denoteβ, to sample previous transitions, although we show that this by itself is
+insufﬁcient for our problem setting.
+3 Challenges in Ofﬂine RL with Online Fine-tuning
+In this section, we aim to better understand the unique challenges that exist when pre-training using
+ofﬂine data, followed by ﬁne-tuning with online data collection. We ﬁrst describe the problem, and
+then analyze what makes this problem difﬁcult for prior methods.
+Problem deﬁnition. We assume that a static dataset of transitions, D = {(s, a, s′,r )j}, is provided
+to the algorithm at the beginning of training. This dataset can be sampled from an arbitrary policy
+or mixture of policies, and may even be collected by a human expert. This deﬁnition is general
+and encompasses many scenarios, such as learning from demonstrations, learning from random
+data, learning from prior RL experiments, or even learning from multi-task data. Given the dataset
+D, our goal is to leverage D for pre-training and use some online interaction to learn the optimal
+policyπ∗(a|s), with as few interactions with the environment as possible (depicted in Fig 1). This
+setting is representative of many real-world RL settings, where prior data is available and the aim is
+to learn new skills efﬁciently. We ﬁrst study existing algorithms empirically in this setting on the
+HalfCheetah-v2 Gym environment. The prior dataset consists of 15 demonstrations from an expert
+policy and 100 suboptimal trajectories sampled from a behavioral clone of these demonstrations.
+All methods for the remainder of this paper incorporate the prior dataset, unless explicitly labeled
+“scratch”.
+3.1) Data efﬁciency. One of the simplest ways to utilize prior data such as demonstrations for RL
+is to pre-train a policy with imitation learning, and ﬁne-tune with on-policy RL [10, 35]. This has
+two drawbacks: (1) prior data may not be optimal; (2) on-policy ﬁne-tuning is data inefﬁcient as it
+does not reuse the prior data in the RL stage. In our setting, data efﬁciency is vital. To this end, we
+require algorithms that are able to reuse arbitrary off-policy data during online RL for data-efﬁcient
+ﬁne-tuning. We ﬁnd that algorithms that use on-policy ﬁne-tuning [35, 10], or Monte-Carlo return
+estimation [30, 31] are generally much less efﬁcient than off-policy actor-critic algorithm, which
+iterate between improvingπ and estimatingQπ via Bellman backups. This can be seen from the
+results in Figure 2 plot 1, where on-policy methods like DAPG [35] and Monte-Carlo return methods
+like AWR [30] are an order of magnitude slower than off-policy actor-critic methods. Actor-critic
+methods, shown in Figure 2 plot 2, can in principle use off-policy data. However, as we will discuss
+next, naïvely applying these algorithms to our problem does not perform well due to a different set of
+challenges.
+3.2) Bootstrap Error in Ofﬂine Learning with Actor-Critic Methods. When standard off-policy
+actor-critic methods are applied to this problem setting, they perform poorly, as shown in the second
+plot in Figure 2: despite having a prior dataset in the replay buffer, these algorithms do not beneﬁt
+3
+
+===== PAGE 4 =====
+Average Returns
+0K 50K 100K 150K 200K
+Timesteps
+0
+2500
+5000
+7500
+1. Data Efficiency from Prior Data
+AWAC (Ours)
+AWR [30]
+DAPG [35]
+0K 50K 100K 150K 200K
+Timesteps
+2. Actor-Critic Methods
+AWAC (Ours)
+SACfD (pretrain)
+SACfD (prior) [43]
+SAC (scratch) [11]
+0K 50K 100K 150K 200K
+Timesteps
+3. Policy Constraint Methods
+BEAR [21]
+BEAR-loose
+Offline Training
+Offline data
+Online data
+Figure 2: Analysis of prior methods on HalfCheetah-v2 using ofﬂine RL with online ﬁne-tuning. (1) DAPG [35]
+and AWR [30] learn relatively slowly, even with access to prior data. We present our method, AWAC, as an
+example of how off-policy RL methods can learn much faster. (2) Soft actor-critic (SAC) with ofﬂine training
+(performed before timestep 0) and ﬁne-tuning. We see a “dip” in the initial performance, even if the policy
+is pretrained with behavioral cloning. (3) Ofﬂine RL method BEAR [ 21] on ofﬂine training and ﬁne-tuning,
+including a “loose” variant of BEAR with a weakened constraint. Standard ofﬂine RL methods ﬁne-tune slowly,
+while the “loose” BEAR variant experiences a similar dip as SAC. (4) We show that the ﬁt of the behavior models
+ˆπβ used by these ofﬂine methods degrades as new data is added to the buffer during ﬁne-tuning, potentially
+explaining their poor ﬁne-tuning performance.
+signiﬁcantly from ofﬂine training. We evaluate soft actor critic [ 11], a state-of-the-art actor-critic
+algorithm for continuous control. Note that “SAC (scratch),” which does not receive the prior data,
+performs similarly to “SACfD (prior),” which does have access to the prior data, indicating that
+the off-policy RL algorithm is not actually able to make use of the off-policy data for pre-training.
+Moreover, even if the SAC is policy is pre-trained by behavior cloning, labeled “SACfD (pretrain)”,
+we still observe an initial decrease in performance.
+This challenge can be attributed to off-policy bootstrapping error accumulation, as observed in several
+prior works [39, 21, 46, 23, 8]. In actor-critic algorithms, the target value Q(s′, a′), with a′ ∼ π,
+is used to updateQ(s, a). When a′ is outside of the data distribution,Q(s′, a′) will be inaccurate,
+leading to accumulation of error on static datasets.
+Prior ofﬂine RL algorithms [8, 21, 46] propose to address this issue by explicitly adding constraints
+on the policy improvement update (Equation 4) to avoid bootstrapping on out-of-distribution actions,
+leading to a policy update of this form:
+arg max
+θ
+Es∼D[Eπθ(a|s)[Qφk (s, a)]] s.t.D(πθ,πβ) ≤ϵ. (5)
+Here,πθ is the actor being updated and πβ(a|s) represents the (potentially unknown) distribution
+from which all of the data seen so far (both ofﬂine data and online data) was generated. In the case
+of a replay buffer,πβ corresponds to a mixture distribution over all past policies. Typically,πβ is
+not known, especially for ofﬂine data, and must be estimated from the data itself. Many ofﬂine
+RL algorithms [21, 8, 38] explicitly ﬁt a parametric model to samples for the distribution πβ via
+maximum likelihood estimation, where samples fromπβ are obtained simply by sampling uniformly
+from the data seen thus far: ˆπβ = max ˆπβ Es,a∼πβ [log ˆπβ(a|s)]. After estimating ˆπβ, prior methods
+implement the constraint given in Equation 5 in various ways, including penalties on the policy
+update [21, 46] or architecture choices for sampling actions for policy training [8, 38]. As we will see
+next, the requirement for accurate estimation of ˆπβ makes these methods difﬁcult to use with online
+ﬁne-tuning.
+3.3) Excessively Conservative Online Learning. While ofﬂine RL algorithms with constraints [21,
+8, 46] perform well ofﬂine, they struggle to improve with ﬁne-tuning, as shown in the third plot in
+Figure 2. We see that the purely ofﬂine RL performance (at “0K” in Fig. 2) is much better than the
+standard off-policy methods shown in Section 3.2. However, with additional iterations of online
+ﬁne-tuning, the performance increases very slowly (as seen from the slope of the BEAR curve in
+Fig 2). What causes this phenomenon?
+This can be attributed to challenges in ﬁtting an accurate behavior model as data is collected online
+during ﬁnetuning. In the ofﬂine setting, behavior models must only be trained once via maximum
+likelihood, but in the online setting, the behavior model must be updated online to track incoming data.
+Training density models online (in the “streaming” setting) is a challenging research problem [ 36],
+made more difﬁcult by a potentially complex multi-modal behavior distribution induced by the
+mixture of online and ofﬂine data. To understand this, we plot the log likelihood of learned behavior
+models on the dataset during online and ofﬂine training for the HalfCheetah task. As we can see in
+4
+
+===== PAGE 5 =====
+the plot, the accuracy of the behavior models (logπβ on the y axis) reduces during online ﬁne-tuning,
+indicating that it is not ﬁtting the new data well during online training. When the behavior models are
+inaccurate or unable to model new data well, constrained optimization becomes too conservative,
+resulting in limited improvement with ﬁne-tuning. This analysis suggests that, in order to address
+our problem setting, we require an off-policy RL algorithm that constrains the policy to prevent
+ofﬂine instability and error accumulation, but is not so conservative that it prevents online ﬁne-tuning
+due to imperfect behavior modeling. Our proposed algorithm, which we discuss in the next section,
+accomplishes this by employing an implicit constraint, which does not require any explicit modeling
+of the behavior policy.
+4 Advantage Weighted Actor Critic: A Simple Algorithm for Fine-tuning
+from Ofﬂine Datasets
+In this section, we will describe the advantage weighted actor-critic (AW AC) algorithm, which trains
+an off-policy critic and an actor with an implicit policy constraint. We will show AW AC mitigates the
+challenges outlined in Section 3. AW AC follows the standard paradigm for actor-critic algorithms as
+described in Section 2, with a policy evaluation step to learnQπ and a policy improvement step to
+updateπ. AW AC uses off-policy temporal-difference learning to estimateQπ in the policy evaluation
+step, and a unique policy improvement update that is able to obtain the beneﬁts of ofﬂine RL
+algorithms at training from prior datasets, while avoiding the overly conservative behavior described
+in Section 3.3. We describe the policy improvement step in AW AC below, and summarize the entire
+algorithm thereafter.
+Policy improvement for AW AC proceeds by learning a policy that maximizes the value of the critic
+learned in the policy evaluation step via TD bootstrapping. If done naively, this can lead to the
+issues described in Section 3.3, but we can avoid the challenges of bootstrap error accumulation by
+restricting the policy distribution to stay close to the data observed thus far during the actor update,
+while maximizing the value of the critic. At iteration k, AWAC therefore optimizes the policy to
+maximize the estimated Q-functionQπk (s, a) at every state, while constraining it to stay close to
+the actions observed in the data, similar to prior ofﬂine RL methods, though this constraint will be
+enforced differently. Note from the deﬁnition of the advantage in Section 2 that optimizingQπk (s, a)
+is equivalent to optimizingAπk (s, a). We can therefore write this optimization as:
+πk+1 = arg max
+π∈Π
+Ea∼π(·|s)[Aπk (s, a)] s.t.DKL(π(·|s)||πβ(·|s)) ≤ϵ. (6)
+As we saw in Section 3.2, enforcing the constraint by incorporating an explicit learned behavior
+model [21, 8, 46, 38] leads to poor ﬁne-tuning performance. Instead, we will enforce the constraint
+implicitly, without explicitly learning a behavior model. We ﬁrst derive the solution to the constrained
+optimization in Equation 6 to obtain a non-parametric closed form for the actor. This solution is then
+projected onto the parametric policy class without any explicit behavior model. The analytic solution
+to Equation 6 can be obtained by enforcing the KKT conditions [31, 34, 30]. The Lagrangian is:
+L(π,λ ) = Ea∼π(·|s)[Aπk (s, a)] +λ(ϵ −DKL(π(·|s)||πβ(·|s))), (7)
+and the closed form solution to this problem is
+π∗(a|s) = 1
+Z(s)πβ(a|s) exp
+(1
+λAπk (s, a)
+)
+, (8)
+whereZ(s) =
+∫
+aπβ(a|s) exp( 1
+λAπk (s, a))da is the normalizing partition function. When using
+function approximators, such as deep neural networks as we do in our implementation, we need to
+project the non-parametric solution into our policy space. For a policyπθ with parametersθ, this can
+be done by minimizing the KL divergence ofπθ from the optimal non-parametric solutionπ∗ under
+the data distributionρπβ (s):
+arg min
+θ
+E
+ρπβ (s)
+[DKL(π∗(·|s)||πθ(·|s))] = arg min
+θ
+E
+ρπβ (s)
+[
+E
+π∗(·|s)
+[− logπθ(·|s)]
+]
+(9)
+Note that the parametric policy could be projected with either direction of KL divergence. Choosing
+the reverse KL results in explicit penalty methods [46] that rely on evaluating the density of a learned
+5
+
+===== PAGE 6 =====
+behavior model. Instead, by using forward KL, we can compute the policy update by sampling
+directly fromβ:
+θk+1 = arg max
+θ
+E
+s,a∼β
+[
+logπθ(a|s) 1
+Z(s) exp
+(1
+λAπk (s, a)
+)]
+. (10)
+This actor update amounts to weighted maximum likelihood (i.e., supervised learning), where the
+targets are obtained by re-weighting the state-action pairs observed in the current dataset by the
+predicted advantages from the learned critic, without explicitly learning any parametric behavior
+model, simply sampling (s,a ) from the replay buffer β. See Appendix A.2 for a more detailed
+derivation and Appendix A.3 for speciﬁc implementation details.
+Avoiding explicit behavior modeling. Note that the update in Equation 10 completely avoids any
+modeling of the previously observed data β with a parametric model. By avoiding any explicit
+learning of the behavior model AWAC is far less conservative than methods which ﬁt a modelˆπβ
+explicitly, and better incorporates new data during online ﬁne-tuning, as seen from our results in
+Section 6. This derivation is related to AWR [ 30], with the main difference that AWAC uses an
+off-policy Q-functionQπ to estimate the advantage, which greatly improves efﬁciency and even ﬁnal
+performance (see results in Section 6.1). The update also resembles ABM-MPO, but ABM-MPOdoes
+require modeling the behavior policy which, as discussed in Section 3.3, can lead to poor ﬁne-tuning.
+In Section 6.1, AW AC outperforms ABM-MPO on a range of challenging tasks.
+Policy evaluation. During policy evaluation, we estimate the action-valueQπ(s, a) for the current
+policyπ, as described in Section 2. We utilize a standard temporal difference learning scheme for
+policy evaluation [11, 7], by minimizing the Bellman error as described in Equation 2. This enables
+us to learn very efﬁciently from off-policy data. This is particularly important in our problem setting
+to effectively use the ofﬂine dataset, and allows us to signiﬁcantly outperform alternatives using
+Monte-Carlo evaluation or TD(λ) to estimate returns [30].
+Algorithm 1 Advantage Weighted AC
+1: Dataset D = {(s, a, s′,r )j}
+2: Initialize bufferβ = D
+3: Initializeπθ,Qφ
+4: for iterationi = 1, 2,... do
+5: Sample batch (s, a, s′,r ) ∼β
+6: Updateφ according to Eqn. 3
+7: Updateθ according to Eqn. 10
+8: ifi> num_ofﬂine_steps then
+9: τ1,...,τ K ∼pπθ (τ )
+10: β ←β ∪ {τ1,...,τ K}
+11: end if
+12: end for
+Algorithm summary. The full AW AC algorithm for ofﬂine
+RL with online ﬁne-tuning is summarized in Algorithm 1.
+In a practical implementation, we can parameterize the actor
+and the critic by neural networks and perform SGD updates
+from Eqn. 10 and Eqn. 3. Speciﬁc details are provided in
+Appendix A.3. As we will show in our experiments, the
+speciﬁc design choices described above enable AWAC to
+overcome the challenges discussed in Section 3. AWAC
+ensures data efﬁciency with off-policy critic estimation via
+bootstrapping, and avoids ofﬂine bootstrap error with a con-
+strained actor update. By avoiding explicit modeling of the
+behavior policy, AW AC avoids overly conservative updates.
+5 Related Work
+Off-policy RL algorithms are designed to reuse off-policy data during training, and have been studied
+extensively [19, 5, 25, 11, 7, 4, 32, 48, 44, 3]. While standard off-policy methods are able to beneﬁt
+from including data seen during a training run, as we show in Section 3.2 they struggle when training
+from previously collected ofﬂine data from other policies, due to error accumulation with distribution
+shift [8, 21]. Ofﬂine RL methods aim to address this issue, often by constraining the actor updates to
+avoid excessive deviation from the data distribution [23, 41, 13, 14, 12, 21, 8, 22, 38, 26, 47]. One
+class of these methods utilize importance sampling [41, 47, 26, 5, 17, 12]. Another class of methods
+perform ofﬂine reinforcement learning via dynamic programming, with an explicit constraint to
+prevent deviation from the data distribution [ 21, 8, 22, 46, 16]. While these algorithms perform well
+in the purely ofﬂine settings, we show in Section 3.3 that such methods tend to be overly conservative,
+and therefore may not learn efﬁciently when ﬁne-tuning with online data collection. In contrast, our
+algorithm Advantage Weighted Actor Critic is comparable to these algorithms for ofﬂine pre-training,
+but learns much more efﬁciently during subsequent ﬁne-tuning.
+Prior work has also considered the special case of learning from demonstration data. One class of
+algorithms initializes the policy via behavioral cloning from demonstrations, and then ﬁne-tunes
+with reinforcement learning [ 33, 15, 40, 18, 35, 10, 50]. Most such methods use on-policy ﬁne-
+tuning, which is less sample-efﬁcient than off-policy methods that perform value function estimation.
+6
+
+===== PAGE 7 =====
+Success Rate
+0K 200K 400K 600K 800K
+Timesteps
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0 pen-binary-v0
+0K 200K 400K 600K 800K
+Timesteps
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0 door-binary-v0
+0M 1M 2M 3M 4M
+Timesteps
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0 relocate-binary-v0
+AWAC (Ours) ABM [38] AWR [30] BEAR [21] BRAC [46] DAPG [35] SACfD [43] SAC+BC [28]
+Figure 3: Comparative evaluation on the dexterous manipulation tasks. These tasks are difﬁcult due to their
+high action dimensionality and reward sparsity. We see that AW AC is able to learn these tasks with little online
+data collection required (100K samples≈ 16 minutes of equivalent real-world interaction time). Meanwhile,
+most prior methods are not able to solve the harder two tasks: door opening and object relocation. AWR and
+DAPG exhibit slow improvement even in the pen rotation task. SACfD and SAC+BC train poorly ofﬂine, which
+results in slow or no online learning. BEAR and BRAC are competitive with AWAC ofﬂine, but struggle to
+improve online. ABM is the only prior method that makes online progress on door opening, but is slower and
+less stable than AW AC. Videos of these results are available at awacrl.github.io
+Other prior works have incorporated demonstration data into the replay buffer using off-policy RL
+methods [43, 27]. We show in Section 3.2 that these strategies can result in a large dip in performance
+during online ﬁne-tuning, due to the inability to pre-train an effective value function from ofﬂine data.
+In contrast, our work shows that using supervised learning style policy updates can allow for better
+bootstrapping from demonstrations as compared to Veˇcerík et al. [43] and Nair et al. [27].
+Our method builds on algorithms that implement a maximum likelihood objective for the actor, based
+on an expectation-maximization formulation of RL [ 31, 29, 40, 34, 30, 1]. Most closely related
+to our method in this respect are the algorithms proposed by Peng et al. [30] (AWR) and Siegel
+et al. [38] (ABM). Unlike AWR, which estimates the value function of the behavior policy,Vπβ
+via Monte-Carlo estimation or TD−λ, our algorithm estimates the Q-function of the current policy
+Qπ via bootstrapping, enabling much more efﬁcient learning, as shown in our experiments. Unlike
+ABM, our method does not require learning a separate function approximator to model the behavior
+policyπβ, and instead directly samples the dataset. As we discussed in Section 3.3, modeling πβ
+can be a major challenge for online ﬁne-tuning. While these distinctions may seem somewhat subtle,
+they are important and we show in our experiments that they result in a large difference in algorithm
+performance. Finally, our work goes beyond the analysis in prior work, by studying the issues
+associated with pre-training and ﬁne-tuning in Section 3.
+6 Experimental Evaluation
+In our experiments, we ﬁrst compare our method against prior methods in the ofﬂine training and
+ﬁne-tuning setting. We show that we can learn difﬁcult, high-dimensional, sparse reward dexterous
+manipulation problems from human demonstrations and off-policy data. We then evaluate our method
+with suboptimal prior data generated by a random controller. Finally, we study why prior methods
+struggle in this setting by analyzing their performance on benchmark MuJoCo tasks, and conduct
+further experiments to understand where the difﬁculty lies (also shown in Section 3). Videos and
+further experimental details can also be found at awacrl.github.io
+6.1) Comparative Evaluation on Dexterous Manipulation Tasks. We aim to study tasks represen-
+tative of the difﬁculties of real-world robot learning, where ofﬂine learning and online ﬁne-tuning are
+most relevant. One such setting is the suite of dexterous manipulation tasks proposed by Rajeswaran
+et al. [35]. These tasks involve complex manipulation skills using a 28-DoF ﬁve-ﬁngered hand in the
+MuJoCo simulator [42] shown in Figure 3: in-hand rotation of a pen, opening a door by unlatching
+the handle, and picking up a sphere and relocating it to a target location. These environments
+exhibit many challenges: high dimensional action spaces, complex manipulation physics with many
+intermittent contacts, and randomized hand and object positions. The reward functions in these
+7
+
+===== PAGE 8 =====
+Average Return
+0K 100K 200K 300K 400K 500K
+Timesteps
+0
+2000
+4000
+6000
+8000
+10000 HalfCheetah-v2
+0K 100K 200K 300K 400K 500K
+Timesteps
+2000
+0
+2000
+4000
+6000 Ant-v2
+0K 100K 200K 300K 400K 500K
+Timesteps
+0
+2000
+4000
+Walker2d-v2
+AWAC (Ours) ABM [38] AWR [30] BEAR [21] BRAC [46] DAPG [35] SACfD [43] SAC+BC [28]
+Figure 5: Comparison of our method and prior methods on standard MuJoCo benchmark tasks. Many prior
+methods also solve these tasks, but AWAC is the only method that consistently ﬁne-tunes to expert-level
+performance. On-policy ﬁne-tuning methods (AWR and DAPG) exhibit slow improvement. SACfD and
+SAC+BC do not train well ofﬂine, but are able to learn onine quickly. But note that SAC+BC uses privileged
+information (the subset of the prior dataset that is expert demonstrations is labelled), and is still slower to learn
+than AW AC. BEAR shows strong ofﬂine performance but poor ﬁne-tuning. BRAC performs similarly to SACfD.
+ABM is competitive with AW AC in Ant-v2 but inconsistent in the other two environments.
+environments are binary 0-1 rewards for task completion. 1 Rajeswaran et al. [35] provide 25 human
+demonstrations for each task, which are not fully optimal but do solve the task. Since this dataset is
+very small, we generated another 500 trajectories of interaction data by constructing a behavioral
+cloned policy, and then sampling from this policy.
+First, we compare our method on the dexterous manipulation tasks described earlier against prior
+methods for off-policy learning, ofﬂine learning, and bootstrapping from demonstrations. Speciﬁc
+implementation details are discussed in Appendix A.4. The results are shown in Fig. 3. Our method
+is able to leverage the prior data to quickly attain good performance, and the efﬁcient off-policy
+actor-critic component of our approach ﬁne-tunes much more quickly than demonstration augmented
+policy gradient (DAPG), the method proposed by Rajeswaran et al. [35]. For example, our method
+solves the pen task in 120K timesteps, the equivalent of just 20 minutes of online interaction. While
+the baseline comparisons and ablations are able to make some amount of progress on the pen task,
+alternative off-policy RL and ofﬂine RL algorithms are largely unable to solve the door and relocate
+task in the time-frame considered. We ﬁnd that the design decisions to use off-policy critic estimation
+allow AWAC to signiﬁcantly outperform AWR [30] while the implicit behavior modeling allows
+AW AC to signiﬁcantly outperform ABM [38], although ABM does make some progress. Rajeswaran
+et al. [35] show that DAPG can solve these tasks with more reward information, but this highlights
+the weakness of on-policy methods in sparse reward scenarios.
+0K 20K 40K 60K 80K 100K
+Timesteps
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Success Rate
+Learning From Random Data
+AWAC
+BEAR
+BRAC
+ABM
+SAC
+SAC+BC
+Figure 4: Comparison of
+ﬁne-tuning from an initial
+dataset of suboptimal data on
+a Sawyer robot pushing task.
+6.2) Fine-Tuning from Random Policy Data. An advantage of
+using off-policy RL for reinforcement learning is that we can also
+incorporate suboptimal data, rather than only demonstrations. In
+this experiment, we evaluate on a simulated tabletop pushing envi-
+ronment with a Sawyer robot (shown in Fig 3), described further
+in Appendix A.1. To study the potential to learn from suboptimal
+data, we use an off-policy dataset of 500 trajectories generated by
+a random process. The task is to push an object to a target location
+in a 40cm x 20cm goal space.
+The results are shown in Figure 4. We see that while many methods
+begin at the same initial performance, AW AC learns the fastest online
+and is actually able to make use of the ofﬂine dataset effectively as
+opposed to some methods which are completely unable to learn.
+6.3) Analysis on MuJoCo Benchmarks from Prior Data. Since
+the dexterous manipulation environments are challenging to solve,
+we provide a comparative evaluation on MuJoCo benchmark tasks for analysis. On these simpler
+problems, many prior methods are able to learn, but it allows us to understand more precisely which
+design decisioins are crucial. For each task, we collect 15 demonstration trajectories using a pre-
+1Rajeswaran et al. [35] use a combination of task completion factors as the sparse reward. For instance, in
+the door task, the sparse reward as a function of the door positiond wasr = 101d>1.35 + 81d>1.0 + 21d>1.2−
+0.1||d− 1.57||2. We only use the success measurer = 1d>1.4, which is substantially more difﬁcult.
+8
+
+===== PAGE 9 =====
+trained expert on each task, and 100 trajectories of off-policy data by rolling out a behavioral cloned
+policy trained on the demonstrations. The same data is made available to all methods. The results are
+presented in Figure 5. AW AC is consistently the best-performing method, but several other methods
+show reasonable performance. We summarize the results according to the challenges in Section 3.
+Data efﬁciency. The two methods that do not estimateQπ are DAPG [1] and AWR [30]. Across all
+three tasks, we see that these methods are somewhat worse ofﬂine than the best performing ofﬂine
+methods, and exhibit steady but slow improvement.
+Bootstrap error in ofﬂine off-policy learning. For SAC [11], across all three tasks, we see that the
+ofﬂine performance at epoch 0 is generally poor. Due to the data in the replay buffer, SAC with
+prior data does learn faster than from scratch, but AW AC is faster to solve the tasks in general. SAC
+with additional data in the replay buffer is similar to the approach proposed by Veˇcerík et al. [43].
+SAC+BC reproduces Nair et al. [28] but uses SAC instead of DDPG [ 24] as the underlying RL
+algorithm. We ﬁnd that these algorithms exhibit a characteristic dip at the start of learning.
+Conservative online learning. Finally, we consider conservative ofﬂine algorithms: ABM [ 38],
+BEAR [21], and BRAC [46]. We found that BRAC performs similarly to SAC for working hyperpa-
+rameters. BEAR trains well ofﬂine - on Ant and Walker2d, BEAR signiﬁcantly outperforms prior
+methods before online experience. However, online improvement is slow for BEAR and the ﬁnal
+performance across all three tasks is much lower than AWAC. The closest in performance to our
+method is ABM, which is comparable on Ant-v2, but much slower on other domains.
+7 Discussion and Future Work
+We have discussed the challenges existing RL methods face when ﬁne-tuning from prior datasets,
+and proposed an algorithm, AW AC, that is effective in this setting. The key insight in AW AC is that
+enforcing a policy update constraint implicitly on actor-critic methods results in a stable learning
+algorithm amenable for off-policy learning. With an informative action-value estimate, the policy
+is weighted towards high-advantage actions in the data, resulting in policy improvement without
+conservative updates. A direction of future work we plan to pursue is applying AWAC to solve
+difﬁcult robotic tasks in the real world. More than just speeding up individual runs, incorporating
+prior data into the learning process enables continuously accumulating data by saving environment
+interactions of the robot - for instance, runs of RL with varying hyperparameters. We hope that this
+enables a wider array of robotic applications than previously possible.
+8 Acknowledgements
+This research was supported by the Ofﬁce of Naval Research, the National Science Foundation
+through IIS-1700696 and IIS-1651843, and ARL DCIST CRA W911NF-17-2-0181. We would like
+to thank Aviral Kumar, Ignasi Clavera, Karol Hausman, Oleh Rybkin, Michael Chang, Corey Lynch,
+Kamyar Ghasemipour, Alex Irpan, Vitchyr Pong, Graham Hughes, and many others at UC Berkeley
+RAIL Lab and Robotics at Google for their valuable feedback on the paper and insightful discussions.
+9
+
+===== PAGE 10 =====
+References
+[1] Abdolmaleki, A., Springenberg, J. T., Tassa, Y ., Munos, R., Heess, N., and Riedmiller, M. Maximum
+a Posteriori Policy Optimisation. In International Conference on Learning Representations (ICLR), pp.
+1–19, 2018.
+[2] Atkeson, C. G. and Schaal, S. Robot Learning From Demonstration. In International Conference on
+Machine Learning (ICML), 1997.
+[3] Balduzzi, D. and Ghifary, M. Compatible value gradients for reinforcement learning of continuous deep
+policies. CoRR, abs/1509.03005, 2015.
+[4] Bhatnagar, S., Sutton, R. S., Ghavamzadeh, M., and Lee, M. Natural actor-critic algorithms. Autom., 45
+(11):2471–2482, 2009. doi: 10.1016/j.automatica.2009.07.008.
+[5] Degris, T., White, M., and Sutton, R. S. Off-Policy Actor-Critic. In International Conference on Machine
+Learning (ICML), may 2012.
+[6] Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. BERT: Pre-training of Deep Bidirectional Trans-
+formers for Language Understanding. In Association for Compuational Linguistics (ACL), oct 2019.
+[7] Fujimoto, S., van Hoof, H., and Meger, D. Addressing Function Approximation Error in Actor-Critic
+Methods. International Conference on Machine Learning (ICML), 2018.
+[8] Fujimoto, S., Meger, D., and Precup, D. Off-Policy Deep Reinforcement Learning without Exploration. In
+International Conference on Machine Learning (ICML), dec 2019.
+[9] Gao, Y ., Xu, H., Lin, J., Yu, F., Levine, S., and Darrell, T. Reinforcement learning from imperfect
+demonstrations. CoRR, abs/1802.05313, 2018.
+[10] Gupta, A., Kumar, V ., Lynch, C., Levine, S., and Hausman, K. Relay Policy Learning: Solving Long-
+Horizon Tasks via Imitation and Reinforcement Learning. In Conference on Robot Learning (CoRL), oct
+2019.
+[11] Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. Soft Actor-Critic: Off-Policy Maximum Entropy Deep
+Reinforcement Learning with a Stochastic Actor. In International Conference on Machine Learning, 2018.
+[12] Hallak, A. and Mannor, S. Consistent On-Line Off-Policy Evaluation. In International Conference on
+Machine Learning (ICML), 2017.
+[13] Hallak, A., Schnitzler, F., Mann, T., and Mannor, S. Off-policy Model-based Learning under Unknown
+Factored Dynamics. In International Conference on Machine Learning (ICML), 2015.
+[14] Hallak, A., Tamar, A., Munos, R., and Mannor, S. Generalized Emphatic Temporal Difference Learning:
+Bias-Variance Analysis. In Association for the Advancement of Artiﬁcial Intelligence (AAAI), 2016.
+[15] Ijspeert, A. J., Nakanishi, J., and Schaal, S. Learning Attractor Landscapes for Learning Motor Primitives.
+In Advances in Neural Information Processing Systems (NIPS), pp. 1547–1554, 2002. ISBN 1049-5258.
+[16] Jaques, N., Ghandeharioun, A., Shen, J. H., Ferguson, C., Lapedriza, À., Jones, N., Gu, S., and Picard,
+R. W. Way off-policy batch deep reinforcement learning of implicit human preferences in dialog. CoRR,
+abs/1907.00456, 2019.
+[17] Jiang, N. and Li, L. Doubly Robust Off-policy Value Evaluation for Reinforcement Learning. In
+International Conference on Machine Learning (ICML), 2016.
+[18] Kim, B., Farahmand, A.-M., Pineau, J., and Precup, D. Learning from Limited Demonstrations. In
+Advances in Neural Information Processing Systems (NIPS), 2013.
+[19] Konda, V . R. and Tsitsiklis, J. N. Actor-Critic Algorithms. InAdvances in Neural Information Processing
+Systems (NeurIPS), 2000.
+[20] Krizhevsky, A., Sutskever, I., and Hinton, G. E. Imagenet classiﬁcation with deep convolutional neural
+networks. In Advances in Neural Information Processing Systems (NIPS), pp. 1097–1105, 2012.
+[21] Kumar, A., Fu, J., Tucker, G., and Levine, S. Stabilizing Off-Policy Q-Learning via Bootstrapping Error
+Reduction. In Neural Information Processing Systems (NeurIPS), jun 2019.
+10
+
+===== PAGE 11 =====
+[22] Lange, S., Gabel, T., and Riedmiller, M. A. Batch reinforcement learning. In Wiering, M. and van Otterlo,
+M. (eds.), Reinforcement Learning, volume 12 of Adaptation, Learning, and Optimization , pp. 45–73.
+Springer, 2012. doi: 10.1007/978-3-642-27645-3\_2.
+[23] Levine, S., Kumar, A., Tucker, G., and Fu, J. Ofﬂine Reinforcement Learning: Tutorial, Review, and
+Perspectives on Open Problems. Technical report, 2020.
+[24] Lillicrap, T. P., Hunt, J. J., Pritzel, A., Heess, N., Erez, T., Tassa, Y ., Silver, D., and Wierstra, D. Continuous
+control with deep reinforcement learning. InInternational Conference on Learning Representations (ICLR),
+2016. ISBN 0-7803-3213-X. doi: 10.1613/jair.301.
+[25] Mnih, V ., Puigdomènech Badia, A., Mirza, M., Graves, A., Harley, T., Lillicrap, T. P., Silver, D.,
+Kavukcuoglu, K., Com, K., and Deepmind, G. Asynchronous Methods for Deep Reinforcement Learning.
+In International Conference on Machine Learning (ICML), 2016.
+[26] Nachum, O., Chow, Y ., Dai, B., and Li, L. DualDICE: Behavior-Agnostic Estimation of Discounted
+Stationary Distribution Corrections. In Advances in Neural Information Processing Systems (NeurIPS),
+jun 2019.
+[27] Nair, A., Chen, D., Agrawal, P., Isola, P., Abbeel, P., Malik, J., Levine, S., Chen, D., Isola, P., Abbeel,
+P., Malik, J., and Levine, S. Combining Self-Supervised Learning and Imitation for Vision-Based Rope
+Manipulation. In IEEE International Conference on Robotics and Automation (ICRA) , 2017. ISBN
+9781509046331. doi: 10.1109/ICRA.2017.7989247.
+[28] Nair, A., Mcgrew, B., Andrychowicz, M., Zaremba, W., and Abbeel, P. Overcoming Exploration in
+Reinforcement Learning with Demonstrations. In IEEE International Conference on Robotics and
+Automation (ICRA), 2018.
+[29] Neumann, G. and Peters, J. Fitted Q-iteration by Advantage Weighted Regression. In Advances in Neural
+Information Processing Systems (NeurIPS), 2008.
+[30] Peng, X. B., Kumar, A., Zhang, G., and Levine, S. Advantage-Weighted Regression: Simple and Scalable
+Off-Policy Reinforcement Learning. sep 2019.
+[31] Peters, J. and Schaal, S. Reinforcement Learning by Reward-weighted Regression for Operational Space
+Control. In International Conference on Machine Learning, 2007.
+[32] Peters, J. and Schaal, S. Natural actor-critic. Neurocomputing, 71(7-9):1180–1190, 2008. doi: 10.1016/j.
+neucom.2007.11.026.
+[33] Peters, J. and Schaal, S. Reinforcement learning of motor skills with policy gradients. Neural Networks,
+21(4):682–697, 2008. ISSN 08936080. doi: 10.1016/j.neunet.2008.02.003.
+[34] Peters, J., Mülling, K., and Altün, Y . Relative Entropy Policy Search. InAAAI Conference on Artiﬁcial
+Intelligence, pp. 1607–1612, 2010.
+[35] Rajeswaran, A., Kumar, V ., Gupta, A., Schulman, J., Todorov, E., and Levine, S. Learning Complex
+Dexterous Manipulation with Deep Reinforcement Learning and Demonstrations. In Robotics: Science
+and Systems, 2018.
+[36] Ramapuram, J., Gregorova, M., and Kalousis, A. Lifelong Generative Modeling. Neurocomputing, may
+2017.
+[37] Schaal, S. Learning from demonstration. In Advances in Neural Information Processing Systems (NeurIPS),
+number 9, pp. 1040–1046, 1997. ISBN 1558604863. doi: 10.1016/j.robot.2004.03.001.
+[38] Siegel, N. Y ., Springenberg, J. T., Berkenkamp, F., Abdolmaleki, A., Neunert, M., Lampe, T., Hafner,
+R., Heess, N., and Riedmiller, M. Keep doing what worked: Behavioral modelling priors for ofﬂine
+reinforcement learning, 2020.
+[39] Sutton, R. S. and Barto, A. G. Reinforcement Learning: An Introduction. 1998.
+[40] Theodorou, E. A., Buchli, J., Org, J., Schaal, S., and Edu, S. A Generalized Path Integral Control Approach
+to Reinforcement Learning. Journal of Machine Learning Research (JMLR), 11:3137–3181, 2010.
+[41] Thomas, P. S. and Brunskill, E. Data-efﬁcient off-policy policy evaluation for reinforcement learning. In
+Balcan, M. and Weinberger, K. Q. (eds.),Proceedings of the 33nd International Conference on Machine
+Learning, ICML 2016, New York City, NY, USA, June 19-24, 2016, volume 48 of JMLR Workshop and
+Conference Proceedings, pp. 2139–2148. JMLR.org, 2016.
+11
+
+===== PAGE 12 =====
+[42] Todorov, E., Erez, T., and Tassa, Y . MuJoCo: A physics engine for model-based control. In IEEE/RSJ
+International Conference on Intelligent Robots and Systems (IROS) , pp. 5026–5033, 2012. ISBN
+9781467317375. doi: 10.1109/IROS.2012.6386109.
+[43] Veˇcerík, M., Hester, T., Scholz, J., Wang, F., Pietquin, O., Piot, B., Heess, N., Rothörl, T., Lampe, T., and
+Riedmiller, M. Leveraging Demonstrations for Deep Reinforcement Learning on Robotics Problems with
+Sparse Rewards. CoRR, abs/1707.0, 2017.
+[44] Wawrzynski, P. Real-time reinforcement learning by sequential actor-critics and experience replay. Neural
+Networks, 22(10):1484–1497, 2009. doi: 10.1016/j.neunet.2009.05.011.
+[45] Williams, R. J. Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement
+Learning. Machine Learning, pp. 229–256, 1992.
+[46] Wu, Y ., Tucker, G., and Nachum, O. Behavior Regularized Ofﬂine Reinforcement Learning. InInterna-
+tional Conference on Learning Representations (ICLR), nov 2020.
+[47] Zhang, R., Dai, B., Li, L., and Schuurmans, D. GenDICE: Generalized Ofﬂine Estimation of Stationary
+Values. In International Conference on Learning Representations (ICLR), feb 2020.
+[48] Zhang, S., Boehmer, W., and Whiteson, S. Generalized off-policy actor-critic. In Wallach, H., Larochelle,
+H., Beygelzimer, A., dÁlché-Buc, F., Fox, E., and Garnett, R. (eds.), Advances in Neural Information
+Processing Systems 32, pp. 2001–2011. Curran Associates, Inc., 2019.
+[49] Zhou, A., Jang, E., Kappler, D., Herzog, A., Khansari, M., Wohlhart, P., Bai, Y ., Kalakrishnan, M., Levine,
+S., and Finn, C. Watch, try, learn: Meta-learning from demonstrations and reward. CoRR, abs/1906.03352,
+2019.
+[50] Zhu, H., Gupta, A., Rajeswaran, A., Levine, S., and Kumar, V . Dexterous Manipulation with Deep Rein-
+forcement Learning: Efﬁcient, General, and Low-Cost. In Proceedings - IEEE International Conference
+on Robotics and Automation, volume 2019-May, pp. 3651–3657. Institute of Electrical and Electronics
+Engineers Inc., oct 2019.
+12
+
+===== PAGE 13 =====
+A Appendix
+A.1 Environment-Speciﬁc Details
+We evaluate our method on three domains: dexterous manipulation environments, Sawyer manipu-
+lation environments, and MuJoCo benchmark environments. In the following sections we describe
+speciﬁc details.
+A.1.1 Dexterous Manipulation Environments
+These environments are modiﬁed from those proposed by by Rajeswaran et al.[35], and available in
+this repository.
+pen-binary-v0. The task is to spin a pen into a given orientation. The action dimension is 24 and
+the observation dimension is 45. Let the position and orientation of the pen be denoted by xp and
+xo respectively, and the desired position and orientation be denoted bydp anddo respectively. The
+reward function isr = 1|xp−dp|≤0.0751|xo·do|≤0.95 - 1. In Rajeswaran et al. [35], the episode was
+terminated when the pen fell out of the hand; we did not include this early termination condition.
+door-binary-v0. The task is to open a door, which requires ﬁrst twisting a latch. The action
+dimension is 28 and the observation dimension is 39. Letd denote the angle of the door. The reward
+function isr = 1d>1.4 - 1.
+relocate-binary-v0. The task is to relocate an object to a goal location. The action dimension is
+30 and the observation dimension is 39. Letxp denote the object position anddp denote the desired
+position. The reward isr = 1|xp−dp|≤0.1 - 1.
+A.1.2 Sawyer Manipulation Environment
+SawyerPush-v0. This environment is included in the Multiworld library. The task is to push a
+puck to a goal position in a 40cm x 20cm, and the reward function is the negative distance between
+the puck and goal position. When using this environment, we use hindsight experience replay for
+goal-conditioned reinforcement learning. The random dataset for prior data was collected by rolling
+out an Ornstein-Uhlenbeck process withθ = 0.15 andσ = 0.3.
+A.2 Algorithm Derivation Details
+The full optimization problem we solve, given the previous off-policy advantage estimateAπk and
+buffer distributionπβ is:
+πk+1 = arg max
+π∈Π
+Ea∼π(·|s)[Aπk (s, a)] (11)
+s.t.DKL(π(·|s)||πβ(·|s)) ≤ϵ (12)∫
+a
+π(a|s)da = 1. (13)
+Our derivation follows Peters et al.[34] and Peng et al. [30]. The analytic solution for the constrained
+optimization problem above can be obtained by enforcing the KKT conditions. The Lagrangian is:
+L(π,λ,α ) = Ea∼π(·|s)[Aπk (s, a)] +λ(ϵ −DKL(π(·|s)||πβ(·|s))) +α(1 −
+∫
+a
+π(a|s)da). (14)
+Differentiating with respect toπ gives:
+∂L
+∂π =Aπk (s, a) −λ logπβ(a|s) +λ logπ(a|s) +λ −α. (15)
+Setting ∂L
+∂π to zero and solving forπ gives the closed form solution to this problem:
+π∗(a|s) = 1
+Z(s)πβ(a|s) exp
+(1
+λAπk (s, a)
+)
+, (16)
+13
+
+===== PAGE 14 =====
+Next, we project the solution into the space of parametric policies. For a policyπθ with parametersθ,
+this can be done by minimizing the KL divergence ofπθ from the optimal non-parametric solution
+π∗ under the data distributionρπβ (s):
+arg min
+θ
+E
+ρπβ (s)
+[DKL(π∗(·|s)||πθ(·|s))] = arg min
+θ
+E
+ρπβ (s)
+[
+E
+π∗(·|s)
+[− logπθ(·|s)]
+]
+(17)
+Note that in the projection step, the parametric policy could be projected with either direction of KL
+divergence. However, choosing the reverse KL direction has a key advantage: it allows us to optimize
+θ as a maximum likelihood problem with an expectation over datas,a ∼β, rather than sampling
+actions from the policy that may be out of distribution for the Q function. In our experiments we
+show that this decision is vital for stable off-policy learning.
+Furthermore, assume discrete policies with a minimum probably density ofπθ ≥αθ. Then the upper
+bound:
+DKL(π∗||πθ) ≤ 2
+αθ
+DTV(π∗,πθ)2 (18)
+≤ 1
+αθ
+DKL(πθ||π∗) (19)
+holds by the Pinsker’s inequality, whereDTV denotes the total variation distance between distributions.
+Thus minimizing the reverse KL also bounds the forward KL. Note that we can control the minimum
+α if desired by applying Laplace smoothing to the policy.
+A.3 Implementation Details
+We implement the algorithm building on top of twin delayed deep deterministic policy gradient (TD3)
+from [7]. The base hyperparameters are given in table 1.
+The policy update is replaced with:
+θk+1 = arg max
+θ
+E
+s,a∼β
+[
+logπθ(a|s) 1
+Z(s) exp
+(1
+λAπk (s, a)
+)]
+. (20)
+We found that explicitly computingZ(s) =
+∫
+aπβ(a|s) exp( 1
+λAπk (s, a))da results in worse perfor-
+mance, so we ignore the effect ofZ(s) and empirically ﬁnd that this results in strong performance
+both ofﬂine and online.
+The Lagrange multiplierλ is a hyperparameter. In this work we useλ = 0.3 for the manipulation
+environments andλ = 1.0 for the MuJoCo benchmark environments. One could adaptively learnλ
+with a dual gradient descent procedure, but this would require access toπβ.
+As rewards for the dextrous manipulation environments are non-positive, we clamp the Q value for
+these experiments to be at most zero. We ﬁnd this stabilizes training slightly.
+A.4 Baseline Implementation Details
+We used public implementations of prior methods (DAPG, AWR) when available. We implemented
+the remaining algorithms in our framework, which also allows us to understand the effects of changing
+individual components of the method. In the section, we describe the implementation details. The
+full overview of algorithms is given in Figure 6.
+Behavior Cloning (BC). This method learns a policy with supervised learning on demonstration
+data.
+Soft Actor Critic (SAC). Using the soft actor critic algorithm from [11], we follow the exact same
+procedure as our method in order to incorporate prior data, initializing the policy with behavior
+cloning on demonstrations and adding all prior data to the replay buffer.
+Behavior Regularized Actor Critic (BRAC). We implement BRAC as described in [46] by adding
+policy regularization log(πβ(a|s)) whereπβ is a behavior policy trained with supervised learning on
+the replay buffer. We add all prior data to the replay buffer before online training.
+Advantage Weighted Regression (A WR).Using the advantage weighted regression algorithm from
+[30], we add all prior data to the replay buffer before online training. We use the implementation
+14
+
+===== PAGE 15 =====
+Hyper-parameter Value
+Training Batches Per Timestep 1
+Exploration Noise None (stochastic policy)
+RL Batch Size 1024
+Discount Factor 0.99
+Reward Scaling 1
+Replay Buffer Size 1000000
+Number of pretraining steps 25000
+Policy Hidden Sizes [256, 256, 256, 256]
+Policy Hidden Activation ReLU
+Policy Weight Decay 10−4
+Policy Learning Rate 3 × 10−4
+Q Hidden Sizes [256, 256, 256, 256]
+Q Hidden Activation ReLU
+Q Weight Decay 0
+Q Learning Rate 3 × 10−4
+Target Networkτ 5 × 10−3
+Table 1: Hyper-parameters used for RL experiments.
+Name ˆQ Policy Objective ˆπβ? Constraint
+SAC Qπ DKL(πθ|| ¯Q) No None
+SAC + BC Qπ Mixed No None
+BCQ Qπ DKL(πθ|| ¯Q) Yes Support (ℓ∞)
+BEAR Qπ DKL(πθ|| ¯Q) Yes Support (MMD)
+AWR Qβ DKL( ¯Q||πθ) No Implicit
+MPO Qπ DKL( ¯Q||πθ) Yes∗ Prior
+ABM-MPO Qπ DKL( ¯Q||πθ) Yes Learned Prior
+DAPG - J(πθ) No None
+BRAC Qπ DKL(πθ|| ¯Q) Yes Explicit KL penalty
+AW AC (Ours) Qπ DKL( ¯Q||πθ) No Implicit
+Figure 6: Comparison of prior algorithms that can incorporate prior datasets. See section A.4 for
+speciﬁc implementation details.
+provided by Peng et al. [30], with the key difference from our method being that AWR uses TD(λ)
+on the replay buffer for policy evaluation.
+Maximum a Posteriori Policy Optimization (MPO). We evaluate the MPO algorithm presented
+by Abdolmaleki et al.[1]. Due to a public implementation being unavailable, we modify our algorithm
+to be as close to MPO as possible. In particular, we change the policy update in Advantage Weighted
+Actor Critic to be:
+θi ← −arg max
+θi
+Es∼D,a∼π(a|s)
+[
+logπθi (a|s) exp( 1
+βQπβ (s,a ))
+]
+. (21)
+15
+
+===== PAGE 16 =====
+Note that in MPO, actions for the update are sampled from the policy and the Q-function is used
+instead of advantage for weights. We failed to see ofﬂine or online improvement with this implemen-
+tation in most environments, so we omit this comparison in favor of ABM.
+Advantage-Weighted Behavior Model (ABM).We evaluate ABM, the method developed in Siegel
+et al. [38]. As with MPO, we modify our method to implement ABM, as there is no public implemen-
+tation of the method. ABM ﬁrst trains an advantage modelπθabm(a|s):
+θabm = arg max
+θi
+Eτ∼D
+
+
+|τ|∑
+t=1
+logπθabm(at|st)f (R(τt:N ) − ˆV (s))
+
+. (22)
+wheref is an increasing non-negative function, chosen to be f = 1 +. In place of an advantage
+computed by empirical returnsR(τt:N )− ˆV (s) we use the advantage estimate computed per transition
+by theQ valueQ(s,a ) −V (s). This is favorable for running ABM online, as computingR(τt:N ) −
+ˆV (s) is similar to AWR, which shows slow online improvement. We then use the policy update:
+θi ← −arg max
+θi
+Es∼D,a∼πabm(a|s)
+[
+logπθi (a|s) exp
+(1
+λ (Qπi (s,a ) −Vπi (s))
+)]
+. (23)
+Additionally, for this method, actions for the update are sampled from a behavior policy trained to
+match the replay buffer and the value function is computed asVπ(s) = Qπ(s,a ) s.t.a ∼π.
+Demonstration Augmented Policy Gradient (DAPG). We directly utilize the code provided in
+[35] to compare against our method. Since DAPG is an on-policy method, we only provide the
+demonstration data to the DAPG code to bootstrap the initial policy from.
+Bootstrapping Error Accumulation Reduction (BEAR). We utilize the implementation of BEAR
+provided in rlkit. We provide the demonstration and off-policy data to the method together. Since the
+original method only involved training ofﬂine, we modify the algorithm to include an online training
+phase. In general we found that the MMD constraint in the method was too conservative. As a result,
+in order to obtain the results displayed in our paper, we swept the MMD threshold value and chose
+the one with the best ﬁnal performance after ofﬂine training with ofﬂine ﬁne-tuning.
+16
