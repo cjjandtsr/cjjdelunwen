@@ -1,0 +1,145 @@
+{
+  "schema": "a4_network_spec_v1",
+  "generated": "2026-10-26",
+  "purpose": "论文 3.2/3.3 节与表2、图2 所需的网络结构与参数量；全部数值由生产加载路径实测，不取自文档",
+  "source": {
+    "checkpoint": "data/outputs/2026.08.16/08.53.26_e5_lambda0p5/checkpoints/latest.ckpt",
+    "checkpoint_sha256": "c1fca4ac2735928b18fa7a9c069f90ad181eb84092acee379b073dc6a61bfc9a",
+    "checkpoint_sha256_matches_registered_constant": true,
+    "registered_constant_ref": "diffusion_policy_3d/rl/dppo_uav/policy_loader.py:56 (REGISTERED_BC_CHECKPOINT_HASH)",
+    "repo_root": "/home/cjj/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy",
+    "git_head": "26eebd2",
+    "config_source": "checkpoint['cfg']（训练时解析后的 Hydra 配置，随 ckpt 保存）",
+    "loader_used": "diffusion_policy_3d/rl/dppo_uav_rebuild/bc_runtime/native_loader.py:138 load_native_e5",
+    "lora_installer_used": "diffusion_policy_3d/rl/dppo_uav_rebuild/actor_ddpm/lora.py:175 install_lora"
+  },
+
+  "input_and_conditioning": {
+    "point_cloud": {"stored_shape": [4096, 6], "used_channels": 3, "note": "第4-6通道为颜色，use_pc_color=false，网络前向只用XYZ", "ref": "ckpt cfg.policy.shape_meta / use_pc_color"},
+    "state": {"shape": [9], "ref": "ckpt cfg.policy.shape_meta.obs.agent_pos"},
+    "action": {"shape": [11], "ref": "ckpt cfg.policy.shape_meta.action"},
+    "history_frames": 3,
+    "point_feature_dim": 128,
+    "state_feature_dim": 64,
+    "frame_feature_dim": 192,
+    "condition_dim": 576,
+    "condition_dim_formula": "3 frames x (128 point + 64 state) = 576"
+  },
+
+  "pointnet": {
+    "type": "multi_stage_pointnet",
+    "class": "MultiStagePointNetEncoder",
+    "ref": "diffusion_policy_3d/model/vision_3d/multi_stage_pointnet.py:20-42",
+    "stem": "Conv1d(3->128, k=1) + LeakyReLU(slope 0)",
+    "stages": 4,
+    "stage_op": "Conv1d(128->128, k=1) -> LeakyReLU -> 逐阶段全局 max-pool(点数维) -> 与逐点特征拼接(256) -> Conv1d(256->128, k=1) -> LeakyReLU",
+    "stage_feature_concat": "4 x 128 = 512",
+    "head": "Conv1d(512->128, k=1) 后对点数维做 max-pool -> 128 维全局特征",
+    "pooling": "max-pool（逐阶段一次 + 输出一次）；无平均池化，无 FPS/最远点采样",
+    "params": 263808
+  },
+
+  "state_encoder": {
+    "mlp_sizes": [64, 64],
+    "layer_shape": "Linear(9->64) + ReLU + Linear(64->64) + ReLU",
+    "ref": "diffusion_policy_3d/model/vision_3d/pointnet_extractor.py:85,138",
+    "params": 4800
+  },
+
+  "denoiser": {
+    "class": "ConditionalUnet1D",
+    "ref": "diffusion_policy_3d/model/diffusion/conditional_unet1d.py:149-249",
+    "input_dim": 11,
+    "horizon": 16,
+    "down_dims": [256, 512, 1024],
+    "kernel_size": 5,
+    "n_groups": 8,
+    "block_conv_stack": "Conv1d(k=5, groups=1) -> GroupNorm(8) -> Mish（每个 Conv1dBlock）",
+    "timestep_embedding": {
+      "dim": 128,
+      "layout": "SinusoidalPosEmb(128) -> Linear(128->512) -> Mish -> Linear(512->128)",
+      "ref": "conditional_unet1d.py:173-179",
+      "params": 131712
+    },
+    "condition_fusion": {
+      "type": "FiLM / film",
+      "global_vector": "concat(时间步嵌入 128, 条件向量 576) = 704",
+      "per_block_module": "Mish -> Linear(704 -> 2*C_out) -> reshape 为 (scale, bias)",
+      "applied_in": "所有残差块（down 6 + mid 2 + up 4 = 12 块）",
+      "flags": {"use_down_condition": true, "use_mid_condition": true, "use_up_condition": true},
+      "condition_type_in_ckpt": "film",
+      "note": "ckpt cfg.policy 未显式存 condition_type，取值由 policy_loader 默认 'film' 与 FiLM 层形状 (704->2C) 实测一致"
+    },
+    "topology": {
+      "down": "3 级 x 2 残差块：11->256（16步）、256->512（8步）、512->1024（4步）；第1、2级后接 Downsample1d(Conv1d k=3, stride=2)",
+      "mid": "2 个残差块，1024 通道，4 步",
+      "up": "2 级 x 2 残差块：cat(1024,1024)=2048->512，cat(512,512)=1024->256；每级后接 Upsample1d(ConvTranspose1d k=4, stride=2, padding=1)",
+      "final": "Conv1dBlock(256->256, k=5) + Conv1d(256->11, k=1)",
+      "asymmetry_fact": "down 存 3 个跳连 h=[256@16, 512@8, 1024@4]，up 只弹取后两个；256@16 的跳连在 forward 中未被使用（conditional_unet1d.py:299-345）",
+      "residual_block_count": 12
+    },
+    "params": {
+      "total": 71254667,
+      "down_modules": 30653440,
+      "mid_modules": 23871488,
+      "up_modules": 16266752,
+      "diffusion_step_encoder": 131712,
+      "final_conv": 331275
+    },
+    "module_inventory": {
+      "linear_layers": 14,
+      "conv1d_layers": 33,
+      "detail": "14 个 Linear = 12 个 FiLM cond_encoder (704->2C) + 时间步嵌入 2 个；33 个 Conv1d = 残差块内 24 个 k=5 卷积 + 5 个残差投影 k=1 (down 3 + up 2) + 2 个下采样 k=3/stride=2 + final_conv 2 个"
+    }
+  },
+
+  "diffusion_schedule": {
+    "train_timesteps": 50,
+    "inference_steps": 10,
+    "sampler": "DDIM",
+    "prediction_type": "sample (x0-prediction)",
+    "beta_schedule": "squaredcos_cap_v2",
+    "beta_start": 0.0001,
+    "beta_end": 0.02,
+    "clip_sample": true,
+    "set_alpha_to_one": true,
+    "ref": "ckpt cfg.policy.noise_scheduler / num_inference_steps"
+  },
+
+  "parameter_budget": {
+    "policy_total": 71523353,
+    "obs_encoder_total": 268608,
+    "denoiser_total": 71254667,
+    "normalizer": 78,
+    "value_critic_total": 214977,
+    "value_critic_layout": "LayerNorm(192) + 位置嵌入(3x192) + Linear(576->256) + SiLU + Linear(256->256) + SiLU + Linear(256->1) + history_weight(256)",
+    "value_critic_ref": "diffusion_policy_3d/rl/dppo_uav_rebuild/engine/value.py:13-39, build_system.py:73-77 (hidden_dim=256, history_scalar=True)",
+    "post_training_trainable": {
+      "lora_rank": 8,
+      "lora_alpha": 8.0,
+      "lora_scale_alpha_over_rank": 1.0,
+      "target_modules": 47,
+      "target_types": {"Linear": 14, "Conv1d": 33},
+      "trainable_tensors": 94,
+      "trainable_params": 1022568,
+      "split_by_type": {"linear_adapters": 192512, "conv1d_adapters": 830056},
+      "fraction_of_denoiser_pct": 1.4351,
+      "fraction_of_policy_pct": 1.4296,
+      "lora_identity_content_hash": "4f91a995cff7da0e7bc9a35d9654f3307f373ecea874f04afb9faad7af9b504f",
+      "identity_hash_cross_check": "与 scripts/routea_paired_support/policy_catalog_v1.json 的 common.lora_identity_hash 逐字符相同",
+      "rank_alpha_source": "diffusion_policy_3d/rl/dppo_uav_rebuild/config/train_e5_dppo_r1_s2_seed202609203_fresh384_v1.yaml (lora: rank 8, alpha 8.0)"
+    },
+    "lora_layout": {
+      "linear": "lora_a (r x in_features), lora_b (out_features x r)；y = Wx + b + (alpha/r) * x A B",
+      "conv1d": "lora_a (r x in_channels x k), lora_b (out_channels x r x 1)；卷积核与原层同形，步长/填充/膨胀沿用原层",
+      "ref": "diffusion_policy_3d/rl/dppo_uav_rebuild/actor_ddpm/lora.py:35-101"
+    }
+  },
+
+  "verification": {
+    "inventory_gate": "install_lora 内置断言 expected (14, 33)，实测 (14, 33)，与论文表1 一致",
+    "encoder_excluded": "观测编码器 2 Linear + 10 Conv1d 不插 LoRA，权重冻结（lora.py:21-25, install_lora 注释）",
+    "param_count_method": "sum(p.numel()) on the constructed policy，且在 install_lora 之前统计（插桩后 denoiser 会多出 1,022,568 个适配器参数，重算得 72,277,235）",
+    "checked_on": "本机 CPU（同一 state_dict 加载路径，与 GPU 前向无关）"
+  }
+}
