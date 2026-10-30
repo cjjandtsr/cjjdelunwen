@@ -153,7 +153,7 @@ def add_cyl(g, mat):
 
 def add_tube(points, radius, mat, name):
     cu = bpy.data.curves.new(name, "CURVE")
-    cu.dimensions = "3D"; cu.bevel_depth = radius; cu.bevel_resolution = 6
+    cu.dimensions = "3D"; cu.bevel_depth = radius; cu.bevel_resolution = 6; cu.use_fill_caps = True
     sp = cu.splines.new("POLY"); sp.points.add(len(points) - 1)
     for p, q in zip(sp.points, points):
         p.co = (q[0], q[1], q[2], 1)
@@ -186,10 +186,11 @@ def add_dashed(points, radius, mat, dash=0.10, gap=0.07):
         add_tube(s, radius, mat, f"dash{i}")
 
 
-def add_points(pts, radius, mat):
+def add_points(pts, radius, mat, zlim=None):
     me = bpy.data.meshes.new("pc"); me.from_pydata([tuple(p) for p in pts], [], [])
     z = pts[:, 2]
-    col = viridis(0.15 + 0.70 * (z - z.min()) / max(1e-6, z.max() - z.min()))
+    lo, hi = zlim if zlim else (z.min(), z.max())
+    col = viridis(0.15 + 0.70 * np.clip((z - lo) / max(1e-6, hi - lo), 0, 1))
     attr = me.color_attributes.new("col", "FLOAT_COLOR", "POINT")
     for i, c in enumerate(col):
         attr.data[i].color = tuple(srgb_to_lin(c)) + (1,)
