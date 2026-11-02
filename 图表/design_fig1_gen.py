@@ -240,7 +240,7 @@ for hh in heights:
     u.append(cube(x, base - hh - dpt, 9, hh, dpt, *BL)); pos_enc.append((x + 5, base - hh - dpt))
     u.append(cube(x + 13, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
     x += 17
-u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#C9D8EC", "#E3EBF6", "#A7BEDF", "#6F8BBA"))
+u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#C9D8EC", "#E3EBF6", "#A7BEDF", "#6F8BBA")); mid_c = x + 8
 x += 22
 for hh in reversed(heights):
     u.append(cube(x, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
@@ -251,12 +251,20 @@ for (xe, ye), (xd, yd) in zip(pos_enc, reversed(pos_dec)):
     ty = min(ye, yd) - 5
     u.append(f'<path d="M{xe} {ye} C {xe} {ty - 5}, {xd} {ty - 5}, {xd} {yd}" stroke="#8a8f98" stroke-width="0.7" stroke-dasharray="2 2" fill="none"/>')
 UW = x
-for tx in (UW * 0.2, UW * 0.34, UW * 0.66, UW * 0.8):
-    u.append(f'<path d="M{tx:.1f} 70 L{tx:.1f} 62" stroke="#7F9CC8" stroke-width="0.9" fill="none"/><path d="M{tx - 2:.1f} 64.5 L{tx:.1f} 61 L{tx + 2:.1f} 64.5 Z" fill="#8172B3"/>')
+# shared condition [c_t, k] feeds a FiLM node inside every residual block
+cxs = [xe - 0.5 for xe, _ in pos_enc] + [mid_c] + [xd - 0.5 for xd, _ in pos_dec]
+u.append(f'<path d="M{min(cxs):.1f} 67 L{max(cxs):.1f} 67" stroke="#6E8DBE" stroke-width="0.9" fill="none"/>')
+for cx in cxs:
+    cy = base - 5.5 if cx == mid_c else base - 4.5
+    bot = base - 2 if cx == mid_c else base
+    u.append(f'<path d="M{cx:.1f} 67 L{cx:.1f} {bot}" stroke="#6E8DBE" stroke-width="0.8" fill="none"/>'
+             f'<path d="M{cx:.1f} {bot} L{cx:.1f} {cy + 2.1}" stroke="#4F6FA3" stroke-width="0.8" fill="none"/>'
+             f'<circle cx="{cx:.1f}" cy="{cy}" r="2.1" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/>')
 ux = 524 + (180 - UW) / 2
 raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with LoRA layers and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
-bx(540, 149, 148, 14, "global cond. [" + i("c<sub>t</sub>") + ", " + i("k") + "] → per-block FiLM", ("#C9D8EC", "#6E8DBE"), fs=S)
+raw('<svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" style="position: absolute; left: 551px; top: 152px; width: 7px; height: 7px; overflow: visible"><circle cx="3.5" cy="3.5" r="2.6" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/></svg>')
+label(560, 150, 140, "FiLM in each residual block, from [" + i("c<sub>t</sub>") + ", " + i("k") + "]", fs=S, align="left", color="#2E4A73")
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
