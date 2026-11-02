@@ -244,7 +244,7 @@ for hh in reversed(hs):
 UW = xx + 2
 band(298, 40, 112, 66, "#FFFFFF", "#4C72B0", radius=4)
 raw(f'<svg width="{UW}" height="54" viewBox="0 0 {UW} 46" role="img" aria-label="Conditional 1D U-Net" style="position: absolute; left: {354 - UW / 2:.0f}px; top: 44px; width: {UW}px; height: 46px; overflow: visible">' + "".join(u) + '</svg>')
-label(298, 93, 112, "Conditional 1D U-Net" + lk, fs=S, bold=True)
+label(298, 93, 112, "U-Net" + lk + " + <span style=\"color: #B5774A\">LoRA</span>", fs=S, bold=True)
 # condition from c_t into the U-Net (bottom)
 seg(186, 93, 186, 116, color="#6E8DBE", head=False)
 seg(186, 116, 354, 116, color="#6E8DBE", head=False)
@@ -263,7 +263,7 @@ bx(578, 58, 50, 24, "De-<br>normalize", NEUT, fs=S)
 seg(629, 70, 637, 70, color="#5A6B85")
 # output
 band(638, 30, 66, 86, *OUTC, radius=5)
-label(638, 33, 66, "<b>Trajectory</b>", fs=S, color="#2E4A73")
+label(638, 33, 66, "<b>Action seq.</b>", fs=S, color="#2E4A73")
 dots = "".join(f'<circle cx="{4 + j * 4.6:.1f}" cy="{30 - 22 * (j / 11) + 8 * (j / 11) ** 2:.1f}" r="1.6" fill="#4F6FA3"/>' for j in range(12))
 raw(f'<svg width="58" height="34" viewBox="0 0 58 34" role="img" aria-label="Predicted trajectory" style="position: absolute; left: 642px; top: 48px; width: 58px; height: 34px; overflow: visible">'
     f'<path d="M4 30 Q 28 6 55 8" stroke="#4F6FA3" stroke-width="0.7" fill="none"/>{dots}</svg>')
@@ -359,16 +359,14 @@ seg(446, 177, 446, 174, color="#6E8DBE")
 dims(386, 166, 30, "576")
 concat_c(446, 168)
 seg(452, 168, 471, 168, color="#6E8DBE")
-dims(451, 157, 22, "704")
-bx(472, 159, 54, 18, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
-lmark(519, 165)
+bx(472, 159, 54, 18, "cond. 704", COND, fs=S)
 seg(527, 168, 612, 168, color="#6E8DBE", head=False, dash="3 2")
 seg(612, 168, 612, 185, color="#6E8DBE", dash="3 2")
-note(530, 157, 150, "broadcast to every residual block")
+note(530, 157, 160, "to every residual block (own FiLM encoder)")
 
 # U-Net container
 band(334, 186, 346, 76, "#FFFFFF", "#8EA7CF", radius=4, dashed=True)
-label(334, 188, 346, "<b>1D U-Net</b> (12 conditional residual blocks)", fs=S, color="#2E4A73")
+label(334, 188, 346, "<b>1D U-Net</b>: 6 stages × 2 conditional residual blocks", fs=S, color="#2E4A73")
 YC = 226
 L = {16: 44, 8: 32, 4: 22}
 G = 10
@@ -406,7 +404,8 @@ note(622, 249, 56, "skip (concat)")
 # ======================= (d) residual block with LoRA =======================
 band(308, 276, 402, 76, *PANEL, radius=8)
 ttl(308, 279, 402, "(d) Conditional Residual Block with LoRA")
-label(310, 304, 10, i("x"), fs=S)
+RY = 320  # main row centre
+label(310, RY - 8, 10, i("x"), fs=S)
 names = ["Conv1d", "GN", "Mish", "FiLM", "Conv1d", "GN", "Mish"]
 ws_ = [32, 20, 24, 26, 32, 20, 24]
 xs_ = []
@@ -414,23 +413,34 @@ xc = 330
 for ww in ws_:
     xs_.append(xc); xc += ww + 9
 for xx_, nm, ww in zip(xs_, names, ws_):
-    bx(xx_, 304, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
-    if nm in ("Conv1d", "FiLM"):
-        lmark(xx_ + ww - 3, 301)
+    bx(xx_, RY - 8, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
+    if nm == "Conv1d":
+        lmark(xx_ + ww - 3, RY - 11)
 for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
-    seg(xx_ + ww, 312, nx - 1, 312, color="#5A6B85", sw=1)
+    seg(xx_ + ww, RY, nx - 1, RY, color="#5A6B85", sw=1)
+# per-block condition encoder: 704 -> Mish -> Linear(704, 2C) -> (gamma, beta)
 fx = xs_[3] + 13
-seg(fx, 295, fx, 303, color="#6E8DBE")
+CYD = 300
+label(326, CYD - 5, 24, "cond.<br>704", fs="7px", color="#2E4A73", lh="1.0")
+seg(349, CYD, 356, CYD, color="#6E8DBE", sw=1)
+bx(357, CYD - 6, 24, 12, "Mish", FROZ, fs="7px")
+seg(382, CYD, 389, CYD, color="#6E8DBE", sw=1)
+bx(390, CYD - 6, 36, 12, "Linear&nbsp;&nbsp;", COND, fs="7px")
+lmark(419, CYD - 2.5)
+seg(427, CYD, fx, CYD, color="#6E8DBE", sw=1, head=False)
+seg(fx, CYD, fx, RY - 9, color="#6E8DBE", sw=1)
+note(fx + 3, CYD + 1, 24, i("γ") + ", " + i("β"))
 end = xs_[-1] + ws_[-1]
-seg(end, 312, end + 9, 312, color="#5A6B85")
-plus(end + 15, 312)
-seg(end + 20, 312, end + 28, 312, color="#5A6B85")
-label(end + 29, 306, 10, i("y"), fs=S, align="left")
-seg(320, 312, 329, 312, color="#5A6B85")
-seg(320, 312, 320, 328, color="#5A6B85", head=False)
-seg(320, 328, end + 15, 328, color="#5A6B85", head=False)
-seg(end + 15, 328, end + 15, 318, color="#5A6B85")
-note(332, 329, 100, "residual", align="left")
+seg(end, RY, end + 9, RY, color="#5A6B85")
+plus(end + 15, RY)
+seg(end + 20, RY, end + 28, RY, color="#5A6B85")
+label(end + 29, RY - 6, 10, i("y"), fs=S, align="left")
+seg(320, RY, 329, RY, color="#5A6B85")
+seg(320, RY, 320, 340, color="#5A6B85", head=False)
+seg(320, 340, end + 15, 340, color="#5A6B85", head=False)
+seg(end + 15, 340, end + 15, RY + 6, color="#5A6B85")
+bx(418, 334, 118, 12, "residual: Identity / 1×1 Conv1d&nbsp;&nbsp;&nbsp;", FROZ, fs="7px")
+lmark(528, 337.5)
 band(596, 296, 108, 52, "#FFFAF5", "#C98A5E", radius=4, dashed=True)
 label(600, 297, 100, "<b>LoRA</b> (trainable)", fs=S, color="#9A6A45", align="left")
 seg(600, 324, 604, 324, color="#5A6B85", head=False)
@@ -444,19 +454,19 @@ bx(639, 331, 15, 13, i("B"), LORA, fs=S)
 seg(651, 313, 658, 313, color="#5A6B85", head=False)
 seg(655, 337, 658, 337, color="#5A6B85", head=False)
 seg(658, 313, 658, 337, color="#5A6B85", head=False)
-note(662, 319, 42, i("W") + " = " + i("W") + "<sub>0</sub><br>+ " + i("BA"), align="left")
+note(661, 317, 48, i("y") + " = " + i("W") + "<sub>0</sub>" + i("x") + "<br>+ (" + i("α") + "/" + i("r") + ")" + i("BAx"), align="left")
 
 # zoom lines from (a) to (b), (c)
 seg(137, 118, 137, 131, color="#7A8496", sw=0.9, dash="3 2")
 seg(354, 121, 354, 131, color="#7A8496", sw=0.9, dash="3 2")
 
 # legend
-for (lx, kind, tx) in ((316, "lock", "frozen in post-training"), (430, LORA, "trainable LoRA"), (512, COND, "condition path"), (600, OUTC, "output")):
+for (lx, kind, tx) in ((316, "lock", "frozen in post-training"), (420, LORA, "LoRA target (denoiser Linear / Conv1d)"), (596, COND, "condition path"), (672, OUTC, "output")):
     if kind == "lock":
         lock(lx, 356)
     else:
         swatch(lx, 357, kind[0], kind[1])
-    label(lx + 10, 355, 100, tx, fs=S, align="left")
+    label(lx + 10, 355, 170, tx, fs=S, align="left")
 body = "\n".join(bands + arrows + cards + labels)
 html = f'''<!doctype html>
 <html lang="en">
