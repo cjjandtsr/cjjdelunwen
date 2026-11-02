@@ -235,38 +235,36 @@ OR = ("#F2C3A0", "#F8DCC7", "#E0A77E", "#C98A5E")
 u, base, dpt = [], 58, 4
 heights = [44, 34, 25, 17]
 x = 4
-pos_enc, pos_dec = [], []
+pos_enc, pos_dec, film_x = [], [], []
 for hh in heights:
-    u.append(cube(x, base - hh - dpt, 12, hh, dpt, *BL)); pos_enc.append((x + 6.5, base - hh - dpt))
+    u.append(cube(x, base - hh - dpt, 9, hh, dpt, *BL)); pos_enc.append((x + 5, base - hh - dpt))
+    u.append(cube(x + 13, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR)); film_x.append(x + 14.25)
     x += 17
 u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#C9D8EC", "#E3EBF6", "#A7BEDF", "#6F8BBA")); mid_c = x + 8
 x += 22
 for hh in reversed(heights):
-    u.append(cube(x + 1, base - hh - dpt, 12, hh, dpt, *BL)); pos_dec.append((x + 7.5, base - hh - dpt))
+    u.append(cube(x, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR)); film_x.append(x + 1.25)
+    u.append(cube(x + 5, base - hh - dpt, 9, hh, dpt, *BL)); pos_dec.append((x + 10, base - hh - dpt))
     x += 17
 x += 2
 for (xe, ye), (xd, yd) in zip(pos_enc, reversed(pos_dec)):
     ty = min(ye, yd) - 5
     u.append(f'<path d="M{xe} {ye} C {xe} {ty - 5}, {xd} {ty - 5}, {xd} {yd}" stroke="#8a8f98" stroke-width="0.7" stroke-dasharray="2 2" fill="none"/>')
 UW = x
-# shared condition [c_t, k] feeds a FiLM node inside every residual block
-cxs = [xe - 0.5 for xe, _ in pos_enc] + [mid_c] + [xd - 0.5 for xd, _ in pos_dec]
-u.append(f'<path d="M{min(cxs):.1f} 67 L{max(cxs):.1f} 67" stroke="#6E8DBE" stroke-width="0.9" fill="none"/>')
-for cx in cxs:
-    cy = base - 5.5 if cx == mid_c else base - 4.5
-    bot = base - 2 if cx == mid_c else base
-    u.append(f'<path d="M{cx:.1f} 67 L{cx:.1f} {bot}" stroke="#6E8DBE" stroke-width="0.8" fill="none"/>'
-             f'<path d="M{cx:.1f} {bot} L{cx:.1f} {cy + 2.1}" stroke="#4F6FA3" stroke-width="0.8" fill="none"/>'
-             f'<circle cx="{cx:.1f}" cy="{cy}" r="2.1" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/>')
+# shared condition [c_t, k] feeds every FiLM layer
+u.append(f'<path d="M{min(film_x):.1f} 66 L{max(film_x):.1f} 66" stroke="#6E8DBE" stroke-width="0.9" fill="none"/>')
+for fx_ in film_x:
+    u.append(f'<path d="M{fx_:.1f} 66 L{fx_:.1f} 61.5" stroke="#6E8DBE" stroke-width="0.8" fill="none"/>'
+             f'<path d="M{fx_ - 1.8:.1f} 61.6 L{fx_:.1f} 58.6 L{fx_ + 1.8:.1f} 61.6 Z" fill="#6E8DBE"/>')
 ux = 524 + (180 - UW) / 2
-raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with FiLM in every residual block and skip connections" '
+raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with FiLM layers and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
 swatch(388, 187, "#B9CCE8", "#6F8BBA")
 label(398, 185, 60, "U-Net block", fs=S, align="left")
-raw('<svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" style="position: absolute; left: 444px; top: 187px; width: 7px; height: 7px; overflow: visible"><circle cx="3.5" cy="3.5" r="2.8" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/></svg>')
+swatch(444, 187, "#F2C3A0", "#C98A5E")
 label(454, 185, 70, "FiLM from [" + i("c<sub>t</sub>") + ", " + i("k") + "]", fs=S, align="left")
 # output
 seg(560, 170, 560, 177)
