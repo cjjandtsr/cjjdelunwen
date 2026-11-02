@@ -256,7 +256,7 @@ for tx in (UW * 0.2, UW * 0.34, UW * 0.66, UW * 0.8):
 ux = 524 + (180 - UW) / 2
 raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with LoRA layers and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
-bx(566, 149, 96, 14, "FiLM(" + i("c<sub>t</sub>") + ", " + i("k") + ")", ("#C9D8EC", "#6E8DBE"))
+bx(540, 149, 148, 14, "global cond. [" + i("c<sub>t</sub>") + ", " + i("k") + "] → per-block FiLM", ("#C9D8EC", "#6E8DBE"), fs=S)
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
@@ -290,28 +290,40 @@ seg(106, 330, 117, 330, color="#555B63")
 label(102, 318, 22, "init.", fs=S, color="#444")
 # d2 two-stage post-training (overview only; two-layer MDP is in Fig. 3)
 band(118, 262, 424, 128, "#ffffff", "#E6D8C3", radius=4)
-label(118, 265, 424, "<b>Two-stage DPPO post-training</b> (encoders and pretrained U-Net frozen; LoRA only)")
+label(118, 265, 424, "<b>Two-stage DPPO post-training</b>")
 bx(126, 281, 196, 14, "<b>Stage 1</b> · PPO · 128 updates", YELB, fs=S)
 bx(328, 281, 206, 14, "<b>Stage 2</b> · PPO + success retention · 128 updates", ORB, fs=S)
-bx(126, 301, 150, 18, "Reward: arrival · progress · risk · time", YELB, fs=S)
-bx(330, 301, 204, 18, "<b>Success retention</b>: fixed reference library, +" + i("λL") + "<sub>keep</sub>", ("#FFFAF3", "#B88A52"), fs=S, dashed=True)
-seg(163, 319, 163, 326, color="#B08A57")
-seg(412, 319, 412, 326, color="#B08A57")
-xs = [126, 209, 292, 375, 458]
-texts = ["Rollouts<br>(H4, reward " + i("r<sub>t</sub>") + ")",
-         "Critic<br>" + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("β<sub>t</sub>") + ")",
-         "Advantage " + i("Â<sub>t</sub>") + "<br>(GAE)",
-         "Clipped PPO on<br>denoising steps",
-         "Update LoRA<br>(policy only)"]
-pals = [YELB, YELB, YELB, ORB, REDB]
-for xx, tx, pal in zip(xs, texts, pals):
-    bx(xx, 327, 74, 34, tx, pal)
-for xx in xs[:-1]:
-    seg(xx + 74, 344, xx + 82, 344)
-seg(495, 361, 495, 371, color="#B08A57", head=False)
-seg(495, 371, 163, 371, color="#B08A57", head=False)
-seg(163, 371, 163, 362, color="#B08A57")
-label(230, 373, 200, "next iteration uses the updated LoRA", fs=S, italic=True, color="#8E6A3E")
+bx(126, 300, 150, 18, "Reward: arrival · progress · risk · time", YELB, fs=S)
+seg(161, 318, 161, 326, color="#B08A57")
+bx(356, 300, 178, 18, "Fixed successful-prefix reference bank", ("#FFFAF3", "#B88A52"), fs=S, dashed=True)
+# main row
+Y0, HB = 327, 34
+row = [(126, 70, "Rollouts<br>(H4, reward " + i("r<sub>t</sub>") + ")", YELB),
+       (204, 66, "Critic<br>" + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("β<sub>t</sub>") + ")", YELB),
+       (278, 66, "Advantage<br>" + i("Â<sub>t</sub>") + " (GAE)", YELB),
+       (352, 64, "PPO loss<br>(denoising steps)", ORB, S)]
+for xx, ww, tx, pal, *fs_ in row:
+    bx(xx, Y0, ww, HB, tx, pal, fs=(fs_[0] if fs_ else F))
+for (xx, ww, *_), (nx, *_) in zip(row[:-1], row[1:]):
+    seg(xx + ww, Y0 + 17, nx - 1, Y0 + 17)
+# actor-loss sum node
+SX, SY = 432, Y0 + 17
+seg(416, SY, SX - 7, SY)
+raw(f'<svg width="12" height="12" viewBox="0 0 12 12" role="img" aria-label="sum" style="position: absolute; left: {SX - 6}px; top: {SY - 6}px; width: 12px; height: 12px; overflow: visible">'
+    '<circle cx="6" cy="6" r="5.5" fill="#ffffff" stroke="#8E6A3E" stroke-width="0.9"/><path d="M6 2.2 V9.8 M2.2 6 H9.8" stroke="#8E6A3E" stroke-width="0.9"/></svg>')
+seg(SX, 318, SX, SY - 7, color="#B08A57")
+label(SX - 63, 319, 60, "+ " + i("λL") + "<sub>keep</sub>", fs=S, align="right", color="#8E6A3E")
+seg(SX + 6, SY, 455, SY)
+label(436, SY + 3, 22, i("L") + "<sub>actor</sub>", fs="7px", color="#8E6A3E")
+bx(456, Y0, 78, HB, "Update actor LoRA<br>(backbone frozen)", REDB, fs=S)
+# critic has its own optimisation
+bx(198, 368, 78, 12, "value loss → update " + i("V<sub>φ</sub>"), ("#FFFFFF", "#C49E6C"), fs="7px")
+seg(237, 368, 237, 362, color="#B08A57")
+# loop
+seg(495, 361, 495, 384, color="#B08A57", head=False)
+seg(495, 384, 161, 384, color="#B08A57", head=False)
+seg(161, 384, 161, 362, color="#B08A57")
+label(296, 373, 190, "next iteration uses the updated LoRA", fs=S, italic=True, color="#8E6A3E")
 
 # =============== (e) Receding horizon ===============
 band(556, 240, 154, 156, "#F3F9F9", "#94C6C0", radius=8)
