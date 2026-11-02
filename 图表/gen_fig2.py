@@ -158,7 +158,8 @@ FN, TITLE = "Fig2.dc.html", "Figure 2 Point-cloud-conditioned diffusion policy n
 FROZ = ("#FFFFFF", "#7F9CC8")          # frozen module: white fill, blue border
 CORE = ("#EEF3FA", "#B7C9E5")          # highlighted core region
 COND = ("#DCE6F3", "#6E8DBE")          # condition path (c_t, k, FiLM)
-LORA = ("#F8DCC7", "#C98A5E")          # trainable LoRA
+LORA = ("#F6EBDA", "#B88A52")          # trainable LoRA (training family, as Fig. 1/3)
+FILM = ("#F2C3A0", "#C98A5E")          # FiLM (same orange as Fig. 1)
 OUTC = ("#EAF0F8", "#4F6FA3")          # output trajectory
 NEUT = ("#FFFFFF", "#8A8F98")          # parameter-free operations
 PANEL = ("#F7F9FC", "#A9BEDD")         # panel background (same family as Fig. 1(c))
@@ -244,7 +245,7 @@ for hh in reversed(hs):
 UW = xx + 2
 band(298, 40, 112, 66, "#FFFFFF", "#4C72B0", radius=4)
 raw(f'<svg width="{UW}" height="54" viewBox="0 0 {UW} 46" role="img" aria-label="Conditional 1D U-Net" style="position: absolute; left: {354 - UW / 2:.0f}px; top: 44px; width: {UW}px; height: 46px; overflow: visible">' + "".join(u) + '</svg>')
-label(298, 93, 112, "U-Net" + lk + " + <span style=\"color: #B5774A\">LoRA</span>", fs=S, bold=True)
+label(298, 93, 112, "U-Net" + lk + " + <span style=\"color: #9C7A4C\">LoRA</span>", fs=S, bold=True)
 # condition from c_t into the U-Net (bottom)
 seg(186, 93, 186, 116, color="#6E8DBE", head=False)
 seg(186, 116, 354, 116, color="#6E8DBE", head=False)
@@ -343,14 +344,12 @@ def stage(x, w, h0, h1, yc, html, fill="#FFFFFF", stroke="#7F9CC8"):
         f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="0.9" stroke-linejoin="round"/></svg>')
     raw(f'<div style="position: absolute; left: {x}px; top: {yc - H_ / 2}px; width: {w}px; height: {H_}px; display: flex; align-items: center; justify-content: center; '
         f'text-align: center; font-size: {S}; line-height: 1.05; color: #1F3A63"><span>{html}</span></div>')
-    lmark(x + 3, yc + min(h0, h1) / 2 - 7)
 
 
 # condition path
 bx(316, 151, 40, 14, "step " + i("k"), COND, fs=S)
 seg(357, 158, 367, 158, color="#6E8DBE")
-bx(368, 150, 66, 16, "time emb. 128&nbsp;&nbsp;", COND, fs=S)
-lmark(427, 155)
+card(368, 150, 66, 16, "time emb. 128", fill=COND[0], border="#B88A52", fs=S, dashed=True)
 bx(316, 170, 40, 14, i("c<sub>t</sub>"), COND, fs=S)
 seg(435, 158, 446, 158, color="#6E8DBE", head=False)
 seg(446, 158, 446, 162, color="#6E8DBE")
@@ -361,26 +360,39 @@ concat_c(446, 168)
 seg(452, 168, 471, 168, color="#6E8DBE")
 bx(472, 159, 54, 18, "cond. 704", COND, fs=S)
 seg(527, 168, 612, 168, color="#6E8DBE", head=False, dash="3 2")
-seg(612, 168, 612, 185, color="#6E8DBE", dash="3 2")
-note(530, 157, 160, "to every residual block (own FiLM encoder)")
+seg(612, 168, 612, 199, color="#6E8DBE", head=False, dash="3 2")
+note(530, 157, 160, "to the FiLM of every residual block")
 
 # U-Net container
 band(334, 186, 346, 76, "#FFFFFF", "#8EA7CF", radius=4, dashed=True)
-label(334, 188, 346, "<b>1D U-Net</b>: 6 stages × 2 conditional residual blocks", fs=S, color="#2E4A73")
+label(334, 188, 250, "<b>1D U-Net</b>: 6 stages × 2 residual blocks", fs=S, color="#2E4A73")
 YC = 226
 L = {16: 44, 8: 32, 4: 22}
-G = 10
-spec = [("Down<br>256", 40, 16, 8), ("Down<br>512", 40, 8, 4), ("Down<br>1024", 44, 4, 4), ("Mid<br>1024", 40, 4, 4),
-        ("Up<br>512", 40, 4, 8), ("Up<br>256", 40, 8, 16)]
+G = 16
+spec = [("Down<br>256", 36, 16, 8), ("Down<br>512", 36, 8, 4), ("Down<br>1024", 36, 4, 4), ("Mid<br>1024", 36, 4, 4),
+        ("Up<br>512", 36, 4, 8), ("Up<br>256", 36, 8, 16)]
 x = 340
 geo = {}
+bars = []
 for k_, (lb, w, a_, b_) in enumerate(spec):
     stage(x, w, L[a_], L[b_], YC, lb)
     geo[k_] = (x, w, (L[a_] + L[b_]) / 2)
-    seg(x + w + 1, YC, x + w + G - 1, YC, color="#5A6B85")
-    x += w + G
-card(x, YC - 22, 26, 44, "final<br>conv", fill="#FFFFFF", border="#7F9CC8", fs=S, lh="1.05")
-lmark(x + 4, YC + 14)
+    if k_ < len(spec) - 1:
+        bh = min(L[b_], L[spec[k_ + 1][2]])
+        bx_ = x + w + 4
+        raw(f'<div style="position: absolute; left: {bx_}px; top: {YC - bh / 2}px; width: 8px; height: {bh}px; box-sizing: border-box; background: {FILM[0]}; border: 1px solid {FILM[1]}; border-radius: 1px"></div>')
+        seg(x + w, YC, bx_, YC, color="#5A6B85", head=False)
+        seg(bx_ + 8, YC, x + w + G, YC, color="#5A6B85", head=False)
+        bars.append((bx_ + 4, YC - bh / 2))
+        x += w + G
+    else:
+        seg(x + w + 1, YC, x + w + 9, YC, color="#5A6B85")
+        x += w + 10
+# condition bus: injected into every FiLM layer from above
+seg(int(bars[0][0]), 199, int(bars[-1][0]), 199, color="#6E8DBE", head=False)
+for bxc, top in bars:
+    seg(int(bxc), 199, int(bxc), int(top) - 1, color="#6E8DBE", sw=0.9)
+card(x, YC - 22, 26, 44, "final<br>conv", fill="#FFFFFF", border="#B88A52", fs=S, lh="1.05", dashed=True)
 seg(x + 27, YC, 685, YC, color="#5A6B85")
 label(684, YC - 11, 26, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
 label(308, YC - 11, 26, Zt(i("k")) + "<br>16×11", fs=S)
@@ -413,9 +425,12 @@ xc = 330
 for ww in ws_:
     xs_.append(xc); xc += ww + 9
 for xx_, nm, ww in zip(xs_, names, ws_):
-    bx(xx_, RY - 8, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
-    if nm == "Conv1d":
-        lmark(xx_ + ww - 3, RY - 11)
+    if nm == "FiLM":
+        bx(xx_, RY - 8, ww, 16, nm, FILM, fs=S)
+    elif nm == "Conv1d":
+        card(xx_, RY - 8, ww, 16, nm, fill="#FFFFFF", border="#B88A52", fs=S, dashed=True)
+    else:
+        bx(xx_, RY - 8, ww, 16, nm, FROZ, fs=S)
 for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
     seg(xx_ + ww, RY, nx - 1, RY, color="#5A6B85", sw=1)
 # per-block condition encoder: 704 -> Mish -> Linear(704, 2C) -> (gamma, beta)
@@ -425,8 +440,7 @@ label(326, CYD - 5, 24, "cond.<br>704", fs="7px", color="#2E4A73", lh="1.0")
 seg(349, CYD, 356, CYD, color="#6E8DBE", sw=1)
 bx(357, CYD - 6, 24, 12, "Mish", FROZ, fs="7px")
 seg(382, CYD, 389, CYD, color="#6E8DBE", sw=1)
-bx(390, CYD - 6, 36, 12, "Linear&nbsp;&nbsp;", COND, fs="7px")
-lmark(419, CYD - 2.5)
+card(390, CYD - 6, 36, 12, "Linear", fill="#FFFFFF", border="#B88A52", fs="7px", dashed=True)
 seg(427, CYD, fx, CYD, color="#6E8DBE", sw=1, head=False)
 seg(fx, CYD, fx, RY - 9, color="#6E8DBE", sw=1)
 note(fx + 3, CYD + 1, 24, i("γ") + ", " + i("β"))
@@ -439,10 +453,9 @@ seg(320, RY, 329, RY, color="#5A6B85")
 seg(320, RY, 320, 340, color="#5A6B85", head=False)
 seg(320, 340, end + 15, 340, color="#5A6B85", head=False)
 seg(end + 15, 340, end + 15, RY + 6, color="#5A6B85")
-bx(418, 334, 118, 12, "residual: Identity / 1×1 Conv1d&nbsp;&nbsp;&nbsp;", FROZ, fs="7px")
-lmark(528, 337.5)
-band(596, 296, 108, 52, "#FFFAF5", "#C98A5E", radius=4, dashed=True)
-label(600, 297, 100, "<b>LoRA</b> (trainable)", fs=S, color="#9A6A45", align="left")
+card(418, 334, 118, 12, "residual: Identity / 1×1 Conv1d", fill="#FFFFFF", border="#B88A52", fs="7px", dashed=True)
+band(596, 296, 108, 52, "#FBF6EE", "#B88A52", radius=4, dashed=True)
+label(600, 297, 100, "<b>LoRA-adapted layer</b>", fs=S, color="#6B5434", align="left")
 seg(600, 324, 604, 324, color="#5A6B85", head=False)
 seg(604, 313, 604, 337, color="#5A6B85", head=False)
 seg(604, 313, 613, 313, color="#5A6B85")
@@ -461,12 +474,16 @@ seg(137, 118, 137, 131, color="#7A8496", sw=0.9, dash="3 2")
 seg(354, 121, 354, 131, color="#7A8496", sw=0.9, dash="3 2")
 
 # legend
-for (lx, kind, tx) in ((316, "lock", "frozen in post-training"), (420, LORA, "LoRA target (denoiser Linear / Conv1d)"), (596, COND, "condition path"), (672, OUTC, "output")):
-    if kind == "lock":
-        lock(lx, 356)
-    else:
-        swatch(lx, 357, kind[0], kind[1])
-    label(lx + 10, 355, 170, tx, fs=S, align="left")
+lock(316, 356)
+label(326, 355, 100, "frozen in post-training", fs=S, align="left")
+swatch(414, 357, FILM[0], FILM[1])
+label(424, 355, 40, "FiLM", fs=S, align="left")
+raw(f'<div style="position: absolute; left: 452px; top: 357px; width: 10px; height: 7px; box-sizing: border-box; background: #FFFFFF; border: 1px dashed #B88A52"></div>')
+label(465, 355, 140, "LoRA-adapted layer (all Linear / Conv1d)", fs=S, align="left")
+swatch(612, 357, COND[0], COND[1])
+label(622, 355, 60, "condition", fs=S, align="left")
+swatch(664, 357, OUTC[0], OUTC[1])
+label(674, 355, 40, "output", fs=S, align="left")
 body = "\n".join(bands + arrows + cards + labels)
 html = f'''<!doctype html>
 <html lang="en">
