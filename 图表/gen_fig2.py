@@ -150,190 +150,291 @@ def cube(x, y, w, h, d, front, top, side, stroke):
 
 BL = ("#8BB7F4", "#C8DEFF", "#6595D5", "#3871B3")
 OR = ("#FF9D59", "#FFC59C", "#E96D29", "#C9541A")
-# Figure 2: network architecture (190 x 70 mm = 718 x 265 px)
-W, H = 718, 265
-FN, TITLE = "Fig2.dc.html", "Figure 2 Network architecture"
-ZB = i("Z̄") + "<sub>" + i("t") + "</sub><sup>" + i("k") + "</sup>"
+# Figure 2 v2: policy network, overview + three zoom-ins (190 x 98 mm = 718 x 372 px)
+W, H = 718, 372
+FN, TITLE = "Fig2.dc.html", "Figure 2 Point-cloud-conditioned diffusion policy network"
+
+# semantic palette (shared with Fig. 1 and Fig. 3)
+FROZ = ("#FFFFFF", "#4C72B0")          # frozen module: white fill, blue border
+CORE = ("#EEF3FA", "#9DB7D6")          # highlighted core region
+COND = ("#EEEAF6", "#8172B3")          # condition path (c_t, k, FiLM)
+LORA = ("#FBE3CF", "#DD8452")          # trainable LoRA
+OUTC = ("#E3F4F1", "#2A9D8F")          # output trajectory
+NEUT = ("#FFFFFF", "#8A8F98")          # parameter-free operations
+PANEL = ("#F4F8FD", "#5B9BD5")         # panel background (same family as Fig. 1(c))
+NOTE = "#5A6270"
 
 
-def plus(x, y, r=6):
+def note(x, y, w, text, align="left"):
+    label(x, y, w, text, fs=S, italic=True, color=NOTE, align=align)
+
+
+def dims(x, y, w, text):
+    label(x, y, w, text, fs=S, italic=True, color="#3A4452")
+
+
+def concat_c(x, y):
+    raw(f'<div style="position: absolute; left: {x - 6}px; top: {y - 6}px; width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; '
+        f'background: #ffffff; border: 1px solid #4A5563; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700">C</div>')
+
+
+def plus(x, y, r=5):
     raw(f'<svg width="{2*r}" height="{2*r}" viewBox="0 0 {2*r} {2*r}" aria-hidden="true" style="position: absolute; left: {x - r}px; top: {y - r}px; width: {2*r}px; height: {2*r}px; overflow: visible">'
         f'<circle cx="{r}" cy="{r}" r="{r - 0.5}" fill="#ffffff" stroke="#4A5563" stroke-width="0.9"/>'
-        f'<path d="M{r} 2.5 L{r} {2*r - 2.5} M2.5 {r} L{2*r - 2.5} {r}" stroke="#4A5563" stroke-width="0.9"/></svg>')
+        f'<path d="M{r} 2 L{r} {2*r - 2} M2 {r} L{2*r - 2} {r}" stroke="#4A5563" stroke-width="0.9"/></svg>')
 
 
-def vbar(x, y, w, h, g1, g2, gid, stroke):
-    raw(f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" aria-hidden="true" style="position: absolute; left: {x}px; top: {y}px; width: {w}px; height: {h}px; overflow: visible">'
-        f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{g1}"/><stop offset="1" stop-color="{g2}"/></linearGradient></defs>'
-        f'<rect x="0" y="0" width="{w}" height="{h}" rx="2" fill="url(#{gid})" stroke="{stroke}" stroke-width="0.6"/></svg>')
+def lockicon(x, y):
+    lock(x, y)
 
 
-# ================= (a) observation encoder =================
-band(8, 8, 228, 122, "#EEF6F1", "#7FB09A", radius=8)
-ttl(8, 11, 228, "(a) Observation Encoder (per frame)")
-bx(14, 34, 46, 28, i("P<sub>τ</sub>") + "<br>4096 × 3", BLUEB)
-seg(61, 48, 67, 48)
-trap(68, 32, 62, 32, "#A9ECF7", "#2FB8D6", "f2pn", "Multi-stage<br>PointNet")
-seg(131, 48, 137, 48)
-vbar(138, 38, 8, 20, "#A9ECF7", "#2FB8D6", "f2b1", "#2FB8D6")
-label(130, 27, 24, "128", fs=S)
-bx(14, 78, 46, 26, i("s<sub>τ</sub>") + "<br>9", BLUEB)
-seg(61, 91, 67, 91)
-trap(68, 76, 62, 30, "#C6E79A", "#6FB43F", "f2mlp", "State MLP<br>9→64→64")
-seg(131, 91, 137, 91)
-vbar(138, 85, 8, 12, "#C6E79A", "#6FB43F", "f2b2", "#6FB43F")
-label(130, 98, 24, "64", fs=S)
-seg(147, 48, 152, 48, head=False)
-seg(147, 91, 152, 91, head=False)
-seg(152, 48, 152, 91, head=False)
-seg(152, 70, 158, 70)
-vbar(159, 44, 10, 52, "#DAE8FC", "#9DB9E4", "f2b3", "#6C8EBF")
-label(148, 32, 32, i("e<sub>τ</sub>") + " 192", fs=S)
-seg(170, 72, 199, 72)
-label(168, 47, 34, "3 frames<br>concat", fs=S, color="#4A5563")
-vbar(200, 36, 14, 70, "#6ED8C6", "#1FA38F", "f2b4", "#178A79")
-label(190, 108, 36, i("c<sub>t</sub>") + " 576", bold=True)
-label(8, 119, 228, "shared by the 3 frames; frozen in post-training (no LoRA)", fs=S, italic=True, color="#4A5563")
+def vbar(x, y, w, h, pal, gid=None):
+    raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: {w}px; height: {h}px; box-sizing: border-box; background: {pal[0]}; border: 1px solid {pal[1]}; border-radius: 2px"></div>')
 
-# ================= (c) multi-stage PointNet =================
-band(8, 138, 228, 119, "#EEF6F1", "#7FB09A", radius=8)
-ttl(8, 141, 228, "(c) Multi-stage PointNet")
-bx(14, 166, 40, 22, "Conv1d<br>3→128", BLUEB, fs=S)
-seg(55, 177, 65, 177)
-band(60, 158, 170, 46, "#F7FBFF", "#9DB7D6", radius=4, dashed=True)
-label(64, 159, 80, "stage " + i("s") + " (× 4)", fs=S, align="left", color="#3D5A80", bold=True)
-bx(66, 170, 44, 20, "Conv1d<br>128→128", BLUEB, fs=S)
-seg(111, 180, 151, 180)
-seg(122, 180, 122, 188, head=False)
-bx(112, 189, 40, 13, "max-pool", ORB, fs=S)
-seg(153, 195, 158, 195, head=False)
-seg(158, 195, 158, 187)
-plus(158, 180)
-label(150, 165, 18, "256", fs=S)
-seg(165, 180, 171, 180)
-bx(172, 170, 52, 20, "Conv1d<br>256→128", BLUEB, fs=S)
-seg(90, 204, 90, 209, head=False)
-seg(90, 209, 47, 209, head=False)
-seg(47, 209, 47, 216)
-label(96, 205, 120, "outputs of the 4 stages", fs=S, italic=True, color="#4A5563", align="left")
-bx(14, 217, 68, 24, "concat 4 stages<br>4 × 128 = 512", BLUEB, fs=S)
-seg(83, 229, 89, 229)
-bx(90, 219, 50, 20, "Conv1d<br>512→128", BLUEB, fs=S)
-seg(141, 229, 147, 229)
-bx(148, 219, 50, 20, "max-pool<br>over " + i("N"), ORB, fs=S)
-seg(199, 229, 205, 229)
-vbar(206, 218, 8, 22, "#A9ECF7", "#2FB8D6", "f2b5", "#2FB8D6")
-label(214, 224, 20, "128", fs=S, align="left")
 
-# ================= (b) conditional 1D U-Net =================
-band(244, 8, 466, 249, "#EAF3FC", "#5B9BD5", radius=8)
-ttl(244, 11, 466, "(b) Conditional 1D U-Net Denoiser " + i("f<sub>θ</sub>") + "(" + ZB + ", " + i("k") + ", " + i("c<sub>t</sub>") + ")")
-raw('<div style="position: absolute; left: 252px; top: 35px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FF9D59; border: 1px solid #E96D29; display: flex; align-items: center; justify-content: center; font-size: 8px; font-style: italic">k</div>')
-seg(267, 42, 273, 42)
-bx(274, 32, 66, 20, "sinusoidal emb.<br>128", ORB, fs=S)
-seg(341, 42, 347, 42)
-bx(348, 32, 70, 20, "MLP<br>128→512→128", ORB, fs=S)
-seg(419, 42, 425, 42)
-plus(432, 42)
-bx(406, 60, 52, 16, i("c<sub>t</sub>") + " (576)", GREENB, fs=S)
-seg(432, 60, 432, 49)
-seg(439, 42, 447, 42)
-label(436, 28, 18, "704", fs=S)
-bx(448, 32, 116, 20, "FiLM generator<br>Linear(704 → 2" + i("C") + ") → (" + i("γ") + ", " + i("β") + ")", ORB, fs=S)
-bx(576, 30, 128, 36, "<b>LoRA</b> (" + i("r") + " = 8) in all denoiser layers:<br>14 Linear + 33 Conv1d,<br>1.02 M trainable (post-training)", ("#FFF4EA", "#E07B39"), fs=S, dashed=True)
-seg(506, 52, 506, 86, color="#E08A1E", head=False)
-label(512, 72, 120, "FiLM in all 12 residual blocks", fs=S, color="#B4521B", align="left")
+def zoom(points, color="#7A8496"):
+    """dashed zoom line between panels (illustrative, may be diagonal)."""
+    d = "M" + " L".join(f"{x} {y}" for x, y in points)
+    raw(f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true" style="position: absolute; left: 0px; top: 0px; width: {W}px; height: {H}px; overflow: visible; pointer-events: none">'
+        f'<path d="{d}" stroke="{color}" stroke-width="0.8" stroke-dasharray="3 2" fill="none"/></svg>')
 
-# U-Net row: residual blocks as 2.5D cubes, height by temporal length
-HH = {16: 76, 8: 54, 4: 34}
-BASE = 176
-blocks = []   # (x, length, label)
-xs = 262
-items = [("in", 16), ("gap", 8),
-         ("rb", 16), ("rb", 16), ("lab", "256@16"), ("ds", 0),
-         ("rb", 8), ("rb", 8), ("lab", "512@8"), ("ds", 0),
-         ("rb", 4), ("rb", 4), ("lab", "1024@4"), ("gap", 10),
-         ("rb", 4), ("rb", 4), ("lab", "mid 1024@4"), ("gap", 10),
-         ("rb", 4), ("rb", 4), ("lab", "512@4"), ("us", 0),
-         ("rb", 8), ("rb", 8), ("lab", "256@8"), ("us", 0),
-         ("fc", 16), ("lab", "final conv"), ("gap", 8), ("out", 16)]
-svg, film_x, group_x, labs, arrows_x = [], [], [], [], []
-x = 0
-grp = []
-for kind, v in items:
-    if kind == "in" or kind == "out":
-        h = HH[16]
-        svg.append(f'<rect x="{x}" y="{BASE - h}" width="6" height="{h}" fill="#ffffff" stroke="#4A5563" stroke-width="0.7"/>')
-        (labs.append(("in", x + 3)) if kind == "in" else labs.append(("out", x + 3)))
-        x += 6
-    elif kind == "gap":
-        if v >= 8:
-            arrows_x.append((x + v / 2 - 1, ""))
-        x += v
-    elif kind == "rb":
-        h = HH[v]
-        svg.append(cube(x, BASE - h - 3, 10, h, 3, *BL))
-        svg.append(cube(x + 13, BASE - h * 0.8 - 2, 2.5, h * 0.8, 2, *OR))
-        film_x.append((x + 6, h))
-        grp.append(x)
-        x += 19
-    elif kind == "fc":
-        h = HH[16]
-        svg.append(cube(x, BASE - h - 3, 10, h, 3, "#C9D7EE", "#E2EAF7", "#9DB2D6", "#6C8EBF"))
-        grp.append(x)
-        x += 16
-    elif kind == "lab":
-        labs.append((v, (grp[0] + grp[-1] + 13) / 2)); grp = []
-        x += 4
-    elif kind in ("ds", "us"):
-        arrows_x.append((x + 5, "↓2" if kind == "ds" else "↑2")); x += 12
-UW = x
-ox = 244 + (466 - UW) / 2
-# FiLM distribution line and drops (drawn in figure coordinates)
-fl = ['<path d="M%.1f 86 L%.1f 86" stroke="#E08A1E" stroke-width="0.9" fill="none"/>' % (film_x[0][0], film_x[-1][0])]
-for fx, h in film_x:
-    tb = BASE - h - 3
-    fl.append(f'<path d="M{fx} 86 L{fx} {tb - 1}" stroke="#E08A1E" stroke-width="0.7" fill="none"/><path d="M{fx - 1.8} {tb - 3} L{fx} {tb} L{fx + 1.8} {tb - 3} Z" fill="#E08A1E"/>')
-# skip connections (only two are used by the network: 1024@4 -> up 512@4 and 512@8 -> up 256@8)
-def find(lbl):
-    return [p for (t, p) in labs if t == lbl][0]
-sk = []
-for a_, b_, dy in (("512@8", "256@8", 6), ("1024@4", "512@4", 2)):
-    xa, xb = find(a_), find(b_)
-    sk.append(f'<path d="M{xa} {BASE + 1} L{xa} {BASE + dy + 4} L{xb} {BASE + dy + 4} L{xb} {BASE + 1}" stroke="#8a8f98" stroke-width="0.7" stroke-dasharray="2 1.5" fill="none"/>')
-svg = svg + sk + fl
-for (xx_, t_) in arrows_x:
+
+Zt = lambda k: i("Z") + "<sub>" + i("t") + "</sub><sup>" + k + "</sup>"
+
+# ======================= (a) overall flow =======================
+band(8, 8, 702, 116, *PANEL, radius=8)
+ttl(8, 11, 702, "(a) Overall Network Flow")
+# input
+label(10, 30, 92, "<b>Observations (3 frames)</b>", fs=S)
+img(20, 42, 70, 45, "three", "Point clouds of the last three frames")
+bx(18, 90, 74, 14, i("P<sub>τ</sub>") + ", " + i("s<sub>τ</sub>") + ", " + i("τ") + " = 1…3", ("#FFFFFF", "#2E3B4E"), fs=S)
+dims(14, 106, 82, "3 × (4096×3, 9)")
+seg(95, 66, 103, 66, color="#2E3B4E")
+# shared encoder (same identity colours as Fig. 1)
+raw('<svg width="66" height="56" viewBox="0 0 66 56" aria-hidden="true" style="position: absolute; left: 104px; top: 38px; width: 66px; height: 56px; overflow: visible">'
+    '<defs><linearGradient id="f2enc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#A9ECF7"/><stop offset="0.55" stop-color="#C6E79A"/><stop offset="1" stop-color="#8FCB66"/></linearGradient></defs>'
+    '<polygon points="0,0 66,11 66,45 0,56" fill="url(#f2enc)" stroke="#4C9A8E" stroke-width="0.7"/></svg>')
+lk = ('<svg width="7" height="9" viewBox="0 0 7 9" role="img" aria-label="frozen" style="display: inline-block; vertical-align: -1px; margin-left: 2px; width: 7px; height: 9px">'
+      '<path d="M1.6 4 V2.6 A1.9 1.9 0 0 1 5.4 2.6 V4" stroke="#2E3B4E" stroke-width="0.9" fill="none"/><rect x="0.5" y="4" width="6" height="4.6" rx="0.8" fill="#2E3B4E"/></svg>')
+raw(f'<div style="position: absolute; left: 104px; top: 38px; width: 66px; height: 56px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: {F}; line-height: 1.15; color: #10301A"><span>Shared<br>observation<br>encoder{lk}</span></div>')
+note(100, 97, 76, "per frame, frozen", align="center")
+seg(171, 66, 179, 66, color="#2E3B4E")
+vbar(180, 40, 12, 52, COND)
+label(174, 29, 24, i("c<sub>t</sub>"), bold=True, color="#5B4C99")
+dims(172, 94, 28, "576")
+# core region
+band(206, 27, 360, 93, *CORE, radius=6)
+label(414, 106, 148, "<b>Iterative denoising</b> (" + i("K") + " = 10 DDIM steps)", fs=S, color="#2E4A73", align="right")
+bx(214, 44, 64, 28, "", NEUT)
+img(218, 47, 56, 12, "noisy", "Gaussian noise")
+label(214, 59, 64, "noise " + Zt(i("K")), fs=S)
+dims(214, 73, 64, "16×11")
+bx(214, 87, 64, 16, "step " + i("k"), COND, fs=S)
+seg(279, 58, 297, 58, color="#2E3B4E")
+seg(279, 95, 290, 95, color="#8172B3", head=False)
+seg(290, 95, 290, 66, color="#8172B3", head=False)
+seg(290, 66, 297, 66, color="#8172B3")
+# U-Net mini cubes (same drawing language as Fig. 1)
+u, base, dpt = [], 44, 3
+hs = [36, 27, 19, 12]
+xx = 3
+for hh in hs:
+    u.append(cube(xx, base - hh - dpt, 5, hh, dpt, *BL)); u.append(cube(xx + 8, base - hh * 0.8 - 2, 1.5, hh * 0.8, 1.5, *OR)); xx += 10
+u.append(cube(xx, base - 7 - dpt, 8, 5, dpt, "#A1C4F5", "#C8DEFF", "#6595D5", "#3871B3")); xx += 12
+for hh in reversed(hs):
+    u.append(cube(xx, base - hh * 0.8 - 2, 1.5, hh * 0.8, 1.5, *OR)); u.append(cube(xx + 3, base - hh - dpt, 5, hh, dpt, *BL)); xx += 10
+UW = xx + 2
+band(298, 40, 112, 66, "#FFFFFF", "#4C72B0", radius=4)
+raw(f'<svg width="{UW}" height="54" viewBox="0 0 {UW} 46" role="img" aria-label="Conditional 1D U-Net" style="position: absolute; left: {354 - UW / 2:.0f}px; top: 44px; width: {UW}px; height: 46px; overflow: visible">' + "".join(u) + '</svg>')
+label(298, 93, 112, "Conditional 1D U-Net" + lk, fs=S, bold=True)
+# condition from c_t into the U-Net (bottom)
+seg(186, 93, 186, 113, color="#8172B3", head=False)
+seg(186, 113, 354, 113, color="#8172B3", head=False)
+seg(354, 113, 354, 107, color="#8172B3")
+note(250, 103, 70, "condition " + i("c<sub>t</sub>"), align="left")
+# x0 prediction -> DDIM update -> loop
+seg(411, 70, 461, 70, color="#2E3B4E")
+label(410, 56, 54, "predict " + Zt("0"), fs=S)
+dims(410, 72, 54, "16×11")
+bx(462, 58, 64, 24, "DDIM update<br>" + Zt(i("k")) + " → " + Zt(i("k") + "−1"), NEUT, fs=S)
+seg(494, 58, 494, 36, color="#2E3B4E", head=False)
+seg(494, 36, 354, 36, color="#2E3B4E", head=False)
+seg(354, 36, 354, 39, color="#2E3B4E")
+label(420, 38, 60, "repeat × 10", fs=S, bold=True, color="#2E4A73")
+seg(527, 70, 577, 70, color="#2E3B4E")
+bx(578, 58, 50, 24, "De-<br>normalize", NEUT, fs=S)
+seg(629, 70, 637, 70, color="#2E3B4E")
+# output
+band(638, 30, 66, 86, *OUTC, radius=5)
+label(638, 33, 66, "<b>Trajectory</b>", fs=S, color="#1D6F65")
+dots = "".join(f'<circle cx="{4 + j * 4.6:.1f}" cy="{30 - 22 * (j / 11) + 8 * (j / 11) ** 2:.1f}" r="1.6" fill="#2A9D8F"/>' for j in range(12))
+raw(f'<svg width="58" height="34" viewBox="0 0 58 34" role="img" aria-label="Predicted trajectory" style="position: absolute; left: 642px; top: 48px; width: 58px; height: 34px; overflow: visible">'
+    f'<path d="M4 30 Q 28 6 55 8" stroke="#2A9D8F" stroke-width="0.7" fill="none"/>{dots}</svg>')
+dims(638, 86, 66, "16 steps × 11")
+note(638, 97, 66, "position, velocity, acc., yaw", align="center")
+
+# ======================= (b) shared observation encoder =======================
+band(8, 132, 292, 220, *PANEL, radius=8)
+ttl(8, 135, 292, "(b) Shared Observation Encoder" + lk)
+band(14, 153, 228, 120, "#FFFFFF", "#B9C3D0", radius=4, dashed=True)
+label(18, 155, 100, "<b>Point-cloud branch</b>", fs=S, align="left")
+note(110, 155, 128, "4096 points → 128-d geometry feature", align="right")
+img(18, 170, 40, 31, "pc", "Body-frame point cloud")
+dims(16, 202, 44, "4096 × 3")
+seg(59, 186, 65, 186, color="#2E3B4E")
+bx(66, 174, 40, 24, "Point<br>Conv1d", ("#E8F9FC", "#2FB8D6"), fs=S)
+seg(107, 186, 113, 186, color="#2E3B4E")
+# one stage, repeated x4
+band(114, 168, 124, 52, "#EAF8FB", "#2FB8D6", radius=4, dashed=True)
+label(118, 169, 80, "PointNet stage", fs=S, align="left", color="#1B7F95", bold=True)
+label(208, 169, 28, "×4", fs=S, align="right", color="#1B7F95", bold=True)
+bx(118, 181, 40, 16, "Conv1d", ("#E8F9FC", "#2FB8D6"), fs=S)
+seg(159, 189, 183, 189, color="#2E3B4E")
+seg(138, 197, 138, 202, color="#2E3B4E", head=False)
+bx(116, 203, 70, 13, "global max-pool", NEUT, fs=S)
+seg(187, 209, 190, 209, color="#2E3B4E", head=False)
+seg(190, 209, 190, 196, color="#2E3B4E")
+concat_c(190, 189)
+seg(197, 189, 201, 189, color="#2E3B4E")
+bx(202, 181, 34, 16, "Conv1d", ("#E8F9FC", "#2FB8D6"), fs=S)
+# after stages
+seg(176, 231, 176, 240, color="#2E3B4E") if False else None
+bx(18, 238, 58, 26, "concat 4 stages<br>(4 × 128)", NEUT, fs=S)
+seg(77, 251, 83, 251, color="#2E3B4E")
+bx(84, 241, 42, 20, "Conv1d", ("#E8F9FC", "#2FB8D6"), fs=S)
+seg(127, 251, 133, 251, color="#2E3B4E")
+bx(134, 241, 50, 20, "max-pool<br>over points", NEUT, fs=S)
+seg(185, 251, 205, 251, color="#2E3B4E")
+vbar(206, 240, 10, 22, ("#CFF2F8", "#2FB8D6"))
+dims(216, 245, 26, "128")
+seg(176, 220, 176, 228, color="#2E3B4E", head=False)
+seg(176, 228, 47, 228, color="#2E3B4E", head=False)
+seg(47, 228, 47, 237, color="#2E3B4E")
+note(60, 228, 120, "outputs of the 4 stages", align="left")
+# state branch
+band(14, 279, 228, 44, "#FFFFFF", "#B9C3D0", radius=4, dashed=True)
+label(18, 281, 100, "<b>State branch</b>", fs=S, align="left")
+note(110, 281, 128, "goal, distance, position, heading", align="right")
+bx(20, 296, 42, 20, "9-d state", ("#FFFFFF", "#2E3B4E"), fs=S)
+seg(63, 306, 75, 306, color="#2E3B4E")
+bx(76, 296, 84, 20, "MLP 9→64→64", ("#F1F9E8", "#6FB43F"), fs=S)
+seg(161, 306, 205, 306, color="#2E3B4E")
+vbar(206, 299, 10, 14, ("#E3F3D0", "#6FB43F"))
+dims(216, 302, 26, "64")
+# fusion column
+seg(217, 251, 252, 251, head=False, color="#2E3B4E") if False else None
+seg(243, 251, 250, 251, color="#2E3B4E", head=False)
+seg(243, 306, 250, 306, color="#2E3B4E", head=False)
+seg(250, 251, 250, 306, color="#2E3B4E", head=False)
+seg(250, 278, 255, 278, color="#2E3B4E")
+bx(256, 262, 38, 32, "concat<br>192 per<br>frame", NEUT, fs=S)
+seg(275, 294, 275, 309, color="#2E3B4E")
+note(250, 296, 22, "×3", align="left")
+vbar(266, 310, 18, 30, COND)
+label(254, 340, 42, i("c<sub>t</sub>") + " 576", fs=S, bold=True, color="#5B4C99")
+note(14, 328, 236, "identical weights for the 3 frames; no LoRA in the encoder", align="left")
+
+# ======================= (c) one denoising call =======================
+band(308, 132, 402, 136, *PANEL, radius=8)
+ttl(308, 135, 402, "(c) One Denoising Call: Conditional 1D U-Net")
+bx(316, 154, 40, 14, "step " + i("k"), COND, fs=S)
+seg(357, 161, 363, 161, color="#8172B3")
+bx(364, 154, 62, 14, "time embedding", COND, fs=S)
+bx(316, 172, 40, 14, i("c<sub>t</sub>") + " (576)", COND, fs=S)
+seg(427, 161, 436, 161, color="#8172B3", head=False)
+seg(357, 179, 436, 179, color="#8172B3", head=False)
+seg(436, 161, 436, 179, color="#8172B3", head=False)
+seg(436, 170, 443, 170, color="#8172B3")
+bx(444, 162, 52, 16, "concat 704", COND, fs=S)
+seg(497, 170, 503, 170, color="#8172B3")
+bx(504, 160, 60, 20, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
+note(568, 160, 140, "scales and shifts every block's<br>features by (step, observation)", align="left")
+# blocks row
+BY, BH = 202, 26
+blocks = [("256@16", 340), ("512@8", 390), ("1024@4", 440), ("mid<br>1024@4", 488), ("512@4", 536), ("256@8", 586)]
+BW = 38
+seg(534, 180, 534, 188, color="#8172B3", head=False)
+seg(359, 188, 605, 188, color="#8172B3", head=False)
+for lb, bxx in blocks:
+    seg(bxx + BW // 2, 188, bxx + BW // 2, BY - 1, color="#8172B3", sw=0.9)
+    bx(bxx, BY, BW, BH, lb, FROZ, fs=S)
+    raw(f'<div style="position: absolute; left: {bxx + BW - 5}px; top: {BY + 3}px; width: 3px; height: {BH - 6}px; background: #DD8452"></div>')
+label(312, BY + 2, 28, Zt(i("k")) + "<br>16×11", fs=S)
+seg(338, BY + 13, 339, BY + 13, color="#2E3B4E") if False else None
+for (a_, b_, t_) in ((378, 389, "↓2"), (428, 439, "↓2"), (478, 487, ""), (526, 535, ""), (574, 585, "↑2")):
+    seg(a_, BY + 13, b_, BY + 13, color="#2E3B4E")
     if t_:
-        svg.append(f'<text x="{xx_}" y="{BASE - 18}" font-size="8" text-anchor="middle" fill="#4A5563" font-family="Tinos, serif">{t_}</text>')
-        svg.append(f'<path d="M{xx_ - 5} {BASE - 10} L{xx_ + 4} {BASE - 10}" stroke="#4A7FE0" stroke-width="0.9" fill="none"/><path d="M{xx_ + 3} {BASE - 12} L{xx_ + 6} {BASE - 10} L{xx_ + 3} {BASE - 8} Z" fill="#4A7FE0"/>')
+        label(a_ - 4, BY - 9, 18, t_, fs=S, color="#4A5563")
+seg(625, BY + 13, 635, BY + 13, color="#2E3B4E")
+label(618, BY - 9, 18, "↑2", fs=S, color="#4A5563")
+bx(636, BY, 30, BH, "final<br>conv", FROZ, fs=S)
+seg(667, BY + 13, 673, BY + 13, color="#2E3B4E")
+label(672, BY + 2, 36, Zt("0") + "<br>16×11", fs=S, color="#1D6F65", bold=True)
+label(312, BY + 28, 30, "noisy", fs=S, color=NOTE, italic=True)
+label(670, BY + 28, 40, "clean", fs=S, color="#1D6F65", italic=True)
+# skip connections
+seg(459, BY + BH, 459, BY + BH + 6, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(459, BY + BH + 6, 555, BY + BH + 6, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(555, BY + BH + 6, 555, BY + BH + 1, color="#4A5563", sw=0.8, dash="2 1.5")
+seg(409, BY + BH, 409, BY + BH + 12, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(409, BY + BH + 12, 605, BY + BH + 12, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(605, BY + BH + 12, 605, BY + BH + 1, color="#4A5563", sw=0.8, dash="2 1.5")
+note(470, BY + BH + 13, 120, "skip connections (concat)", align="left")
+note(316, 250, 390, "each box = 2 conditional residual blocks (12 in total); encoder–bottleneck–decoder over the 16-step axis", align="left")
+
+# ======================= (d) residual block with LoRA =======================
+band(308, 276, 402, 76, *PANEL, radius=8)
+ttl(308, 279, 402, "(d) Conditional Residual Block with LoRA")
+label(314, 304, 12, i("x"), fs=S)
+names = ["Conv1d", "GN", "Mish", "FiLM", "Conv1d", "GN", "Mish"]
+ws_ = [32, 20, 24, 26, 32, 20, 24]
+xs_ = []
+xc = 330
+for ww in ws_:
+    xs_.append(xc); xc += ww + 6
+for xx_, nm, ww in zip(xs_, names, ws_):
+    bx(xx_, 304, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
+for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
+    seg(xx_ + ww, 312, nx - 1, 312, color="#2E3B4E", sw=1)
+fx = xs_[3] + 13
+seg(fx, 297, fx, 303, color="#8172B3")
+end = xs_[-1] + ws_[-1]
+seg(end, 312, end + 6, 312, color="#2E3B4E")
+plus(end + 12, 312)
+seg(end + 17, 312, end + 21, 312, color="#2E3B4E")
+label(end + 21, 306, 10, i("y"), fs=S, align="left")
+seg(324, 312, 329, 312, color="#2E3B4E")
+seg(324, 312, 324, 328, color="#2E3B4E", head=False)
+seg(324, 328, end + 12, 328, color="#2E3B4E", head=False)
+seg(end + 12, 328, end + 12, 318, color="#2E3B4E")
+note(332, 329, 200, "residual path (1×1 conv if channels change)", align="left")
+band(580, 296, 124, 52, "#FFF8F2", "#DD8452", radius=4, dashed=True)
+label(584, 297, 60, "<b>LoRA</b> (trainable)", fs=S, color="#B85A22", align="left")
+seg(584, 320, 588, 320, color="#2E3B4E", head=False)
+seg(588, 313, 588, 337, color="#2E3B4E", head=False)
+seg(588, 313, 593, 313, color="#2E3B4E")
+bx(594, 307, 40, 13, i("W") + "<sub>0</sub>" + lk, FROZ, fs=S)
+seg(588, 337, 593, 337, color="#2E3B4E")
+bx(594, 331, 17, 13, i("A"), LORA, fs=S)
+seg(612, 337, 616, 337, color="#2E3B4E")
+bx(617, 331, 17, 13, i("B"), LORA, fs=S)
+seg(635, 313, 640, 313, color="#2E3B4E", head=False)
+seg(635, 337, 640, 337, color="#2E3B4E", head=False)
+seg(640, 313, 640, 337, color="#2E3B4E", head=False)
+note(645, 306, 58, i("W") + " = " + i("W") + "<sub>0</sub> + " + i("BA") + "<br>rank 8<br>" + i("B") + " = 0 at start", align="left")
+note(316, 340, 260, "LoRA in all 14 Linear and 33 Conv1d layers (1.4% of parameters)", align="left")
+
+# zoom lines from (a) to (b), (c)
+seg(137, 118, 137, 131, color="#7A8496", sw=0.9, dash="3 2")
+seg(354, 121, 354, 131, color="#7A8496", sw=0.9, dash="3 2")
+
+# legend
+for (lx, kind, tx) in ((316, "lock", "frozen in post-training"), (430, LORA, "trainable LoRA"), (512, COND, "condition path"), (600, OUTC, "output")):
+    if kind == "lock":
+        lock(lx, 356)
     else:
-        svg.append(f'<path d="M{xx_ - 3} {BASE - 10} L{xx_ + 2} {BASE - 10}" stroke="#4A7FE0" stroke-width="0.9" fill="none"/><path d="M{xx_ + 1} {BASE - 12} L{xx_ + 4} {BASE - 10} L{xx_ + 1} {BASE - 8} Z" fill="#4A7FE0"/>')
-raw(f'<svg width="{UW:.0f}" height="{BASE + 24}" viewBox="0 0 {UW:.0f} {BASE + 24}" role="img" aria-label="Conditional 1D U-Net: residual blocks at 16, 8 and 4 steps, two skip connections, LoRA on every block" '
-    f'style="position: absolute; left: {ox:.0f}px; top: 0px; width: {UW:.0f}px; height: {BASE + 24}px; overflow: visible">' + "".join(svg) + '</svg>')
-for (t_, px) in labs:
-    if t_ == "in":
-        label(ox + px - 26, 78, 52, ZB + "<br>16 × 11", fs=S)
-    elif t_ == "out":
-        label(ox + px - 30, 78, 60, i("Ẑ") + "<sub>" + i("t") + "</sub><sup>0</sup><br>16 × 11", fs=S)
-    else:
-        label(ox + px - 26, BASE + 13, 52, t_, fs=S)
-label(ox + (find("1024@4") + find("512@4")) / 2 - 40, BASE + 23, 80, "skip (concat)", fs=S, color="#4A5563")
-# residual block detail
-band(252, 218, 450, 34, "#ffffff", "#C9CED6", radius=4)
-label(258, 221, 70, "<b>Residual block</b>", fs=S, align="left")
-label(258, 236, 12, i("h"), align="left")
-seg(268, 241, 279, 241)
-bx(278, 231, 100, 20, "Conv1d (" + i("k") + " = 5),<br>GroupNorm, Mish", BLUEB, fs=S)
-seg(379, 241, 383, 241)
-bx(384, 232, 70, 18, i("γ") + " ⊙ " + i("h") + " + " + i("β"), ORB, fs=S)
-label(384, 220, 70, "from FiLM", fs=S, color="#B4521B")
-seg(455, 241, 461, 241)
-bx(462, 231, 100, 20, "Conv1d (" + i("k") + " = 5),<br>GroupNorm, Mish", BLUEB, fs=S)
-seg(563, 241, 567, 241)
-plus(574, 241)
-seg(581, 241, 589, 241)
-label(590, 236, 20, "out", fs=S, align="left")
-label(612, 233, 88, "residual: 1 × 1 conv<br>if channels change", fs=S, align="left", color="#4A5563")
+        swatch(lx, 357, kind[0], kind[1])
+    label(lx + 10, 355, 100, tx, fs=S, align="left")
 body = "\n".join(bands + arrows + cards + labels)
 html = f'''<!doctype html>
 <html lang="en">

@@ -207,8 +207,8 @@ trap(440, 104, 46, 44, "#A9ECF7", "#2FB8D6", "gpn", "PointNet")
 seg(487, 66, 493, 66)
 seg(487, 126, 493, 126)
 raw('<svg width="16" height="108" viewBox="0 0 16 108" aria-hidden="true" style="position: absolute; left: 494px; top: 42px; width: 16px; height: 108px; overflow: visible">'
-    '<defs><linearGradient id="gcat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6ED8C6"/><stop offset="1" stop-color="#1FA38F"/></linearGradient></defs>'
-    '<rect x="0" y="0" width="16" height="108" rx="3" fill="url(#gcat)" stroke="#178A79" stroke-width="0.6"/>'
+    '<defs><linearGradient id="gcat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9AEE0"/><stop offset="1" stop-color="#8172B3"/></linearGradient></defs>'
+    '<rect x="0" y="0" width="16" height="108" rx="3" fill="url(#gcat)" stroke="#6A5B9E" stroke-width="0.6"/>'
     '<text x="8" y="54" font-size="8" fill="#ffffff" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 8 54)" font-family="Tinos, serif">3-frame concat</text></svg>')
 label(488, 152, 28, i("c<sub>t</sub>"), fs=T, bold=True)
 seg(511, 96, 523, 96)
@@ -216,9 +216,9 @@ seg(511, 96, 523, 96)
 bx(524, 26, 88, 32, "", BLUEB)
 label(524, 28, 88, "Noisy trajectory " + Zk(i("K")))
 img(534, 44, 68, 11, "noisy", "Noisy trajectory samples")
-bx(618, 26, 86, 32, "", ORB)
+bx(618, 26, 86, 32, "", ("#F3F0FA", "#8172B3"))
 label(618, 28, 86, "Diffusion step " + i("k"))
-raw('<div style="position: absolute; left: 654px; top: 42px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FF9D59; border: 1px solid #E96D29; display: flex; align-items: center; justify-content: center; font-size: 8px; font-style: italic; color: #1f2328">k</div>')
+raw('<div style="position: absolute; left: 654px; top: 42px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #E6E0F3; border: 1px solid #8172B3; display: flex; align-items: center; justify-content: center; font-size: 8px; font-style: italic; color: #1f2328">k</div>')
 seg(568, 58, 568, 65)
 seg(661, 58, 661, 65)
 # U-Net
@@ -252,11 +252,11 @@ for (xe, ye), (xd, yd) in zip(pos_enc, reversed(pos_dec)):
     u.append(f'<path d="M{xe} {ye} C {xe} {ty - 5}, {xd} {ty - 5}, {xd} {yd}" stroke="#8a8f98" stroke-width="0.7" stroke-dasharray="2 2" fill="none"/>')
 UW = x
 for tx in (UW * 0.2, UW * 0.34, UW * 0.66, UW * 0.8):
-    u.append(f'<path d="M{tx:.1f} 70 L{tx:.1f} 62" stroke="#F49A37" stroke-width="0.9" fill="none"/><path d="M{tx - 2:.1f} 64.5 L{tx:.1f} 61 L{tx + 2:.1f} 64.5 Z" fill="#F49A37"/>')
+    u.append(f'<path d="M{tx:.1f} 70 L{tx:.1f} 62" stroke="#8172B3" stroke-width="0.9" fill="none"/><path d="M{tx - 2:.1f} 64.5 L{tx:.1f} 61 L{tx + 2:.1f} 64.5 Z" fill="#8172B3"/>')
 ux = 524 + (180 - UW) / 2
 raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with LoRA layers and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
-bx(566, 149, 96, 14, "FiLM(" + i("c<sub>t</sub>") + ", " + i("k") + ")", ORB)
+bx(566, 149, 96, 14, "FiLM(" + i("c<sub>t</sub>") + ", " + i("k") + ")", ("#E6E0F3", "#8172B3"))
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
@@ -367,9 +367,4 @@ return {{}};
 </html>
 '''
 open(os.path.join(ROOT, "Main.dc.html"), "w", encoding="utf-8").write(html)
-canvas = {"v": 3, "createdOnFiles": {"v": 1, "at": "2026-11-01T13:20:00Z"}, "title": "论文方法示意图",
-          "launch": {"view": "canvas"}, "pages": [],
-          "boards": {"Main.dc.html": {"x": 0, "y": 0, "w": W, "h": H, "title": "图1 方法总体框架（190×107 mm）"}},
-          "order": ["Main.dc.html"], "notes": {}, "designSystems": []}
-json.dump(canvas, open(os.path.join(ROOT, "canvas.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print("ok", len(html))
