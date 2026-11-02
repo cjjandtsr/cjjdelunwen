@@ -15,7 +15,7 @@ A = {
 W, H = 718, 404
 F, T, S = "9.33px", "10.67px", "8px"   # 7 pt, 8 pt, 6 pt
 INK = "#1f2328"
-BLUE = "#4A7FE0"
+BLUE = "#6A84AE"
 ORANGE = "#E96D29"
 
 bands, arrows, cards, labels = [], [], [], []
@@ -92,12 +92,12 @@ i = lambda s: f"<i>{s}</i>"
 
 # Figure 1, v4: Enhancing / ML-paper style (tinted panels, centred titles, gradient blocks, draw.io palette)
 TT = "12px"          # panel titles (9 pt)
-BLUEB = ("#DAE8FC", "#6C8EBF")
-GREENB = ("#D5E8D4", "#82B366")
-YELB = ("#FFF2CC", "#D6B656")
-ORB = ("#FFE6CC", "#D79B00")
-REDB = ("#F8CECC", "#B85450")
-FAT = "#7EA6E0"
+BLUEB = ("#EAF0F8", "#8EA7CF")
+GREENB = ("#E6EFE8", "#8FB09B")
+YELB = ("#FAF2E6", "#CDB089")
+ORB = ("#F4E4CC", "#C49E6C")
+REDB = ("#EDD3AF", "#B88A52")
+FAT = "#AFC2DE"
 
 
 def ttl(x, y, w, text, fs=TT):
@@ -142,10 +142,10 @@ def bx(x, y, w, h, html, pal, fs=F, dashed=False, bold=False):
 Zk = lambda sup: i("Z") + "<sub>" + i("t") + "</sub><sup>" + sup + "</sup>"
 
 # =============== (a) Observation ===============
-band(8, 8, 192, 214, "#EEF6F1", "#7FB09A", radius=8)
+band(8, 8, 192, 214, "#F4F8F5", "#9DBBA9", radius=8)
 ttl(8, 11, 192, "Observation")
 for (cx, cy) in ((13, 29), (107, 29), (13, 125), (107, 125)):
-    band(cx, cy, 88, 92, "#ffffff", "#BCD5C9", radius=4)
+    band(cx, cy, 88, 92, "#ffffff", "#CFDDD4", radius=4)
 label(13, 32, 88, "<b>Local point cloud</b>")
 label(107, 32, 88, "<b>Relative goal</b>")
 label(13, 128, 88, "<b>UAV state</b>")
@@ -189,7 +189,7 @@ label(214, 147, 152, "observe · plan · execute", italic=True, color="#3A4452")
 label(296, 178, 72, "depth camera,<br>60° FOV, 0.05–10 m", fs=S, align="left", color="#4A5563")
 
 # =============== (c) Conditional diffusion policy ===============
-band(380, 8, 330, 214, "#EAF3FC", "#5B9BD5", radius=8)
+band(380, 8, 330, 214, "#F5F8FC", "#9DB5D8", radius=8)
 ttl(380, 11, 330, "Conditional Diffusion Policy")
 label(386, 31, 80, "State history", align="left")
 for k_, yy in enumerate((45, 60, 75)):
@@ -198,31 +198,31 @@ for k_, yy in enumerate((45, 60, 75)):
     seg(424, yy + 6, 430, yy + 6, head=False)
 seg(430, 51, 430, 81, head=False)
 seg(430, 66, 439, 66)
-trap(440, 44, 46, 44, "#C6E79A", "#6FB43F", "gmlp", "State<br>MLP")
+trap(440, 44, 46, 44, "#DCE6F3", "#C9D8EC", "gmlp", "State<br>MLP")
 label(386, 96, 90, "Point-cloud history", align="left")
 img(384, 109, 50, 32, "three", "Point-cloud history")
 label(384, 142, 52, i("τ") + "−2 … " + i("τ"), fs=S)
 seg(435, 126, 439, 126)
-trap(440, 104, 46, 44, "#A9ECF7", "#2FB8D6", "gpn", "PointNet")
+trap(440, 104, 46, 44, "#DCE6F3", "#C9D8EC", "gpn", "PointNet")
 seg(487, 66, 493, 66)
 seg(487, 126, 493, 126)
 raw('<svg width="16" height="108" viewBox="0 0 16 108" aria-hidden="true" style="position: absolute; left: 494px; top: 42px; width: 16px; height: 108px; overflow: visible">'
-    '<defs><linearGradient id="gcat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B9AEE0"/><stop offset="1" stop-color="#8172B3"/></linearGradient></defs>'
-    '<rect x="0" y="0" width="16" height="108" rx="3" fill="url(#gcat)" stroke="#6A5B9E" stroke-width="0.6"/>'
-    '<text x="8" y="54" font-size="8" fill="#ffffff" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 8 54)" font-family="Tinos, serif">3-frame concat</text></svg>')
+    '<defs><linearGradient id="gcat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B7C9E5"/><stop offset="1" stop-color="#9DB5D8"/></linearGradient></defs>'
+    '<rect x="0" y="0" width="16" height="108" rx="3" fill="url(#gcat)" stroke="#6E8DBE" stroke-width="0.6"/>'
+    '<text x="8" y="54" font-size="8" fill="#2E4A73" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 8 54)" font-family="Tinos, serif">3-frame concat</text></svg>')
 label(488, 152, 28, i("c<sub>t</sub>"), fs=T, bold=True)
 seg(511, 96, 523, 96)
 # noise and step inputs
 bx(524, 26, 88, 32, "", BLUEB)
 label(524, 28, 88, "Noisy trajectory " + Zk(i("K")))
 img(534, 44, 68, 11, "noisy", "Noisy trajectory samples")
-bx(618, 26, 86, 32, "", ("#F3F0FA", "#8172B3"))
+bx(618, 26, 86, 32, "", BLUEB)
 label(618, 28, 86, "Diffusion step " + i("k"))
-raw('<div style="position: absolute; left: 654px; top: 42px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #E6E0F3; border: 1px solid #8172B3; display: flex; align-items: center; justify-content: center; font-size: 8px; font-style: italic; color: #1f2328">k</div>')
+raw('<div style="position: absolute; left: 654px; top: 42px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #C9D8EC; border: 1px solid #6E8DBE; display: flex; align-items: center; justify-content: center; font-size: 8px; font-style: italic; color: #1f2328">k</div>')
 seg(568, 58, 568, 65)
 seg(661, 58, 661, 65)
 # U-Net
-band(524, 66, 180, 104, "#ffffff", "#8C9BB5", radius=4)
+band(524, 66, 180, 104, "#ffffff", "#9DB5D8", radius=4)
 label(524, 69, 180, "<b>Conditional 1D U-Net</b>")
 def cube(x, y, w, h, d, front, top, side, stroke):
     return (f'<rect x="{x}" y="{y + d}" width="{w}" height="{h}" fill="{front}" stroke="{stroke}" stroke-width="0.6"/>'
@@ -230,8 +230,8 @@ def cube(x, y, w, h, d, front, top, side, stroke):
             f'<path d="M{x + w} {y + d} L{x + w + d} {y} L{x + w + d} {y + h} L{x + w} {y + h + d} Z" fill="{side}" stroke="{stroke}" stroke-width="0.6"/>')
 
 
-BL = ("#8BB7F4", "#C8DEFF", "#6595D5", "#3871B3")
-OR = ("#FF9D59", "#FFC59C", "#E96D29", "#C9541A")
+BL = ("#B9CCE8", "#DCE6F3", "#93AED6", "#6F8BBA")
+OR = ("#F2C3A0", "#F8DCC7", "#E0A77E", "#C98A5E")
 u, base, dpt = [], 58, 4
 heights = [44, 34, 25, 17]
 x = 4
@@ -240,7 +240,7 @@ for hh in heights:
     u.append(cube(x, base - hh - dpt, 9, hh, dpt, *BL)); pos_enc.append((x + 5, base - hh - dpt))
     u.append(cube(x + 13, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
     x += 17
-u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#A1C4F5", "#C8DEFF", "#6595D5", "#3871B3"))
+u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#C9D8EC", "#E3EBF6", "#A7BEDF", "#6F8BBA"))
 x += 22
 for hh in reversed(heights):
     u.append(cube(x, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
@@ -252,88 +252,88 @@ for (xe, ye), (xd, yd) in zip(pos_enc, reversed(pos_dec)):
     u.append(f'<path d="M{xe} {ye} C {xe} {ty - 5}, {xd} {ty - 5}, {xd} {yd}" stroke="#8a8f98" stroke-width="0.7" stroke-dasharray="2 2" fill="none"/>')
 UW = x
 for tx in (UW * 0.2, UW * 0.34, UW * 0.66, UW * 0.8):
-    u.append(f'<path d="M{tx:.1f} 70 L{tx:.1f} 62" stroke="#8172B3" stroke-width="0.9" fill="none"/><path d="M{tx - 2:.1f} 64.5 L{tx:.1f} 61 L{tx + 2:.1f} 64.5 Z" fill="#8172B3"/>')
+    u.append(f'<path d="M{tx:.1f} 70 L{tx:.1f} 62" stroke="#7F9CC8" stroke-width="0.9" fill="none"/><path d="M{tx - 2:.1f} 64.5 L{tx:.1f} 61 L{tx + 2:.1f} 64.5 Z" fill="#8172B3"/>')
 ux = 524 + (180 - UW) / 2
 raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with LoRA layers and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
-bx(566, 149, 96, 14, "FiLM(" + i("c<sub>t</sub>") + ", " + i("k") + ")", ("#E6E0F3", "#8172B3"))
+bx(566, 149, 96, 14, "FiLM(" + i("c<sub>t</sub>") + ", " + i("k") + ")", ("#C9D8EC", "#6E8DBE"))
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
-swatch(388, 187, "#8BB7F4", "#3871B3")
+swatch(388, 187, "#B9CCE8", "#6F8BBA")
 label(398, 185, 60, "U-Net (frozen)", fs=S, align="left")
-swatch(456, 187, "#FF9D59", "#E96D29")
+swatch(456, 187, "#F2C3A0", "#C98A5E")
 label(466, 185, 60, "LoRA (trainable)", fs=S, align="left")
 # output
 seg(560, 170, 560, 177)
 bx(524, 178, 80, 16, "DDIM ×10", BLUEB)
 seg(605, 186, 613, 186)
-dots = "".join(f'<circle cx="{3 + j * 5:.1f}" cy="{12 - 9 * (j / 11) + 4 * (j / 11) ** 2:.1f}" r="1.5" fill="#0874F9"/>' for j in range(12))
+dots = "".join(f'<circle cx="{3 + j * 5:.1f}" cy="{12 - 9 * (j / 11) + 4 * (j / 11) ** 2:.1f}" r="1.5" fill="#4F6FA3"/>' for j in range(12))
 raw(f'<svg width="62" height="16" viewBox="0 0 62 16" role="img" aria-label="Predicted trajectory" style="position: absolute; left: 614px; top: 177px; width: 62px; height: 16px; overflow: visible">'
-    f'<path d="M3 12 Q 30 4 58 4" stroke="#157AE9" stroke-width="0.7" fill="none"/>{dots}</svg>')
+    f'<path d="M3 12 Q 30 4 58 4" stroke="#7F9CC8" stroke-width="0.7" fill="none"/>{dots}</svg>')
 label(596, 198, 104, "Predicted trajectory " + Zk("0"))
 seg(678, 186, 703, 186, head=False)
 seg(703, 186, 703, 239)
 
 # =============== (d) Training ===============
-band(8, 240, 540, 156, "#FFF4E6", "#F2A65A", radius=8)
+band(8, 240, 540, 156, "#FCF8F2", "#D9BC94", radius=8)
 ttl(8, 243, 540, "Training: BC Pretraining + Two-stage DPPO Post-training")
 # d1 pretraining
-band(14, 262, 92, 128, "#ffffff", "#D7C9B0", radius=4)
+band(14, 262, 92, 128, "#ffffff", "#E6D8C3", radius=4)
 label(14, 265, 92, "<b>BC pretraining</b>")
 bx(20, 282, 80, 26, "EGO-Planner<br>demos (988)", YELB)
 seg(60, 308, 60, 315)
 bx(20, 316, 80, 20, i("L") + "<sub>BC</sub> + " + i("λ") + "<sub>geo</sub>" + i("L") + "<sub>geo</sub>", YELB)
 seg(60, 336, 60, 343)
-bx(20, 344, 80, 26, "Update all<br>parameters", BLUEB)
+bx(20, 344, 80, 26, "Update all<br>parameters", ORB)
 seg(106, 330, 117, 330, color="#555B63")
 label(102, 318, 22, "init.", fs=S, color="#444")
 # d2 two-stage post-training (overview only; two-layer MDP is in Fig. 3)
-band(118, 262, 424, 128, "#ffffff", "#D7C9B0", radius=4)
+band(118, 262, 424, 128, "#ffffff", "#E6D8C3", radius=4)
 label(118, 265, 424, "<b>Two-stage DPPO post-training</b> (encoders and pretrained U-Net frozen; LoRA only)")
-bx(126, 281, 196, 14, "<b>Stage 1</b> · PPO · 128 updates", ORB, fs=S)
-bx(328, 281, 206, 14, "<b>Stage 2</b> · PPO + success retention · 128 updates", ("#FCD5B4", "#E07B39"), fs=S)
+bx(126, 281, 196, 14, "<b>Stage 1</b> · PPO · 128 updates", YELB, fs=S)
+bx(328, 281, 206, 14, "<b>Stage 2</b> · PPO + success retention · 128 updates", ORB, fs=S)
 bx(126, 301, 150, 18, "Reward: arrival · progress · risk · time", YELB, fs=S)
-bx(330, 301, 204, 18, "<b>Success retention</b>: fixed reference library, +" + i("λL") + "<sub>keep</sub>", ("#FFF4EA", "#E07B39"), fs=S, dashed=True)
-seg(163, 319, 163, 326, color="#B8962E")
-seg(412, 319, 412, 326, color="#E07B39")
+bx(330, 301, 204, 18, "<b>Success retention</b>: fixed reference library, +" + i("λL") + "<sub>keep</sub>", ("#FFFAF3", "#B88A52"), fs=S, dashed=True)
+seg(163, 319, 163, 326, color="#B08A57")
+seg(412, 319, 412, 326, color="#B08A57")
 xs = [126, 209, 292, 375, 458]
 texts = ["Rollouts<br>(H4, reward " + i("r<sub>t</sub>") + ")",
          "Critic<br>" + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("β<sub>t</sub>") + ")",
          "Advantage " + i("Â<sub>t</sub>") + "<br>(GAE)",
          "Clipped PPO on<br>denoising steps",
          "Update LoRA<br>(policy only)"]
-pals = [YELB, BLUEB, YELB, GREENB, REDB]
+pals = [YELB, YELB, YELB, ORB, REDB]
 for xx, tx, pal in zip(xs, texts, pals):
     bx(xx, 327, 74, 34, tx, pal)
 for xx in xs[:-1]:
     seg(xx + 74, 344, xx + 82, 344)
-seg(495, 361, 495, 371, color="#E96D29", head=False)
-seg(495, 371, 163, 371, color="#E96D29", head=False)
-seg(163, 371, 163, 362, color="#E96D29")
-label(230, 373, 200, "next iteration uses the updated LoRA", fs=S, italic=True, color="#B4521B")
+seg(495, 361, 495, 371, color="#B08A57", head=False)
+seg(495, 371, 163, 371, color="#B08A57", head=False)
+seg(163, 371, 163, 362, color="#B08A57")
+label(230, 373, 200, "next iteration uses the updated LoRA", fs=S, italic=True, color="#8E6A3E")
 
 # =============== (e) Receding horizon ===============
-band(556, 240, 154, 156, "#EAF6FC", "#4AA8D8", radius=8)
+band(556, 240, 154, 156, "#F3F9F9", "#94C6C0", radius=8)
 ttl(556, 243, 154, "Receding-horizon<br>Execution")
 label(556, 280, 154, "Generate 16 steps,<br>execute the first 4")
 cell = []
 for j in range(16):
-    fi, bo = (("#BFC2C3", "#6B6E70") if j < 2 else ("#4AD3D5", "#009AA6") if j < 6 else ("#B0CEFA", "#5D88C2") if j < 10 else ("#FFFFFF", "#888888"))
+    fi, bo = (("#DADDE0", "#9AA1A7") if j < 2 else ("#93CEC6", "#5A9E96") if j < 6 else ("#D3EBE8", "#8CC0B9") if j < 10 else ("#FFFFFF", "#A8B0B5"))
     cell.append(f'<rect x="{j * 8}" y="0" width="8" height="12" fill="{fi}" stroke="{bo}" stroke-width="0.6"/>')
-cell.append('<path d="M17 16 L47 16" stroke="#009AA6" stroke-width="0.9" fill="none"/><path d="M17 14 L17 18 M47 14 L47 18" stroke="#009AA6" stroke-width="0.9"/>')
-cell.append('<path d="M17 27 L79 27" stroke="#5D88C2" stroke-width="0.9" fill="none"/><path d="M17 25 L17 29 M79 25 L79 29" stroke="#5D88C2" stroke-width="0.9"/>')
-cell.append('<text x="51" y="19" font-size="8" fill="#007A84" font-family="Tinos, serif">H4 executed</text>')
-cell.append('<text x="83" y="30" font-size="8" fill="#3F6AA6" font-family="Tinos, serif">H8 risk window</text>')
+cell.append('<path d="M17 16 L47 16" stroke="#5A9E96" stroke-width="0.9" fill="none"/><path d="M17 14 L17 18 M47 14 L47 18" stroke="#5A9E96" stroke-width="0.9"/>')
+cell.append('<path d="M17 27 L79 27" stroke="#8CC0B9" stroke-width="0.9" fill="none"/><path d="M17 25 L17 29 M79 25 L79 29" stroke="#8CC0B9" stroke-width="0.9"/>')
+cell.append('<text x="51" y="19" font-size="8" fill="#3F7F78" font-family="Tinos, serif">H4 executed</text>')
+cell.append('<text x="83" y="30" font-size="8" fill="#5E8F89" font-family="Tinos, serif">H8 risk window</text>')
 raw('<svg width="128" height="32" viewBox="0 0 128 32" role="img" aria-label="Sixteen-step trajectory; the first four steps after two aligned steps are executed; eight steps form the risk window" '
     'style="position: absolute; left: 569px; top: 312px; width: 128px; height: 32px; overflow: visible">' + "".join(cell) + "</svg>")
-bx(578, 360, 110, 26, "Update observations<br>and replan", ("#E9F6FF", "#498DFA"))
+bx(578, 360, 110, 26, "Update observations<br>and replan", ("#E6F3F1", "#8CC0B9"))
 
 # =============== closed loop back to the environment ===============
 seg(600, 240, 600, 231, head=False)
 seg(600, 231, 290, 231, head=False)
 seg(290, 231, 290, 162)
-label(214, 186, 72, "execute H4,<br>observe, replan", align="right", italic=True, color="#2F5FC4")
+label(214, 186, 72, "execute H4,<br>observe, replan", align="right", italic=True, color="#4F6A93")
 body = "\n".join(bands + arrows + cards + labels)
 html = f'''<!doctype html>
 <html lang="en">
