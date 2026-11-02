@@ -329,74 +329,79 @@ label(254, 340, 42, i("c<sub>t</sub>") + " 576", fs=S, bold=True, color="#2E4A73
 # ======================= (c) one denoising call =======================
 band(308, 132, 402, 136, *PANEL, radius=8)
 ttl(308, 135, 402, "(c) One Denoising Call: Conditional 1D U-Net")
-bx(316, 154, 40, 14, "step " + i("k"), COND, fs=S)
-seg(357, 161, 367, 161, color="#6E8DBE")
-bx(368, 154, 60, 14, "time embedding", COND, fs=S)
-bx(316, 172, 40, 14, i("c<sub>t</sub>") + " (576)", COND, fs=S)
-seg(429, 161, 436, 161, color="#6E8DBE", head=False)
-seg(357, 179, 436, 179, color="#6E8DBE", head=False)
-seg(436, 161, 436, 179, color="#6E8DBE", head=False)
-seg(436, 170, 447, 170, color="#6E8DBE")
-bx(448, 162, 50, 16, "concat 704", COND, fs=S)
-seg(499, 170, 509, 170, color="#6E8DBE")
-bx(510, 160, 58, 20, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
-# blocks row: block height encodes temporal length; trapezoids are down/up-sampling
-def edge(x, y, h):
-    raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: 3px; height: {h}px; background: #E0A77E"></div>')
 
 
-def trapz(x0, h0, x1, h1, yc, fill, stroke, lbl):
-    w = x1 - x0
-    pts = f"0,{(max(h0, h1) - h0) / 2} {w},{(max(h0, h1) - h1) / 2} {w},{(max(h0, h1) + h1) / 2} 0,{(max(h0, h1) + h0) / 2}"
+def lmark(x, y):  # LoRA marker (small orange square inside a block)
+    raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: 5px; height: 5px; box-sizing: border-box; background: #F2C3A0; border: 0.7px solid #C98A5E"></div>')
+
+
+def stage(x, w, h0, h1, yc, html, fill="#FFFFFF", stroke="#7F9CC8"):
+    """U-Net stage: left height = input length, right height = output length."""
     H_ = max(h0, h1)
-    raw(f'<svg width="{w}" height="{H_}" viewBox="0 0 {w} {H_}" aria-hidden="true" style="position: absolute; left: {x0}px; top: {yc - H_ / 2}px; width: {w}px; height: {H_}px; overflow: visible">'
-        f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="0.7"/></svg>')
-    label(x0 - 6, yc - H_ / 2 - 11, w + 12, lbl, fs=S, color="#4A5563")
+    pts = f"0,{(H_ - h0) / 2} {w},{(H_ - h1) / 2} {w},{(H_ + h1) / 2} 0,{(H_ + h0) / 2}"
+    raw(f'<svg width="{w}" height="{H_}" viewBox="0 0 {w} {H_}" aria-hidden="true" style="position: absolute; left: {x}px; top: {yc - H_ / 2}px; width: {w}px; height: {H_}px; overflow: visible">'
+        f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="0.9" stroke-linejoin="round"/></svg>')
+    raw(f'<div style="position: absolute; left: {x}px; top: {yc - H_ / 2}px; width: {w}px; height: {H_}px; display: flex; align-items: center; justify-content: center; '
+        f'text-align: center; font-size: {S}; line-height: 1.05; color: #1F3A63"><span>{html}</span></div>')
+    lmark(x + 3, yc + min(h0, h1) / 2 - 7)
 
 
-YC = 214
-HT = {16: 40, 8: 30, 4: 22}
-row = [("256@16", 340, 40, 16), ("512@8", 392, 40, 8), ("1024@4", 444, 40, 4), ("mid<br>1024@4", 493, 42, 4),
-       ("512@4", 544, 40, 4), ("256@8", 596, 40, 8)]
-seg(539, 180, 539, 186, color="#6E8DBE", head=False)
-seg(360, 186, 616, 186, color="#6E8DBE", head=False)
+# condition path
+bx(316, 151, 40, 14, "step " + i("k"), COND, fs=S)
+seg(357, 158, 367, 158, color="#6E8DBE")
+bx(368, 150, 66, 16, "time emb. 128&nbsp;&nbsp;", COND, fs=S)
+lmark(427, 155)
+bx(316, 170, 40, 14, i("c<sub>t</sub>"), COND, fs=S)
+seg(435, 158, 446, 158, color="#6E8DBE", head=False)
+seg(446, 158, 446, 162, color="#6E8DBE")
+seg(357, 177, 446, 177, color="#6E8DBE", head=False)
+seg(446, 177, 446, 174, color="#6E8DBE")
+dims(386, 166, 30, "576")
+concat_c(446, 168)
+seg(452, 168, 471, 168, color="#6E8DBE")
+dims(451, 157, 22, "704")
+bx(472, 159, 54, 18, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
+lmark(519, 165)
+seg(527, 168, 612, 168, color="#6E8DBE", head=False, dash="3 2")
+seg(612, 168, 612, 185, color="#6E8DBE", dash="3 2")
+note(530, 157, 150, "broadcast to every residual block")
+
+# U-Net container
+band(334, 186, 346, 76, "#FFFFFF", "#8EA7CF", radius=4, dashed=True)
+label(334, 188, 346, "<b>1D U-Net</b> (12 conditional residual blocks)", fs=S, color="#2E4A73")
+YC = 226
+L = {16: 44, 8: 32, 4: 22}
+G = 10
+spec = [("Down<br>256", 40, 16, 8), ("Down<br>512", 40, 8, 4), ("Down<br>1024", 44, 4, 4), ("Mid<br>1024", 40, 4, 4),
+        ("Up<br>512", 40, 4, 8), ("Up<br>256", 40, 8, 16)]
+x = 340
 geo = {}
-for lb, bxx, bw, L in row:
-    h = HT[L]
-    top = YC - h / 2
-    seg(bxx + bw // 2, 186, bxx + bw // 2, int(top) - 1, color="#6E8DBE", sw=0.9)
-    card(bxx, int(top), bw, h, lb, fill="#FFFFFF", border="#7F9CC8", fs=S, lh="1.05")
-    edge(bxx + bw - 5, int(top) + 3, h - 6)
-    geo[lb] = (bxx, bw, h)
-# down-sampling (strided Conv1d, carries LoRA) and up-sampling (ConvTranspose1d, no LoRA)
-trapz(380, 40, 392, 30, YC, "#F8E6D8", "#C98A5E", "↓2")
-trapz(432, 30, 444, 22, YC, "#F8E6D8", "#C98A5E", "↓2")
-seg(484, YC, 492, YC, color="#5A6B85")
-seg(535, YC, 543, YC, color="#5A6B85")
-trapz(584, 22, 596, 30, YC, "#E3EBF6", "#8EA7CF", "↑2")
-trapz(636, 30, 648, 40, YC, "#E3EBF6", "#8EA7CF", "↑2")
-card(648, YC - 20, 28, 40, "final<br>conv", fill="#FFFFFF", border="#7F9CC8", fs=S)
-edge(671, YC - 17, 34)
-label(306, YC - 11, 26, Zt(i("k")) + "<br>16×11", fs=S)
+for k_, (lb, w, a_, b_) in enumerate(spec):
+    stage(x, w, L[a_], L[b_], YC, lb)
+    geo[k_] = (x, w, (L[a_] + L[b_]) / 2)
+    seg(x + w + 1, YC, x + w + G - 1, YC, color="#5A6B85")
+    x += w + G
+card(x, YC - 22, 26, 44, "final<br>conv", fill="#FFFFFF", border="#7F9CC8", fs=S, lh="1.05")
+lmark(x + 4, YC + 14)
+seg(x + 27, YC, 685, YC, color="#5A6B85")
+label(684, YC - 11, 26, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
+label(308, YC - 11, 26, Zt(i("k")) + "<br>16×11", fs=S)
 seg(331, YC, 339, YC, color="#5A6B85")
-seg(330, YC + 14, 341, YC + 14, color="#5A6B85") if False else None
-seg(677, YC, 684, YC, color="#5A6B85")
-label(683, YC - 11, 26, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
-# skip connections
-def bot(lb):
-    bxx, bw, h = geo[lb]
-    return bxx + bw / 2, YC + h / 2
-(xa, ya), (xb, yb) = bot("1024@4"), bot("512@4")
-seg(int(xa), int(ya), int(xa), 236, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(int(xa), 236, int(xb), 236, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(int(xb), 236, int(xb), int(yb) + 1, color="#4A5563", sw=0.8, dash="2 1.5")
-(xa, ya), (xb, yb) = bot("512@8"), bot("256@8")
-seg(int(xa), int(ya), int(xa), 242, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(int(xa), 242, int(xb), 242, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(int(xb), 242, int(xb), int(yb) + 1, color="#4A5563", sw=0.8, dash="2 1.5")
-note(470, 243, 120, "skip (concat)", align="left")
-edge(425, 157, 8)
-edge(565, 163, 14)
+
+
+# skip connections (outputs of Down 1024 -> Up 512, Down 512 -> Up 256)
+def skip(src, dst, yb):
+    xs_, ws_, hs_ = geo[src]
+    xd, wd, hd = geo[dst]
+    cs, cd = int(xs_ + ws_ / 2), int(xd + wd / 2)
+    seg(cs, int(YC + hs_ / 2) + 1, cs, yb, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+    seg(cs, yb, cd, yb, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+    seg(cd, yb, cd, int(YC + hd / 2) + 2, color="#4A5563", sw=0.8, dash="2 1.5")
+
+
+skip(2, 4, 247)
+skip(1, 5, 254)
+note(622, 249, 56, "skip (concat)")
 
 # ======================= (d) residual block with LoRA =======================
 band(308, 276, 402, 76, *PANEL, radius=8)
@@ -411,7 +416,7 @@ for ww in ws_:
 for xx_, nm, ww in zip(xs_, names, ws_):
     bx(xx_, 304, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
     if nm in ("Conv1d", "FiLM"):
-        raw(f'<div style="position: absolute; left: {xx_ + ww - 4}px; top: 307px; width: 2.5px; height: 10px; background: #E0A77E"></div>')
+        lmark(xx_ + ww - 3, 301)
 for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
     seg(xx_ + ww, 312, nx - 1, 312, color="#5A6B85", sw=1)
 fx = xs_[3] + 13
