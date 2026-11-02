@@ -332,6 +332,23 @@ band(308, 132, 402, 136, *PANEL, radius=8)
 ttl(308, 135, 402, "(c) One Denoising Call: Conditional 1D U-Net")
 
 
+LR = "#B88A52"
+
+
+def ring(x, y, w, h, pad=2.5, r=4):  # LoRA: dashed outline around the adapted layer
+    raw(f'<div style="position: absolute; left: {x - pad}px; top: {y - pad}px; width: {w + 2 * pad}px; height: {h + 2 * pad}px; box-sizing: border-box; '
+        f'border: 1px dashed {LR}; border-radius: {r}px; pointer-events: none"></div>')
+
+
+def ring_poly(x, w, h0, h1, yc, pad=2.5):
+    H_ = max(h0, h1) + 2 * pad
+    a, b = h0 + 2 * pad, h1 + 2 * pad
+    W_ = w + 2 * pad
+    pts = f"0,{(H_ - a) / 2} {W_},{(H_ - b) / 2} {W_},{(H_ + b) / 2} 0,{(H_ + a) / 2}"
+    raw(f'<svg width="{W_}" height="{H_}" viewBox="0 0 {W_} {H_}" aria-hidden="true" style="position: absolute; left: {x - pad}px; top: {yc - H_ / 2}px; width: {W_}px; height: {H_}px; overflow: visible">'
+        f'<polygon points="{pts}" fill="none" stroke="{LR}" stroke-width="0.9" stroke-dasharray="2.5 1.8" stroke-linejoin="round"/></svg>')
+
+
 def lmark(x, y):  # LoRA marker (small orange square inside a block)
     raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: 5px; height: 5px; box-sizing: border-box; background: #F2C3A0; border: 0.7px solid #C98A5E"></div>')
 
@@ -349,13 +366,14 @@ def stage(x, w, h0, h1, yc, html, fill="#FFFFFF", stroke="#7F9CC8"):
 # condition path
 bx(316, 151, 40, 14, "step " + i("k"), COND, fs=S)
 seg(357, 158, 367, 158, color="#6E8DBE")
-card(368, 150, 66, 16, "time emb. 128", fill=COND[0], border="#B88A52", fs=S, dashed=True)
+bx(368, 150, 66, 16, "time emb. 128", COND, fs=S)
+ring(368, 150, 66, 16)
 bx(316, 170, 40, 14, i("c<sub>t</sub>"), COND, fs=S)
 seg(435, 158, 446, 158, color="#6E8DBE", head=False)
 seg(446, 158, 446, 162, color="#6E8DBE")
 seg(357, 177, 446, 177, color="#6E8DBE", head=False)
 seg(446, 177, 446, 174, color="#6E8DBE")
-dims(386, 166, 30, "576")
+dims(372, 178, 30, "576")
 concat_c(446, 168)
 seg(452, 168, 471, 168, color="#6E8DBE")
 bx(472, 159, 54, 18, "cond. 704", COND, fs=S)
@@ -376,6 +394,7 @@ geo = {}
 bars = []
 for k_, (lb, w, a_, b_) in enumerate(spec):
     stage(x, w, L[a_], L[b_], YC, lb)
+    ring_poly(x, w, L[a_], L[b_], YC)
     geo[k_] = (x, w, (L[a_] + L[b_]) / 2)
     if k_ < len(spec) - 1:
         bh = min(L[b_], L[spec[k_ + 1][2]])
@@ -392,7 +411,8 @@ for k_, (lb, w, a_, b_) in enumerate(spec):
 seg(int(bars[0][0]), 199, int(bars[-1][0]), 199, color="#6E8DBE", head=False)
 for bxc, top in bars:
     seg(int(bxc), 199, int(bxc), int(top) - 1, color="#6E8DBE", sw=0.9)
-card(x, YC - 22, 26, 44, "final<br>conv", fill="#FFFFFF", border="#B88A52", fs=S, lh="1.05", dashed=True)
+card(x, YC - 22, 26, 44, "final<br>conv", fill="#FFFFFF", border="#7F9CC8", fs=S, lh="1.05")
+ring(x, YC - 22, 26, 44)
 seg(x + 27, YC, 685, YC, color="#5A6B85")
 label(684, YC - 11, 26, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
 label(308, YC - 11, 26, Zt(i("k")) + "<br>16×11", fs=S)
@@ -428,7 +448,8 @@ for xx_, nm, ww in zip(xs_, names, ws_):
     if nm == "FiLM":
         bx(xx_, RY - 8, ww, 16, nm, FILM, fs=S)
     elif nm == "Conv1d":
-        card(xx_, RY - 8, ww, 16, nm, fill="#FFFFFF", border="#B88A52", fs=S, dashed=True)
+        bx(xx_, RY - 8, ww, 16, nm, FROZ, fs=S)
+        ring(xx_, RY - 8, ww, 16, pad=2)
     else:
         bx(xx_, RY - 8, ww, 16, nm, FROZ, fs=S)
 for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
@@ -440,7 +461,8 @@ label(326, CYD - 5, 24, "cond.<br>704", fs="7px", color="#2E4A73", lh="1.0")
 seg(349, CYD, 356, CYD, color="#6E8DBE", sw=1)
 bx(357, CYD - 6, 24, 12, "Mish", FROZ, fs="7px")
 seg(382, CYD, 389, CYD, color="#6E8DBE", sw=1)
-card(390, CYD - 6, 36, 12, "Linear", fill="#FFFFFF", border="#B88A52", fs="7px", dashed=True)
+bx(390, CYD - 6, 36, 12, "Linear", FROZ, fs="7px")
+ring(390, CYD - 6, 36, 12, pad=2)
 seg(427, CYD, fx, CYD, color="#6E8DBE", sw=1, head=False)
 seg(fx, CYD, fx, RY - 9, color="#6E8DBE", sw=1)
 note(fx + 3, CYD + 1, 24, i("γ") + ", " + i("β"))
@@ -453,7 +475,8 @@ seg(320, RY, 329, RY, color="#5A6B85")
 seg(320, RY, 320, 340, color="#5A6B85", head=False)
 seg(320, 340, end + 15, 340, color="#5A6B85", head=False)
 seg(end + 15, 340, end + 15, RY + 6, color="#5A6B85")
-card(418, 334, 118, 12, "residual: Identity / 1×1 Conv1d", fill="#FFFFFF", border="#B88A52", fs="7px", dashed=True)
+bx(418, 334, 118, 12, "residual: Identity / 1×1 Conv1d", FROZ, fs="7px")
+ring(418, 334, 118, 12, pad=2)
 band(596, 296, 108, 52, "#FBF6EE", "#B88A52", radius=4, dashed=True)
 label(600, 297, 100, "<b>LoRA-adapted layer</b>", fs=S, color="#6B5434", align="left")
 seg(600, 324, 604, 324, color="#5A6B85", head=False)
@@ -478,7 +501,8 @@ lock(316, 356)
 label(326, 355, 100, "frozen in post-training", fs=S, align="left")
 swatch(414, 357, FILM[0], FILM[1])
 label(424, 355, 40, "FiLM", fs=S, align="left")
-raw(f'<div style="position: absolute; left: 452px; top: 357px; width: 10px; height: 7px; box-sizing: border-box; background: #FFFFFF; border: 1px dashed #B88A52"></div>')
+raw(f'<div style="position: absolute; left: 453px; top: 358px; width: 8px; height: 5px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #7F9CC8"></div>')
+ring(453, 358, 8, 5, pad=1.8, r=2)
 label(465, 355, 140, "LoRA-adapted layer (all Linear / Conv1d)", fs=S, align="left")
 swatch(612, 357, COND[0], COND[1])
 label(622, 355, 60, "condition", fs=S, align="left")
