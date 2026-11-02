@@ -295,13 +295,13 @@ band(118, 262, 424, 128, "#ffffff", "#E6D8C3", radius=4)
 label(118, 265, 424, "<b>Two-stage DPPO post-training</b>")
 bx(126, 281, 196, 14, "<b>Stage 1</b> · PPO · 128 updates", YELB, fs=S)
 bx(328, 281, 206, 14, "<b>Stage 2</b> · PPO + success retention · 128 updates", ORB, fs=S)
-bx(126, 300, 150, 18, "Reward: arrival · progress · risk · time", YELB, fs=S)
+bx(126, 300, 200, 18, "Reward: terminal · progress · risk · time · space", YELB, fs=S)
 seg(161, 318, 161, 326, color="#B08A57")
 bx(356, 300, 178, 18, "Fixed successful-prefix reference bank", ("#FFFAF3", "#B88A52"), fs=S, dashed=True)
 # main row
 Y0, HB = 327, 34
 row = [(126, 70, "Rollouts<br>(H4, reward " + i("r<sub>t</sub>") + ")", YELB),
-       (204, 66, "Critic<br>" + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("β<sub>t</sub>") + ")", YELB),
+       (204, 66, "Critic<br>" + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("e<sub>t</sub>") + ")", YELB),
        (278, 66, "Advantage<br>" + i("Â<sub>t</sub>") + " (GAE)", YELB),
        (352, 64, "PPO loss<br>(denoising steps)", ORB, S)]
 for xx, ww, tx, pal, *fs_ in row:
@@ -330,7 +330,7 @@ label(296, 373, 190, "next iteration uses the updated LoRA", fs=S, italic=True, 
 # =============== (e) Receding horizon ===============
 band(556, 240, 154, 156, "#F3F9F9", "#94C6C0", radius=8)
 ttl(556, 243, 154, "Receding-horizon<br>Execution")
-label(556, 280, 154, "Generate 16 steps,<br>execute the first 4")
+label(556, 280, 154, "Generate 16 steps,<br>execute steps 3–6")
 cell = []
 for j in range(16):
     fi, bo = (("#DADDE0", "#9AA1A7") if j < 2 else ("#93CEC6", "#5A9E96") if j < 6 else ("#D3EBE8", "#8CC0B9") if j < 10 else ("#FFFFFF", "#A8B0B5"))

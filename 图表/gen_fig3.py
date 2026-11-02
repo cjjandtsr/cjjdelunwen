@@ -184,8 +184,11 @@ def cell(x, y, w, h, pal, op=1.0):
         f'background: {pal[0]}; border: 0.8px solid {pal[1]}; opacity: {op}"></div>')
 
 
+C_PA = ("#E3E6EA", "#A7AEB6")   # cells 0-1: overlap the observed history
+
+
 def shade(n):
-    return C_EX if n < 4 else (C_H8 if n < 8 else C_RS)
+    return C_PA if n < 2 else C_EX if n < 6 else (C_H8 if n < 10 else C_RS)
 
 
 def bracket(x1, x2, y, color="#4A5563"):
@@ -219,7 +222,7 @@ Zs = lambda k: i("Z") + "<sup>" + k + "</sup>"
 
 # ======================= (a) execution =======================
 band(8, 8, 702, 122, *PANEL, radius=8)
-ttl(8, 11, 702, "(a) Receding-Horizon Execution (deployment and training rollouts)")
+ttl(8, 11, 702, "(a) Receding-Horizon Execution (training rollouts and closed-loop evaluation)")
 # one decision
 card(18, 52, 56, 34, "observation<br>" + i("o<sub>t</sub>") + " (3 frames)", fill=COND[0], border=COND[1], fs=S)
 seg(75, 69, 87, 69, color=LINE)
@@ -228,32 +231,32 @@ seg(153, 69, 165, 69, color=LINE)
 CX0, CW = 166, 9
 for n in range(16):
     cell(CX0 + n * CW, 63, 8, 12, shade(n))
-for n in (0, 3, 7, 15):
+for n in (0, 2, 5, 9, 15):
     label(CX0 + n * CW - 4, 77, 16, str(n), fs="7px", color="#3A4452")
 E = lambda n: CX0 + n * CW + 8
 bracket(CX0, E(15), 36)
-bracket(CX0, E(7), 46)
-bracket(CX0, E(3), 56)
+bracket(CX0 + 2 * CW, E(9), 46)
+bracket(CX0 + 2 * CW, E(5), 56)
 label(CX0, 25, E(15) - CX0, "H16: planned trajectory (16 × 0.3 s)", fs=S)
-label(E(7) + 3, 41, 70, "H8: risk window", fs=S, align="left")
-label(E(3) + 3, 51, 70, "H4: executed", fs=S, align="left", bold=True, color="#2E4A73")
-note(CX0, 89, 150, "one cell = one 0.3 s waypoint segment", align="left")
+label(E(9) + 3, 41, 70, "H8: risk window", fs=S, align="left")
+label(E(5) + 3, 52, 70, "H4: executed", fs=S, align="left", bold=True, color="#2E4A73")
+note(CX0, 89, 190, "cell = 0.3 s; cells 0–1 overlap the observed history", align="left")
 
 # timeline of repeated decisions
-X0, TW = 360, 18          # px per 0.3 s
+X0, TW = 400, 18          # px per 0.3 s
 rows = [(X0, 40), (X0 + 72, 56), (X0 + 144, 72)]
 for r, (rx, ry) in enumerate(rows):
     for n in range(16):
-        x = rx + n * TW
+        x = rx + (n - 2) * TW
         if x + TW > 698:
             break
-        op = 1.0 if (n < 4 or r == 2) else 0.4
+        op = 1.0 if (2 <= n < 6 or r == 2) else 0.4
         cell(x, ry, TW - 1, 11, shade(n), op)
     seg(rx, 99, rx, ry + 12, color="#4F6FA3", sw=0.8, head=False, dash="2 1.5")
 # zoom from the single decision to the first row
-svgpath(f"M{E(15) + 2} 63 L{X0 - 2} 46", "#7A8496", 0.8, head=False, dash="3 2")
+svgpath(f"M{E(15) + 2} 63 L{X0 - 2 * TW - 2} 46", "#7A8496", 0.8, head=False, dash="3 2")
 # time axis
-seg(352, 104, 704, 104, color="#4A5563", sw=0.9)
+seg(356, 104, 704, 104, color="#4A5563", sw=0.9)
 for k in range(0, 19):
     x = X0 + k * TW
     if x > 696:
@@ -267,8 +270,8 @@ for k in range(3):
     diamond(X0 + 72 * k, 104)
 # executed path along the axis
 raw(f'<div style="position: absolute; left: {X0}px; top: 91px; width: {216}px; height: 3px; background: #6E8DBE; border-radius: 1.5px"></div>')
-note(X0 + 220, 86, 110, "flown path: executed H4 segments")
-note(X0 + 214, 27, 130, "faded: discarded at replan")
+note(X0 + 220, 86, 84, "flown path")
+note(586, 27, 118, "faded: discarded at replan")
 label(330, 118, 100, "", fs=S)
 note(X0 + 2, 116, 200, "◆ replan every 1.2 s · ticks: new observation every 0.3 s", align="left")
 
@@ -308,9 +311,9 @@ seg(471, 176, 579, 176, color=ALINE)
 label(488, 163, 80, i("r<sub>t</sub>"), fs=S, bold=True, color=AINK)
 # right: credit-assignment pipeline
 PX, PW = 580, 122
-card(PX, 164, PW, 24, "<b>reward " + i("r<sub>t</sub>") + "</b><br>H4 progress + H8 risk", fill=TB1[0], border=TB1[1], fs=S, color=AINK)
+card(PX, 164, PW, 24, "<b>reward " + i("r<sub>t</sub>") + "</b><br>terminal · progress · risk · time · space", fill=TB1[0], border=TB1[1], fs="7px", color=AINK)
 seg(PX + PW // 2, 189, PX + PW // 2, 197, color=ALINE)
-card(PX, 198, PW, 22, "critic " + i("V<sub>φ</sub>") + " + GAE → " + i("Â<sub>t</sub>"), fill=TB1[0], border=TB1[1], fs=S, color=AINK)
+card(PX, 198, PW, 22, "critic " + i("V<sub>φ</sub>") + "(" + i("c<sub>t</sub>") + ", " + i("e<sub>t</sub>") + ") + GAE → " + i("Â<sub>t</sub>"), fill=TB1[0], border=TB1[1], fs=S, color=AINK)
 note(PX - 54, 205, 52, i("V<sub>φ</sub>") + " ← returns", align="right", color=AINK)
 seg(PX + PW // 2, 221, PX + PW // 2, 229, color=ALINE)
 card(PX, 230, PW, 22, "<b>denoising discount</b> " + i("γ<sub>d</sub>") + "<sup><i>K</i>−<i>j</i>−1</sup>", fill=TB2[0], border=TB2[1], fs=S, color=AINK)
