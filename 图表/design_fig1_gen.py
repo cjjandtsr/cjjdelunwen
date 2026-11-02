@@ -237,14 +237,12 @@ heights = [44, 34, 25, 17]
 x = 4
 pos_enc, pos_dec = [], []
 for hh in heights:
-    u.append(cube(x, base - hh - dpt, 9, hh, dpt, *BL)); pos_enc.append((x + 5, base - hh - dpt))
-    u.append(cube(x + 13, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
+    u.append(cube(x, base - hh - dpt, 12, hh, dpt, *BL)); pos_enc.append((x + 6.5, base - hh - dpt))
     x += 17
 u.append(cube(x, base - 9 - dpt, 16, 7, dpt, "#C9D8EC", "#E3EBF6", "#A7BEDF", "#6F8BBA")); mid_c = x + 8
 x += 22
 for hh in reversed(heights):
-    u.append(cube(x, base - hh * 0.8 - 2, 2.5, hh * 0.8, 2, *OR))
-    u.append(cube(x + 5, base - hh - dpt, 9, hh, dpt, *BL)); pos_dec.append((x + 10, base - hh - dpt))
+    u.append(cube(x + 1, base - hh - dpt, 12, hh, dpt, *BL)); pos_dec.append((x + 7.5, base - hh - dpt))
     x += 17
 x += 2
 for (xe, ye), (xd, yd) in zip(pos_enc, reversed(pos_dec)):
@@ -261,17 +259,15 @@ for cx in cxs:
              f'<path d="M{cx:.1f} {bot} L{cx:.1f} {cy + 2.1}" stroke="#4F6FA3" stroke-width="0.8" fill="none"/>'
              f'<circle cx="{cx:.1f}" cy="{cy}" r="2.1" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/>')
 ux = 524 + (180 - UW) / 2
-raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with LoRA layers and skip connections" '
+raw(f'<svg width="{UW:.0f}" height="70" viewBox="0 0 {UW:.0f} 70" role="img" aria-label="Conditional 1D U-Net with FiLM in every residual block and skip connections" '
     f'style="position: absolute; left: {ux:.0f}px; top: 80px; width: {UW:.0f}px; height: 70px; overflow: visible">' + "".join(u) + '</svg>')
-raw('<svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" style="position: absolute; left: 551px; top: 152px; width: 7px; height: 7px; overflow: visible"><circle cx="3.5" cy="3.5" r="2.6" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/></svg>')
-label(560, 150, 140, "FiLM in each residual block, from [" + i("c<sub>t</sub>") + ", " + i("k") + "]", fs=S, align="left", color="#2E4A73")
 # legend
 lock(388, 174)
 label(398, 173, 120, "frozen after pretraining", fs=S, align="left")
 swatch(388, 187, "#B9CCE8", "#6F8BBA")
-label(398, 185, 60, "U-Net (frozen)", fs=S, align="left")
-swatch(456, 187, "#F2C3A0", "#C98A5E")
-label(466, 185, 60, "LoRA (trainable)", fs=S, align="left")
+label(398, 185, 60, "U-Net block", fs=S, align="left")
+raw('<svg width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" style="position: absolute; left: 444px; top: 187px; width: 7px; height: 7px; overflow: visible"><circle cx="3.5" cy="3.5" r="2.8" fill="#ffffff" stroke="#4F6FA3" stroke-width="0.8"/></svg>')
+label(454, 185, 70, "FiLM from [" + i("c<sub>t</sub>") + ", " + i("k") + "]", fs=S, align="left")
 # output
 seg(560, 170, 560, 177)
 bx(524, 178, 80, 16, "DDIM ×10", BLUEB)
@@ -279,7 +275,7 @@ seg(605, 186, 613, 186)
 dots = "".join(f'<circle cx="{3 + j * 5:.1f}" cy="{12 - 9 * (j / 11) + 4 * (j / 11) ** 2:.1f}" r="1.5" fill="#4F6FA3"/>' for j in range(12))
 raw(f'<svg width="62" height="16" viewBox="0 0 62 16" role="img" aria-label="Predicted trajectory" style="position: absolute; left: 614px; top: 177px; width: 62px; height: 16px; overflow: visible">'
     f'<path d="M3 12 Q 30 4 58 4" stroke="#7F9CC8" stroke-width="0.7" fill="none"/>{dots}</svg>')
-label(596, 198, 104, "Predicted trajectory " + Zk("0"))
+label(590, 198, 116, "Predicted action seq. " + Zk("0"))
 seg(678, 186, 703, 186, head=False)
 seg(703, 186, 703, 239)
 
