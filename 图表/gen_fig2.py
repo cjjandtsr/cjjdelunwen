@@ -207,9 +207,8 @@ ttl(8, 11, 702, "(a) Overall Network Flow")
 # input
 label(10, 30, 92, "<b>Observations (3 frames)</b>", fs=S)
 img(20, 42, 70, 45, "three", "Point clouds of the last three frames")
-bx(18, 90, 74, 14, i("P<sub>τ</sub>") + ", " + i("s<sub>τ</sub>") + ", " + i("τ") + " = 1…3", ("#FFFFFF", "#5A6B85"), fs=S)
-dims(14, 106, 82, "3 × (4096×3, 9)")
-seg(95, 66, 103, 66, color="#5A6B85")
+dims(14, 92, 82, "3 × (4096×3, 9)")
+seg(91, 66, 103, 66, color="#5A6B85")
 # shared encoder (same identity colours as Fig. 1)
 raw('<svg width="66" height="56" viewBox="0 0 66 56" aria-hidden="true" style="position: absolute; left: 104px; top: 38px; width: 66px; height: 56px; overflow: visible">'
     '<defs><linearGradient id="f2enc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E3EBF6"/><stop offset="1" stop-color="#C9D8EC"/></linearGradient></defs>'
@@ -217,23 +216,22 @@ raw('<svg width="66" height="56" viewBox="0 0 66 56" aria-hidden="true" style="p
 lk = ('<svg width="7" height="9" viewBox="0 0 7 9" role="img" aria-label="frozen" style="display: inline-block; vertical-align: -1px; margin-left: 2px; width: 7px; height: 9px">'
       '<path d="M1.6 4 V2.6 A1.9 1.9 0 0 1 5.4 2.6 V4" stroke="#2E3B4E" stroke-width="0.9" fill="none"/><rect x="0.5" y="4" width="6" height="4.6" rx="0.8" fill="#2E3B4E"/></svg>')
 raw(f'<div style="position: absolute; left: 104px; top: 38px; width: 66px; height: 56px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: {F}; line-height: 1.15; color: #1F3A63"><span>Shared<br>observation<br>encoder{lk}</span></div>')
-note(100, 97, 76, "per frame, frozen", align="center")
 seg(171, 66, 179, 66, color="#5A6B85")
 vbar(180, 40, 12, 52, COND)
 label(174, 29, 24, i("c<sub>t</sub>"), bold=True, color="#2E4A73")
 dims(172, 94, 28, "576")
 # core region
 band(206, 27, 360, 93, *CORE, radius=6)
-label(414, 106, 148, "<b>Iterative denoising</b> (" + i("K") + " = 10 DDIM steps)", fs=S, color="#2E4A73", align="right")
+label(414, 106, 148, "<b>Iterative denoising</b>", fs=S, color="#2E4A73", align="right")
 bx(214, 44, 64, 28, "", NEUT)
 img(218, 47, 56, 12, "noisy", "Gaussian noise")
 label(214, 59, 64, "noise " + Zt(i("K")), fs=S)
 dims(214, 73, 64, "16×11")
 bx(214, 87, 64, 16, "step " + i("k"), COND, fs=S)
 seg(279, 58, 297, 58, color="#5A6B85")
-seg(279, 95, 290, 95, color="#6E8DBE", head=False)
-seg(290, 95, 290, 66, color="#6E8DBE", head=False)
-seg(290, 66, 297, 66, color="#6E8DBE")
+seg(279, 95, 285, 95, color="#6E8DBE", head=False)
+seg(285, 95, 285, 68, color="#6E8DBE", head=False)
+seg(285, 68, 297, 68, color="#6E8DBE")
 # U-Net mini cubes (same drawing language as Fig. 1)
 u, base, dpt = [], 44, 3
 hs = [36, 27, 19, 12]
@@ -248,19 +246,18 @@ band(298, 40, 112, 66, "#FFFFFF", "#4C72B0", radius=4)
 raw(f'<svg width="{UW}" height="54" viewBox="0 0 {UW} 46" role="img" aria-label="Conditional 1D U-Net" style="position: absolute; left: {354 - UW / 2:.0f}px; top: 44px; width: {UW}px; height: 46px; overflow: visible">' + "".join(u) + '</svg>')
 label(298, 93, 112, "Conditional 1D U-Net" + lk, fs=S, bold=True)
 # condition from c_t into the U-Net (bottom)
-seg(186, 93, 186, 113, color="#6E8DBE", head=False)
-seg(186, 113, 354, 113, color="#6E8DBE", head=False)
-seg(354, 113, 354, 107, color="#6E8DBE")
+seg(186, 93, 186, 116, color="#6E8DBE", head=False)
+seg(186, 116, 354, 116, color="#6E8DBE", head=False)
+seg(354, 116, 354, 107, color="#6E8DBE")
 note(250, 103, 70, "condition " + i("c<sub>t</sub>"), align="left")
 # x0 prediction -> DDIM update -> loop
 seg(411, 70, 461, 70, color="#5A6B85")
 label(410, 56, 54, "predict " + Zt("0"), fs=S)
-dims(410, 72, 54, "16×11")
-bx(462, 58, 64, 24, "DDIM update<br>" + Zt(i("k")) + " → " + Zt(i("k") + "−1"), NEUT, fs=S)
-seg(494, 58, 494, 36, color="#5A6B85", head=False)
-seg(494, 36, 354, 36, color="#5A6B85", head=False)
-seg(354, 36, 354, 39, color="#5A6B85")
-label(420, 38, 60, "repeat × 10", fs=S, bold=True, color="#2E4A73")
+bx(462, 58, 64, 24, "DDIM<br>update", NEUT, fs=S)
+seg(494, 58, 494, 31, color="#5A6B85", head=False)
+seg(494, 31, 354, 31, color="#5A6B85", head=False)
+seg(354, 31, 354, 39, color="#5A6B85")
+label(420, 33, 60, "× 10", fs=S, bold=True, color="#2E4A73")
 seg(527, 70, 577, 70, color="#5A6B85")
 bx(578, 58, 50, 24, "De-<br>normalize", NEUT, fs=S)
 seg(629, 70, 637, 70, color="#5A6B85")
@@ -271,50 +268,46 @@ dots = "".join(f'<circle cx="{4 + j * 4.6:.1f}" cy="{30 - 22 * (j / 11) + 8 * (j
 raw(f'<svg width="58" height="34" viewBox="0 0 58 34" role="img" aria-label="Predicted trajectory" style="position: absolute; left: 642px; top: 48px; width: 58px; height: 34px; overflow: visible">'
     f'<path d="M4 30 Q 28 6 55 8" stroke="#4F6FA3" stroke-width="0.7" fill="none"/>{dots}</svg>')
 dims(638, 86, 66, "16 steps × 11")
-note(638, 97, 66, "position, velocity, acc., yaw", align="center")
 
 # ======================= (b) shared observation encoder =======================
 band(8, 132, 292, 220, *PANEL, radius=8)
 ttl(8, 135, 292, "(b) Shared Observation Encoder" + lk)
 band(14, 153, 228, 120, "#FFFFFF", "#B9C3D0", radius=4, dashed=True)
 label(18, 155, 100, "<b>Point-cloud branch</b>", fs=S, align="left")
-note(110, 155, 128, "4096 points → 128-d geometry feature", align="right")
-img(18, 170, 40, 31, "pc", "Body-frame point cloud")
+img(18, 170, 36, 28, "pc", "Body-frame point cloud")
 dims(16, 202, 44, "4096 × 3")
-seg(59, 186, 65, 186, color="#5A6B85")
-bx(66, 174, 40, 24, "Point<br>Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
-seg(107, 186, 113, 186, color="#5A6B85")
+seg(55, 186, 65, 186, color="#5A6B85")
+bx(66, 174, 36, 24, "Point<br>Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
+seg(103, 186, 113, 186, color="#5A6B85")
 # one stage, repeated x4
 band(114, 168, 124, 52, "#F2F6FB", "#8EA7CF", radius=4, dashed=True)
 label(118, 169, 80, "PointNet stage", fs=S, align="left", color="#3D5A80", bold=True)
 label(208, 169, 28, "×4", fs=S, align="right", color="#3D5A80", bold=True)
 bx(118, 181, 40, 16, "Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
-seg(159, 189, 183, 189, color="#5A6B85")
+seg(159, 189, 179, 189, color="#5A6B85")
 seg(138, 197, 138, 202, color="#5A6B85", head=False)
-bx(116, 203, 70, 13, "global max-pool", NEUT, fs=S)
-seg(187, 209, 190, 209, color="#5A6B85", head=False)
-seg(190, 209, 190, 196, color="#5A6B85")
-concat_c(190, 189)
-seg(197, 189, 201, 189, color="#5A6B85")
+bx(116, 203, 64, 13, "global max-pool", NEUT, fs=S)
+seg(181, 209, 186, 209, color="#5A6B85", head=False)
+seg(186, 209, 186, 196, color="#5A6B85")
+concat_c(186, 189)
+seg(192, 189, 201, 189, color="#5A6B85")
 bx(202, 181, 34, 16, "Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
 # after stages
 seg(176, 231, 176, 240, color="#5A6B85") if False else None
 bx(18, 238, 58, 26, "concat 4 stages<br>(4 × 128)", NEUT, fs=S)
-seg(77, 251, 83, 251, color="#5A6B85")
-bx(84, 241, 42, 20, "Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
-seg(127, 251, 133, 251, color="#5A6B85")
-bx(134, 241, 50, 20, "max-pool<br>over points", NEUT, fs=S)
-seg(185, 251, 205, 251, color="#5A6B85")
+seg(77, 251, 87, 251, color="#5A6B85")
+bx(88, 241, 38, 20, "Conv1d", ("#EAF0F8", "#8EA7CF"), fs=S)
+seg(127, 251, 137, 251, color="#5A6B85")
+bx(138, 241, 50, 20, "max-pool<br>over points", NEUT, fs=S)
+seg(189, 251, 205, 251, color="#5A6B85")
 vbar(206, 240, 10, 22, ("#C9D8EC", "#8EA7CF"))
 dims(216, 245, 26, "128")
 seg(176, 220, 176, 228, color="#5A6B85", head=False)
 seg(176, 228, 47, 228, color="#5A6B85", head=False)
 seg(47, 228, 47, 237, color="#5A6B85")
-note(60, 228, 120, "outputs of the 4 stages", align="left")
 # state branch
 band(14, 279, 228, 44, "#FFFFFF", "#B9C3D0", radius=4, dashed=True)
 label(18, 281, 100, "<b>State branch</b>", fs=S, align="left")
-note(110, 281, 128, "goal, distance, position, heading", align="right")
 bx(20, 296, 42, 20, "9-d state", ("#FFFFFF", "#5A6B85"), fs=S)
 seg(63, 306, 75, 306, color="#5A6B85")
 bx(76, 296, 84, 20, "MLP 9→64→64", ("#DCE6F3", "#7F9CC8"), fs=S)
@@ -323,106 +316,130 @@ vbar(206, 299, 10, 14, ("#DCE6F3", "#7F9CC8"))
 dims(216, 302, 26, "64")
 # fusion column
 seg(217, 251, 252, 251, head=False, color="#5A6B85") if False else None
-seg(243, 251, 250, 251, color="#5A6B85", head=False)
-seg(243, 306, 250, 306, color="#5A6B85", head=False)
-seg(250, 251, 250, 306, color="#5A6B85", head=False)
-seg(250, 278, 255, 278, color="#5A6B85")
+seg(241, 251, 245, 251, color="#5A6B85", head=False)
+seg(241, 306, 245, 306, color="#5A6B85", head=False)
+seg(245, 251, 245, 306, color="#5A6B85", head=False)
+seg(245, 278, 255, 278, color="#5A6B85")
 bx(256, 262, 38, 32, "concat<br>192 per<br>frame", NEUT, fs=S)
 seg(275, 294, 275, 309, color="#5A6B85")
 note(250, 296, 22, "×3", align="left")
 vbar(266, 310, 18, 30, COND)
 label(254, 340, 42, i("c<sub>t</sub>") + " 576", fs=S, bold=True, color="#2E4A73")
-note(14, 328, 236, "identical weights for the 3 frames; no LoRA in the encoder", align="left")
 
 # ======================= (c) one denoising call =======================
 band(308, 132, 402, 136, *PANEL, radius=8)
 ttl(308, 135, 402, "(c) One Denoising Call: Conditional 1D U-Net")
 bx(316, 154, 40, 14, "step " + i("k"), COND, fs=S)
-seg(357, 161, 363, 161, color="#6E8DBE")
-bx(364, 154, 62, 14, "time embedding", COND, fs=S)
+seg(357, 161, 367, 161, color="#6E8DBE")
+bx(368, 154, 60, 14, "time embedding", COND, fs=S)
 bx(316, 172, 40, 14, i("c<sub>t</sub>") + " (576)", COND, fs=S)
-seg(427, 161, 436, 161, color="#6E8DBE", head=False)
+seg(429, 161, 436, 161, color="#6E8DBE", head=False)
 seg(357, 179, 436, 179, color="#6E8DBE", head=False)
 seg(436, 161, 436, 179, color="#6E8DBE", head=False)
-seg(436, 170, 443, 170, color="#6E8DBE")
-bx(444, 162, 52, 16, "concat 704", COND, fs=S)
-seg(497, 170, 503, 170, color="#6E8DBE")
-bx(504, 160, 60, 20, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
-note(568, 160, 140, "scales and shifts every block's<br>features by (step, observation)", align="left")
-# blocks row
-BY, BH = 202, 26
-blocks = [("256@16", 340), ("512@8", 390), ("1024@4", 440), ("mid<br>1024@4", 488), ("512@4", 536), ("256@8", 586)]
-BW = 38
-seg(534, 180, 534, 188, color="#6E8DBE", head=False)
-seg(359, 188, 605, 188, color="#6E8DBE", head=False)
-for lb, bxx in blocks:
-    seg(bxx + BW // 2, 188, bxx + BW // 2, BY - 1, color="#6E8DBE", sw=0.9)
-    bx(bxx, BY, BW, BH, lb, FROZ, fs=S)
-    raw(f'<div style="position: absolute; left: {bxx + BW - 5}px; top: {BY + 3}px; width: 3px; height: {BH - 6}px; background: #E0A77E"></div>')
-label(312, BY + 2, 28, Zt(i("k")) + "<br>16×11", fs=S)
-seg(338, BY + 13, 339, BY + 13, color="#5A6B85") if False else None
-for (a_, b_, t_) in ((378, 389, "↓2"), (428, 439, "↓2"), (478, 487, ""), (526, 535, ""), (574, 585, "↑2")):
-    seg(a_, BY + 13, b_, BY + 13, color="#5A6B85")
-    if t_:
-        label(a_ - 4, BY - 9, 18, t_, fs=S, color="#4A5563")
-seg(625, BY + 13, 635, BY + 13, color="#5A6B85")
-label(618, BY - 9, 18, "↑2", fs=S, color="#4A5563")
-bx(636, BY, 30, BH, "final<br>conv", FROZ, fs=S)
-seg(667, BY + 13, 673, BY + 13, color="#5A6B85")
-label(672, BY + 2, 36, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
-label(312, BY + 28, 30, "noisy", fs=S, color=NOTE, italic=True)
-label(670, BY + 28, 40, "clean", fs=S, color="#2E4A73", italic=True)
+seg(436, 170, 447, 170, color="#6E8DBE")
+bx(448, 162, 50, 16, "concat 704", COND, fs=S)
+seg(499, 170, 509, 170, color="#6E8DBE")
+bx(510, 160, 58, 20, "<b>FiLM</b> (" + i("γ") + ", " + i("β") + ")", COND, fs=S)
+# blocks row: block height encodes temporal length; trapezoids are down/up-sampling
+def edge(x, y, h):
+    raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: 3px; height: {h}px; background: #E0A77E"></div>')
+
+
+def trapz(x0, h0, x1, h1, yc, fill, stroke, lbl):
+    w = x1 - x0
+    pts = f"0,{(max(h0, h1) - h0) / 2} {w},{(max(h0, h1) - h1) / 2} {w},{(max(h0, h1) + h1) / 2} 0,{(max(h0, h1) + h0) / 2}"
+    H_ = max(h0, h1)
+    raw(f'<svg width="{w}" height="{H_}" viewBox="0 0 {w} {H_}" aria-hidden="true" style="position: absolute; left: {x0}px; top: {yc - H_ / 2}px; width: {w}px; height: {H_}px; overflow: visible">'
+        f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="0.7"/></svg>')
+    label(x0 - 6, yc - H_ / 2 - 11, w + 12, lbl, fs=S, color="#4A5563")
+
+
+YC = 214
+HT = {16: 40, 8: 30, 4: 22}
+row = [("256@16", 340, 40, 16), ("512@8", 392, 40, 8), ("1024@4", 444, 40, 4), ("mid<br>1024@4", 493, 42, 4),
+       ("512@4", 544, 40, 4), ("256@8", 596, 40, 8)]
+seg(539, 180, 539, 186, color="#6E8DBE", head=False)
+seg(360, 186, 616, 186, color="#6E8DBE", head=False)
+geo = {}
+for lb, bxx, bw, L in row:
+    h = HT[L]
+    top = YC - h / 2
+    seg(bxx + bw // 2, 186, bxx + bw // 2, int(top) - 1, color="#6E8DBE", sw=0.9)
+    card(bxx, int(top), bw, h, lb, fill="#FFFFFF", border="#7F9CC8", fs=S, lh="1.05")
+    edge(bxx + bw - 5, int(top) + 3, h - 6)
+    geo[lb] = (bxx, bw, h)
+# down-sampling (strided Conv1d, carries LoRA) and up-sampling (ConvTranspose1d, no LoRA)
+trapz(380, 40, 392, 30, YC, "#F8E6D8", "#C98A5E", "↓2")
+trapz(432, 30, 444, 22, YC, "#F8E6D8", "#C98A5E", "↓2")
+seg(484, YC, 492, YC, color="#5A6B85")
+seg(535, YC, 543, YC, color="#5A6B85")
+trapz(584, 22, 596, 30, YC, "#E3EBF6", "#8EA7CF", "↑2")
+trapz(636, 30, 648, 40, YC, "#E3EBF6", "#8EA7CF", "↑2")
+card(648, YC - 20, 28, 40, "final<br>conv", fill="#FFFFFF", border="#7F9CC8", fs=S)
+edge(671, YC - 17, 34)
+label(306, YC - 11, 26, Zt(i("k")) + "<br>16×11", fs=S)
+seg(331, YC, 339, YC, color="#5A6B85")
+seg(330, YC + 14, 341, YC + 14, color="#5A6B85") if False else None
+seg(677, YC, 684, YC, color="#5A6B85")
+label(683, YC - 11, 26, Zt("0") + "<br>16×11", fs=S, color="#2E4A73", bold=True)
 # skip connections
-seg(459, BY + BH, 459, BY + BH + 6, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(459, BY + BH + 6, 555, BY + BH + 6, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(555, BY + BH + 6, 555, BY + BH + 1, color="#4A5563", sw=0.8, dash="2 1.5")
-seg(409, BY + BH, 409, BY + BH + 12, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(409, BY + BH + 12, 605, BY + BH + 12, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
-seg(605, BY + BH + 12, 605, BY + BH + 1, color="#4A5563", sw=0.8, dash="2 1.5")
-note(470, BY + BH + 13, 120, "skip connections (concat)", align="left")
-note(316, 250, 390, "each box = 2 conditional residual blocks (12 in total); encoder–bottleneck–decoder over the 16-step axis", align="left")
+def bot(lb):
+    bxx, bw, h = geo[lb]
+    return bxx + bw / 2, YC + h / 2
+(xa, ya), (xb, yb) = bot("1024@4"), bot("512@4")
+seg(int(xa), int(ya), int(xa), 236, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(int(xa), 236, int(xb), 236, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(int(xb), 236, int(xb), int(yb) + 1, color="#4A5563", sw=0.8, dash="2 1.5")
+(xa, ya), (xb, yb) = bot("512@8"), bot("256@8")
+seg(int(xa), int(ya), int(xa), 242, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(int(xa), 242, int(xb), 242, color="#4A5563", sw=0.8, head=False, dash="2 1.5")
+seg(int(xb), 242, int(xb), int(yb) + 1, color="#4A5563", sw=0.8, dash="2 1.5")
+note(470, 243, 120, "skip (concat)", align="left")
+edge(425, 157, 8)
+edge(565, 163, 14)
 
 # ======================= (d) residual block with LoRA =======================
 band(308, 276, 402, 76, *PANEL, radius=8)
 ttl(308, 279, 402, "(d) Conditional Residual Block with LoRA")
-label(314, 304, 12, i("x"), fs=S)
+label(310, 304, 10, i("x"), fs=S)
 names = ["Conv1d", "GN", "Mish", "FiLM", "Conv1d", "GN", "Mish"]
 ws_ = [32, 20, 24, 26, 32, 20, 24]
 xs_ = []
 xc = 330
 for ww in ws_:
-    xs_.append(xc); xc += ww + 6
+    xs_.append(xc); xc += ww + 9
 for xx_, nm, ww in zip(xs_, names, ws_):
     bx(xx_, 304, ww, 16, nm, COND if nm == "FiLM" else FROZ, fs=S)
+    if nm in ("Conv1d", "FiLM"):
+        raw(f'<div style="position: absolute; left: {xx_ + ww - 4}px; top: 307px; width: 2.5px; height: 10px; background: #E0A77E"></div>')
 for xx_, ww, nx in zip(xs_[:-1], ws_[:-1], xs_[1:]):
     seg(xx_ + ww, 312, nx - 1, 312, color="#5A6B85", sw=1)
 fx = xs_[3] + 13
-seg(fx, 297, fx, 303, color="#6E8DBE")
+seg(fx, 295, fx, 303, color="#6E8DBE")
 end = xs_[-1] + ws_[-1]
-seg(end, 312, end + 6, 312, color="#5A6B85")
-plus(end + 12, 312)
-seg(end + 17, 312, end + 21, 312, color="#5A6B85")
-label(end + 21, 306, 10, i("y"), fs=S, align="left")
-seg(324, 312, 329, 312, color="#5A6B85")
-seg(324, 312, 324, 328, color="#5A6B85", head=False)
-seg(324, 328, end + 12, 328, color="#5A6B85", head=False)
-seg(end + 12, 328, end + 12, 318, color="#5A6B85")
-note(332, 329, 200, "residual path (1×1 conv if channels change)", align="left")
-band(580, 296, 124, 52, "#FFFAF5", "#C98A5E", radius=4, dashed=True)
-label(584, 297, 60, "<b>LoRA</b> (trainable)", fs=S, color="#9A6A45", align="left")
-seg(584, 320, 588, 320, color="#5A6B85", head=False)
-seg(588, 313, 588, 337, color="#5A6B85", head=False)
-seg(588, 313, 593, 313, color="#5A6B85")
-bx(594, 307, 40, 13, i("W") + "<sub>0</sub>" + lk, FROZ, fs=S)
-seg(588, 337, 593, 337, color="#5A6B85")
-bx(594, 331, 17, 13, i("A"), LORA, fs=S)
-seg(612, 337, 616, 337, color="#5A6B85")
-bx(617, 331, 17, 13, i("B"), LORA, fs=S)
-seg(635, 313, 640, 313, color="#5A6B85", head=False)
-seg(635, 337, 640, 337, color="#5A6B85", head=False)
-seg(640, 313, 640, 337, color="#5A6B85", head=False)
-note(645, 306, 58, i("W") + " = " + i("W") + "<sub>0</sub> + " + i("BA") + "<br>rank 8<br>" + i("B") + " = 0 at start", align="left")
-note(316, 340, 260, "LoRA in all 14 Linear and 33 Conv1d layers (1.4% of parameters)", align="left")
+seg(end, 312, end + 9, 312, color="#5A6B85")
+plus(end + 15, 312)
+seg(end + 20, 312, end + 28, 312, color="#5A6B85")
+label(end + 29, 306, 10, i("y"), fs=S, align="left")
+seg(320, 312, 329, 312, color="#5A6B85")
+seg(320, 312, 320, 328, color="#5A6B85", head=False)
+seg(320, 328, end + 15, 328, color="#5A6B85", head=False)
+seg(end + 15, 328, end + 15, 318, color="#5A6B85")
+note(332, 329, 100, "residual", align="left")
+band(596, 296, 108, 52, "#FFFAF5", "#C98A5E", radius=4, dashed=True)
+label(600, 297, 100, "<b>LoRA</b> (trainable)", fs=S, color="#9A6A45", align="left")
+seg(600, 324, 604, 324, color="#5A6B85", head=False)
+seg(604, 313, 604, 337, color="#5A6B85", head=False)
+seg(604, 313, 613, 313, color="#5A6B85")
+bx(614, 307, 36, 13, i("W") + "<sub>0</sub>" + lk, FROZ, fs=S)
+seg(604, 337, 613, 337, color="#5A6B85")
+bx(614, 331, 15, 13, i("A"), LORA, fs=S)
+seg(630, 337, 638, 337, color="#5A6B85")
+bx(639, 331, 15, 13, i("B"), LORA, fs=S)
+seg(651, 313, 658, 313, color="#5A6B85", head=False)
+seg(655, 337, 658, 337, color="#5A6B85", head=False)
+seg(658, 313, 658, 337, color="#5A6B85", head=False)
+note(662, 319, 42, i("W") + " = " + i("W") + "<sub>0</sub><br>+ " + i("BA"), align="left")
 
 # zoom lines from (a) to (b), (c)
 seg(137, 118, 137, 131, color="#7A8496", sw=0.9, dash="3 2")

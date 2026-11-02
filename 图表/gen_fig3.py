@@ -15,7 +15,7 @@ A = {
 W, H = 718, 404
 F, T, S = "9.33px", "10.67px", "8px"   # 7 pt, 8 pt, 6 pt
 INK = "#1f2328"
-BLUE = "#4A7FE0"
+BLUE = "#6A84AE"
 ORANGE = "#E96D29"
 
 bands, arrows, cards, labels = [], [], [], []
@@ -148,113 +148,197 @@ def cube(x, y, w, h, d, front, top, side, stroke):
             f'<path d="M{x + w} {y + d} L{x + w + d} {y} L{x + w + d} {y + h} L{x + w} {y + h + d} Z" fill="{side}" stroke="{stroke}" stroke-width="0.6"/>')
 
 
-BL = ("#8BB7F4", "#C8DEFF", "#6595D5", "#3871B3")
-OR = ("#FF9D59", "#FFC59C", "#E96D29", "#C9541A")
-# Figure 3: two-layer decision process (a) and receding-horizon timing (b); 190 x 70 mm
-W, H = 718, 265
-FN, TITLE = "Fig3.dc.html", "Figure 3 Two-layer decision process and receding-horizon execution"
+BL = ("#B9CCE8", "#DCE6F3", "#93AED6", "#6F8BBA")
+OR = ("#F2C3A0", "#F8DCC7", "#E0A77E", "#C98A5E")
+# Figure 3 v2: (a) receding-horizon execution, common to deployment and rollouts;
+#              (b) post-training only: two-layer MDP and denoising credit assignment.
+W, H = 718, 338
+FN, TITLE = "Fig3.dc.html", "Figure 3 Execution and DPPO post-training"
+
+COND = ("#DCE6F3", "#6E8DBE")
+FROZ = ("#FFFFFF", "#7F9CC8")
+LORA = ("#F8DCC7", "#C98A5E")
+OUTC = ("#EAF0F8", "#4F6FA3")
+PANEL = ("#F7F9FC", "#A9BEDD")
+TPANEL = ("#FBF6EE", "#CDB089")        # training panel (amber family, as Fig. 1)
+TB1 = ("#F6EBDA", "#C49E6C")           # training block, light
+TB2 = ("#EDD9BC", "#B88A52")           # training block, darker (key quantity)
+NOTE = "#5A6270"
+AINK = "#6B5434"                       # amber text
+LINE = "#5A6B85"
+ALINE = "#9C7A4C"
+# cell shades: executed / risk window / rest of plan
+C_EX = ("#8EA7CF", "#6E8DBE")
+C_H8 = ("#C9D8EC", "#8EA7CF")
+C_RS = ("#EEF3FA", "#B7C9E5")
+lk = ('<svg width="7" height="9" viewBox="0 0 7 9" role="img" aria-label="frozen" style="display: inline-block; vertical-align: -1px; margin-left: 2px; width: 7px; height: 9px">'
+      '<path d="M1.6 4 V2.6 A1.9 1.9 0 0 1 5.4 2.6 V4" stroke="#2E3B4E" stroke-width="0.9" fill="none"/><rect x="0.5" y="4" width="6" height="4.6" rx="0.8" fill="#2E3B4E"/></svg>')
 
 
-def node(x, y, html, pal=BLUEB, r=13):
-    raw(f'<div style="position: absolute; left: {x - r}px; top: {y - r}px; width: {2*r}px; height: {2*r}px; box-sizing: border-box; border-radius: 50%; '
-        f'background: {pal[0]}; border: 1px solid {pal[1]}; display: flex; align-items: center; justify-content: center; font-size: 7.5px; line-height: 1"><span>{html}</span></div>')
+def note(x, y, w, text, align="left", color=NOTE):
+    label(x, y, w, text, fs=S, italic=True, color=color, align=align)
 
 
-def Z(t, k):
-    return i("Z") + "<sub>" + t + "</sub><sup>" + k + "</sup>"
+def cell(x, y, w, h, pal, op=1.0):
+    raw(f'<div style="position: absolute; left: {x}px; top: {y}px; width: {w}px; height: {h}px; box-sizing: border-box; '
+        f'background: {pal[0]}; border: 0.8px solid {pal[1]}; opacity: {op}"></div>')
 
 
-# ================= (a) two-layer decision process =================
-band(8, 8, 702, 140, "#EEF6F1", "#7FB09A", radius=8)
-ttl(8, 11, 702, "(a) Two-layer Decision Process")
-label(410, 13, 296, "environment MDP: one step = one decision " + i("t") + " (generate, execute H4, receive " + i("r<sub>t</sub>") + ")", fs=S, align="right", color="#4A5563")
+def shade(n):
+    return C_EX if n < 4 else (C_H8 if n < 8 else C_RS)
 
 
-def decision(x0, t, tlabel):
-    band(x0, 30, 330, 76, "#ffffff", "#BCD5C9", radius=4)
-    label(x0 + 6, 32, 80, "<b>Decision " + tlabel + "</b>", align="left")
-    bx(x0 + 8, 58, 28, 22, i("c<sub>" + t + "</sub>"), GREENB)
-    band(x0 + 46, 44, 194, 56, "#F7FBFF", "#9DB7D6", radius=4, dashed=True)
-    label(x0 + 46, 45, 194, "denoising MDP, " + i("K") + " = 10 DDIM steps", fs=S, color="#3D5A80")
-    seg(x0 + 37, 69, x0 + 51, 69)
-    xs_ = [x0 + 66, x0 + 106, x0 + 146, x0 + 182, x0 + 222]
-    labs_ = [Z(i(t), i("K")), Z(i(t), i("K") + "−1"), "⋯", Z(i(t), "1"), Z(i(t), "0")]
-    for j_, (xx_, lb) in enumerate(zip(xs_, labs_)):
-        if lb == "⋯":
-            label(xx_ - 10, 63, 20, "⋯", fs=T)
-        else:
-            node(xx_, 72, lb, ORB if j_ == 4 else BLUEB)
-    for a_, b_ in zip(xs_[:-1], xs_[1:]):
-        seg(a_ + 13, 72, b_ - 13, 72, sw=1)
-    label(x0 + 46, 87, 194, "each step: Gaussian transition, tractable log-probability", fs=S, italic=True, color="#4A5563")
-    seg(x0 + 235, 72, x0 + 251, 72)
-    bx(x0 + 252, 58, 70, 28, "Execute H4<br>(4 × 0.3 s)", REDB)
-    return xs_
+def bracket(x1, x2, y, color="#4A5563"):
+    raw(f'<svg width="{x2 - x1}" height="6" viewBox="0 0 {x2 - x1} 6" aria-hidden="true" style="position: absolute; left: {x1}px; top: {y}px; width: {x2 - x1}px; height: 6px; overflow: visible">'
+        f'<path d="M0.5 5 V1 H{x2 - x1 - 0.5} V5" stroke="{color}" stroke-width="0.8" fill="none"/></svg>')
 
 
-xa = decision(14, "t", i("t"))
-xb = decision(372, "t+1", i("t") + "+1")
-seg(337, 72, 371, 72)
-label(338, 56, 32, i("r<sub>t</sub>"))
-label(336, 78, 36, "new obs.", fs=S, color="#4A5563")
-label(702, 62, 8, "⋯", fs=T)
-# PPO strip
-bx(14, 116, 690, 26, "<b>Clipped PPO on every denoising transition</b> (" + i("t") + ", " + i("j") + "): probability ratio from per-step log-probabilities, advantage "
-   + i("Ã<sub>t,j</sub>") + " = " + i("γ") + "<sub>d</sub><sup>" + i("K") + "−" + i("j") + "−1</sup> Norm(" + i("Â<sub>t</sub>") + "); updates LoRA only", ("#ECF2CD", "#987019"))
-for xs_ in (xa, xb):
-    for xx_ in (xs_[0] + 20, xs_[1] + 20, xs_[3] + 20):
-        seg(int(xx_), 100, int(xx_), 115, color="#7A8F3A", sw=0.9, dash="2 1.5")
-
-# ================= (b) receding-horizon execution =================
-band(8, 156, 702, 101, "#EAF6FC", "#4AA8D8", radius=8)
-ttl(8, 159, 702, "(b) Receding-horizon Execution")
-CW = 18
-X0 = 100
+def diamond(x, y, s=5, fill="#4F6FA3"):
+    raw(f'<svg width="{2*s}" height="{2*s}" viewBox="0 0 {2*s} {2*s}" aria-hidden="true" style="position: absolute; left: {x - s}px; top: {y - s}px; width: {2*s}px; height: {2*s}px; overflow: visible">'
+        f'<path d="M{s} 0 L{2*s} {s} L{s} {2*s} L0 {s} Z" fill="{fill}" stroke="#ffffff" stroke-width="0.6"/></svg>')
 
 
-def cells(x0, y0, idx=True):
-    out = []
-    for j in range(16):
-        fi, bo = (("#BFC2C3", "#6B6E70") if j < 2 else ("#4AD3D5", "#009AA6") if j < 6 else ("#B0CEFA", "#5D88C2") if j < 10 else ("#FFFFFF", "#888888"))
-        out.append(f'<rect x="{j * CW}" y="0" width="{CW}" height="13" fill="{fi}" stroke="{bo}" stroke-width="0.6"/>')
-        if idx and j in (0, 2, 6, 10, 15):
-            out.append(f'<text x="{j * CW + CW / 2}" y="9.5" font-size="7.5" text-anchor="middle" fill="#1f2328" font-family="Tinos, serif">{j}</text>')
-    raw(f'<svg width="{16 * CW}" height="13" viewBox="0 0 {16 * CW} 13" role="img" aria-label="sixteen-step predicted sequence" style="position: absolute; left: {x0}px; top: {y0}px; width: {16 * CW}px; height: 13px; overflow: visible">' + "".join(out) + "</svg>")
+def circ(cx, cy, r, html, pal, bold=False):
+    fw = " font-weight: 700;" if bold else ""
+    raw(f'<div style="position: absolute; left: {cx - r}px; top: {cy - r}px; width: {2*r}px; height: {2*r}px; box-sizing: border-box; border-radius: 50%; '
+        f'background: {pal[0]}; border: 1px solid {pal[1]}; display: flex; align-items: center; justify-content: center; font-size: {S}; color: #1F3A63;{fw}"><span>{html}</span></div>')
 
 
-label(16, 193, 80, "<b>Decision " + i("t") + "</b>", align="left")
-cells(X0, 193)
-# brackets
-raw(f'<svg width="{16 * CW}" height="40" viewBox="0 0 {16 * CW} 40" aria-hidden="true" style="position: absolute; left: {X0}px; top: 183px; width: {16 * CW}px; height: 40px; overflow: visible">'
-    f'<path d="M0 6 L0 3 L{16 * CW} 3 L{16 * CW} 6" stroke="#4A5563" stroke-width="0.7" fill="none"/>'
-    f'<path d="M{2 * CW} 26 L{2 * CW} 29 L{6 * CW} 29 L{6 * CW} 26" stroke="#009AA6" stroke-width="0.9" fill="none"/>'
-    f'<path d="M{2 * CW} 33 L{2 * CW} 37 L{10 * CW} 37 L{10 * CW} 33" stroke="#5D88C2" stroke-width="0.9" fill="none"/></svg>')
-label(X0, 174, 16 * CW, "H16: full prediction (16 × 11)", fs=S)
-label(X0 + 6 * CW + 4, 207, 120, "H4: executed, progress reward", fs=S, align="left", color="#007A84")
-label(X0 + 10 * CW + 4, 216, 160, "H8: planning window, scored for risk " + i("ρ<sub>t</sub>"), fs=S, align="left", color="#3F6AA6")
-label(16, 231, 80, "<b>Decision " + i("t") + "+1</b>", align="left")
-cells(X0 + 4 * CW, 231, idx=False)
-seg(X0 + 4 * CW + 2 * CW, 206, X0 + 4 * CW + 2 * CW, 245, color="#2E9A8A", sw=0.9, head=False, dash="2 2")
-label(X0 + 6 * CW + 4, 245, 220, "replan after 1.2 s from new observations", fs=S, align="left", color="#1F7F72")
-# legend + time axis on the right
-for (lx, ly, fi, bo, tx) in ((470, 178, "#BFC2C3", "#6B6E70", "aligned, not executed"), (590, 178, "#4AD3D5", "#009AA6", "executed (H4)"),
-                             (470, 190, "#B0CEFA", "#5D88C2", "planned only"), (590, 190, "#FFFFFF", "#888888", "outside H8")):
-    swatch(lx, ly + 1, fi, bo)
-    label(lx + 10, ly - 1, 110, tx, fs=S, align="left")
-ax = ['<path d="M0 10 L194 10" stroke="#4A5563" stroke-width="0.8" fill="none"/><path d="M192 8 L196 10 L192 12 Z" fill="#4A5563"/>']
-for n in range(9):
-    xx_ = n * 23
-    if n % 4 == 0:
-        ax.append(f'<path d="M{xx_} 6 L{xx_ + 4} 10 L{xx_} 14 L{xx_ - 4} 10 Z" fill="#1F7F72"/>')
+def svgpath(d, color, sw, head=True, dash=None, op=1.0):
+    _mid[0] += 1
+    mid = f"f3arc{_mid[0]}"
+    mk = (f'<defs><marker id="{mid}" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" markerUnits="userSpaceOnUse" overflow="visible">'
+          f'<path d="M0 0 L4 2 L0 4 Z" fill="{color}"/></marker></defs>') if head else ""
+    ds = f' stroke-dasharray="{dash}"' if dash else ""
+    me = f' marker-end="url(#{mid})"' if head else ""
+    raw(f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true" style="position: absolute; left: 0px; top: 0px; width: {W}px; height: {H}px; overflow: visible; pointer-events: none">'
+        f'{mk}<path d="{d}" stroke="{color}" stroke-width="{sw}" fill="none" stroke-linecap="round" opacity="{op}"{ds}{me}/></svg>')
+
+
+Zs = lambda k: i("Z") + "<sup>" + k + "</sup>"
+
+# ======================= (a) execution =======================
+band(8, 8, 702, 122, *PANEL, radius=8)
+ttl(8, 11, 702, "(a) Receding-Horizon Execution (deployment and training rollouts)")
+# one decision
+card(18, 52, 56, 34, "observation<br>" + i("o<sub>t</sub>") + " (3 frames)", fill=COND[0], border=COND[1], fs=S)
+seg(75, 69, 87, 69, color=LINE)
+card(88, 48, 64, 42, "<b>policy " + i("π<sub>θ</sub>") + "</b><br>" + i("K") + " = 10 DDIM<br>steps", fill="#FFFFFF", border="#4F6FA3", fs=S)
+seg(153, 69, 165, 69, color=LINE)
+CX0, CW = 166, 9
+for n in range(16):
+    cell(CX0 + n * CW, 63, 8, 12, shade(n))
+for n in (0, 3, 7, 15):
+    label(CX0 + n * CW - 4, 77, 16, str(n), fs="7px", color="#3A4452")
+E = lambda n: CX0 + n * CW + 8
+bracket(CX0, E(15), 36)
+bracket(CX0, E(7), 46)
+bracket(CX0, E(3), 56)
+label(CX0, 25, E(15) - CX0, "H16: planned trajectory (16 × 0.3 s)", fs=S)
+label(E(7) + 3, 41, 70, "H8: risk window", fs=S, align="left")
+label(E(3) + 3, 51, 70, "H4: executed", fs=S, align="left", bold=True, color="#2E4A73")
+note(CX0, 89, 150, "one cell = one 0.3 s waypoint segment", align="left")
+
+# timeline of repeated decisions
+X0, TW = 360, 18          # px per 0.3 s
+rows = [(X0, 40), (X0 + 72, 56), (X0 + 144, 72)]
+for r, (rx, ry) in enumerate(rows):
+    for n in range(16):
+        x = rx + n * TW
+        if x + TW > 698:
+            break
+        op = 1.0 if (n < 4 or r == 2) else 0.4
+        cell(x, ry, TW - 1, 11, shade(n), op)
+    seg(rx, 99, rx, ry + 12, color="#4F6FA3", sw=0.8, head=False, dash="2 1.5")
+# zoom from the single decision to the first row
+svgpath(f"M{E(15) + 2} 63 L{X0 - 2} 46", "#7A8496", 0.8, head=False, dash="3 2")
+# time axis
+seg(352, 104, 704, 104, color="#4A5563", sw=0.9)
+for k in range(0, 19):
+    x = X0 + k * TW
+    if x > 696:
+        break
+    tall = 4 if k % 4 == 0 else 2
+    raw(f'<div style="position: absolute; left: {x - 0.4}px; top: {104 - tall}px; width: 0.8px; height: {2*tall}px; background: #4A5563"></div>')
+for k, t in enumerate(["0", "1.2", "2.4", "3.6"]):
+    label(X0 + 72 * k - 12, 109, 24, t, fs=S)
+label(674, 109, 32, "time (s)", fs=S, align="right")
+for k in range(3):
+    diamond(X0 + 72 * k, 104)
+# executed path along the axis
+raw(f'<div style="position: absolute; left: {X0}px; top: 91px; width: {216}px; height: 3px; background: #6E8DBE; border-radius: 1.5px"></div>')
+note(X0 + 220, 86, 110, "flown path: executed H4 segments")
+note(X0 + 214, 27, 130, "faded: discarded at replan")
+label(330, 118, 100, "", fs=S)
+note(X0 + 2, 116, 200, "◆ replan every 1.2 s · ticks: new observation every 0.3 s", align="left")
+
+# ======================= (b) post-training =======================
+band(8, 138, 702, 180, *TPANEL, radius=8)
+ttl(8, 141, 702, "(b) Post-Training Only: Two-Layer MDP and Denoising Credit Assignment")
+# left: two-layer MDP
+band(16, 160, 508, 150, "#FFFFFF", "#D8C6A6", radius=4, dashed=True)
+note(22, 168, 34, "outer<br>MDP", color=AINK)
+note(22, 222, 34, "inner<br>MDP", color=AINK)
+# outer row
+card(58, 166, 40, 20, i("s<sub>t</sub>"), fill=COND[0], border=COND[1], fs=F)
+card(430, 166, 40, 20, i("s<sub>t</sub>") + "<sub>+1</sub>", fill=COND[0], border=COND[1], fs=F)
+seg(78, 187, 78, 216, color=LINE)
+note(82, 196, 20, i("c<sub>t</sub>"))
+# inner chain
+CY, R = 228, 11
+xs = [78, 152, 222, 292, 366]
+circ(xs[0], CY, R, Zs(i("K")), ("#FFFFFF", "#8EA7CF"))
+circ(xs[1], CY, R, Zs(i("K") + "−1"), ("#F2F6FB", "#8EA7CF"))
+label(xs[2] - 12, CY - 7, 24, "⋯", fs=F)
+circ(xs[3], CY, R, Zs("1"), ("#DCE6F3", "#7F9CC8"))
+circ(xs[4], CY, R, Zs("0"), OUTC, bold=True)
+for a, b in ((0, 1), (1, 2), (2, 3), (3, 4)):
+    x1 = xs[a] + (R if a != 2 else 10) + 1
+    x2 = xs[b] - (R if b != 2 else 10) - 1
+    seg(x1, CY, x2, CY, color=LINE)
+label(168, CY - 34, 150, i("π<sub>θ</sub>") + "(" + Zs(i("k") + "−1") + " | " + Zs(i("k")) + ", " + i("c<sub>t</sub>") + ")", fs=S, align="left")
+note(168, CY - 20, 150, "Gaussian step, tractable log-prob")
+note(xs[2] - 30, CY + 13, 60, i("K") + " = 10 steps", align="center")
+# Z0 -> execute -> s_{t+1}
+seg(xs[4], CY - R, xs[4], 176, color=LINE, head=False)
+seg(xs[4], 176, 429, 176, color=LINE)
+note(xs[4] + 4, 186, 70, "execute H4")
+# reward to the right column
+seg(471, 176, 579, 176, color=ALINE)
+label(488, 163, 80, i("r<sub>t</sub>"), fs=S, bold=True, color=AINK)
+# right: credit-assignment pipeline
+PX, PW = 580, 122
+card(PX, 164, PW, 24, "<b>reward " + i("r<sub>t</sub>") + "</b><br>H4 progress + H8 risk", fill=TB1[0], border=TB1[1], fs=S, color=AINK)
+seg(PX + PW // 2, 189, PX + PW // 2, 197, color=ALINE)
+card(PX, 198, PW, 22, "critic " + i("V<sub>φ</sub>") + " + GAE → " + i("Â<sub>t</sub>"), fill=TB1[0], border=TB1[1], fs=S, color=AINK)
+note(PX - 54, 205, 52, i("V<sub>φ</sub>") + " ← returns", align="right", color=AINK)
+seg(PX + PW // 2, 221, PX + PW // 2, 229, color=ALINE)
+card(PX, 230, PW, 22, "<b>denoising discount</b> " + i("γ<sub>d</sub>") + "<sup><i>K</i>−<i>j</i>−1</sup>", fill=TB2[0], border=TB2[1], fs=S, color=AINK)
+seg(PX + PW // 2, 253, PX + PW // 2, 261, color=ALINE)
+card(PX, 261, PW, 25, "clipped PPO on " + i("R<sub>t,j</sub>") + "<br>+ λ" + i("L") + "<sub>keep</sub> (stage 2)", fill=TB1[0], border=TB1[1], fs=S, color=AINK)
+seg(PX + PW // 2, 287, PX + PW // 2, 294, color=ALINE)
+card(PX, 295, PW, 16, "<b>update LoRA only</b> · " + i("W") + "<sub>0</sub>" + lk, fill=LORA[0], border=LORA[1], fs=S, color="#7A4E2E")
+# credit arcs: thin (early denoising step) -> thick (final step)
+mids = [(xs[0] + xs[1]) / 2, (xs[1] + xs[2]) / 2 + 4, (xs[2] + xs[3]) / 2 - 4, (xs[3] + xs[4]) / 2]
+widths = [0.6, 1.0, 1.4, 1.9]
+jl = ["0", "1", i("K") + "−2", i("K") + "−1"]
+BUS = 278
+seg(PX - 1, 241, 540, 241, color=ALINE, sw=1.0, head=False)
+seg(540, 241, 540, BUS, color=ALINE, sw=1.0, head=False)
+seg(540, BUS, int(mids[0]), BUS, color=ALINE, sw=1.0, head=False)
+for m, w_, t in zip(mids, widths, jl):
+    seg(int(m), BUS, int(m), CY + 4, color=ALINE, sw=w_)
+    label(int(m) + 4, CY + 22, 30, i("j") + "=" + t, fs="7px", color=AINK, align="left")
+label(60, BUS + 6, 460, i("Ã<sub>t,j</sub>") + " = " + i("γ<sub>d</sub>") + "<sup><i>K</i>−<i>j</i>−1</sup>" + i("Â<sub>t</sub>") + " · line width = credit: later denoising steps receive more", fs=S, color=AINK)
+
+# legend
+for (lx, kind, tx) in ((16, "lock", "frozen"), (70, LORA, "trainable LoRA"), (152, C_EX, "executed segment (H4)"),
+                       (270, ("#FBF6EE", "#CDB089"), "post-training only (not run at deployment)")):
+    if kind == "lock":
+        lock(lx, 324)
     else:
-        ax.append(f'<circle cx="{xx_}" cy="10" r="2.2" fill="#4A5563"/>')
-    ax.append(f'<text x="{xx_}" y="24" font-size="7.5" text-anchor="middle" fill="#1f2328" font-family="Tinos, serif">{n * 0.3:.1f}</text>')
-ax.append('<text x="199" y="13" font-size="7.5" fill="#1f2328" font-family="Tinos, serif">time (s)</text>')
-raw('<svg width="230" height="26" viewBox="0 0 230 26" role="img" aria-label="observations every 0.3 s, replanning every 1.2 s" style="position: absolute; left: 478px; top: 216px; width: 230px; height: 26px; overflow: visible">' + "".join(ax) + "</svg>")
-raw('<svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true" style="position: absolute; left: 470px; top: 247px; width: 8px; height: 8px"><circle cx="4" cy="4" r="2.2" fill="#4A5563"/></svg>')
-label(480, 245, 90, "observe every 0.3 s", fs=S, align="left")
-raw('<svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true" style="position: absolute; left: 576px; top: 247px; width: 8px; height: 8px"><path d="M4 0 L8 4 L4 8 L0 4 Z" fill="#1F7F72"/></svg>')
-label(586, 245, 110, "replan every 1.2 s", fs=S, align="left")
+        swatch(lx, 325, kind[0], kind[1])
+    label(lx + 10, 323, 220, tx, fs=S, align="left")
 body = "\n".join(bands + arrows + cards + labels)
 html = f'''<!doctype html>
 <html lang="en">
