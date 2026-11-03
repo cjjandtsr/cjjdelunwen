@@ -332,12 +332,15 @@ seg(197, YB + HB, 197, 382, color=ALINE, head=False, dash="2 1.5")
 seg(197, 382, 182, 382, color=ALINE, head=False, dash="2 1.5")
 seg(182, 382, 182, YB + HB + 1, color=ALINE, dash="2 1.5")
 note(202, 376, 200, "critic " + i("φ") + " updated separately (value loss on returns)", color=AINK)
-# credit arcs: from the advantage box up to every denoising transition
+# credit: one trunk from the advantage box, fanning out to every denoising transition
+JX, JY = 372, 256
+seg(JX, YB - 1, JX, JY, color="#9C7A4C", sw=2.2, head=False)
+raw(f'<div style="position: absolute; left: {JX - 2.5}px; top: {JY - 2.5}px; width: 5px; height: 5px; border-radius: 50%; background: #9C7A4C"></div>')
 widths = [0.6, 0.9, 1.3, 1.7, 2.2]
 for m, w_ in zip(mids, widths):
-    svgpath(f"M{343} {YB - 1} C {343} 300, {m + 5} 290, {m + 5} {CY + 4}", "#9C7A4C", w_)
-note(392, 304, 70, "credit to each<br>denoising step", color=AINK)
-
+    ex = m + 5
+    svgpath(f"M{JX} {JY} C {JX - 0.35 * (JX - ex):.0f} {JY}, {ex} {JY - 8}, {ex} {CY + 4}", "#9C7A4C", w_)
+note(JX - 114, 302, 110, i("Ã<sub>t,j</sub>") + " to each denoising step", align="right", color=AINK)
 # legend
 for lx, pal, tx in ((16, C_EX, "executed (H4)"), (110, C_H8, "evaluated only (H8 tail)"), (238, C_RS, "outside window"), (330, C_PA, "aligned with history"),
                     (446, COND, "condition"), (510, TPANEL, "post-training only")):
