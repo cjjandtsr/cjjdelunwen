@@ -6,7 +6,9 @@
 直线飞行是确定的，同一任务的 5 次重复结局相同，所以按任务计，再乘重复数换算为回合。
 不含动力学、不含时间上限（最长直线距离见输出，均远小于 60 次决策 × 1.2 s 内 1 m/s 可飞的 72 m）。
 
-运行：python3 -I g12_straight_line.py <项目仓库根> <out_dir> name=bank.json [name=bank.json ...]
+运行：python3 -I g12_straight_line.py <项目仓库根> <out_dir> name=bank.json[:strata.json] [...]
+类别取冻结分类文件（dev/val：F5 的 dev_strata.json、val_strata.json；test12：analysis_20261103/test12_strata.json；
+扩展集：bank 自带 category，已由 C4 复核）。直线是否穿过障碍另用同一 segment 判定给出（blocked_full_segment）。
 输出：g12_tasks.csv（逐任务）、g12_summary.csv（按集合 × 类别）
 """
 import csv, json, math, os, sys, collections
@@ -14,28 +16,27 @@ root, out = sys.argv[1:3]
 banks = [a.split('=', 1) for a in sys.argv[3:]]
 code = os.path.join(root, 'Improved-3D-Diffusion-Policy')
 sys.path.insert(0, code); sys.path.insert(0, os.path.join(code, 'scripts'))
-from scripts.routea_paired_support.task_geometry_metrics import compute, band_density
-from scripts.analyze_routea_f5 import labels
+from diffusion_policy_3d.env.collision_geom import segment_obstacle_collision
 from diffusion_policy_3d.env.collision_geom import ObstacleSpec
 from diffusion_policy_3d.env.reward_v2_support.first_event import locate_first_event
 FIELDS = ('name', 'shape', 'x', 'y', 'z', 'yaw', 'radius', 'height', 'size_x', 'size_y', 'size_z')
 CAT = {'zero': 'Sparse', 'low': 'Moderate', 'high': 'Dense'}
 os.makedirs(out, exist_ok=True)
 rows = []
-for name, path in banks:
+for name, spec in banks:
+    path, _, sp = spec.partition(':')
     b = json.load(open(path))
+    frozen = {t['task_id']: t['labels']['w1'] for t in json.load(open(sp))['tasks']} if sp else {t['task_id']: t['category'] for t in b['tasks']}
     for t in b['tasks']:
         p, w = t['payload'], t['world_id']
         geo = b['worlds'][w]['geometry']
         obs = [ObstacleSpec(**{k: o[k] for k in FIELDS}) for o in geo]
         s, g = p['start_pos'], p['goal_pos']
         ev = locate_first_event([s, g], g, obs, 0.1, float(p['z_range'][1]), terminate_at_space_limits=False)
-        item = dict(task_id=t['task_id'], world=w, role=t['role'], split=name, start=s, goal=g, geometry=geo)
-        r = compute(item); r['band_rho'] = band_density(item)
-        rows.append(dict(split=name, task_id=t['task_id'], world=w, role=t['role'], cat=CAT[labels(r)['w1']],
+        rows.append(dict(split=name, task_id=t['task_id'], world=w, role=t['role'], cat=CAT[frozen[t['task_id']]],
                          repeats=len(b['episodes']) // len(b['tasks']), distance_m=round(math.dist(s, g), 4),
                          outcome='reached' if ev is not None and ev.kind == 'reached' else (ev.kind if ev else 'none'),
-                         blocked_full_segment=r['blocked']))
+                         blocked_full_segment=segment_obstacle_collision(s, g, obs, 0.1) is not None))
 with open(os.path.join(out, 'g12_tasks.csv'), 'w', newline='') as f:
     wr = csv.DictWriter(f, fieldnames=list(rows[0])); wr.writeheader(); wr.writerows(rows)
 summ = []
