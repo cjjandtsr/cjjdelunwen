@@ -67,18 +67,37 @@ for t in bank['tasks']:
     s, g = p['start_pos'], p['goal_pos']
     geo = bank['worlds'][w]['geometry']
     obs = [ObstacleSpec(**{k: o[k] for k in FIELDS}) for o in geo]
+    zr_ok = list(p['z_range']) == [1.0, 5.0]   # dev420/val20/test12 三个 bank 的环境高度界限均为 [1.0, 5.0]
+    bearing = math.atan2(g[1] - s[1], g[0] - s[0]); dyaw = (p['start_yaw'] - bearing + math.pi) % (2 * math.pi) - math.pi
+    yaw_ok = abs(dyaw) <= 0.3 + 1e-9
     rng_ok = all(-14 <= v <= 14 for v in (s[0], s[1], g[0], g[1])) and 1.3 <= s[2] <= 4.7 and 1.5 <= g[2] <= 4.5
     dist_ok = math.dist(s, g) > 0.5
     adm = RTB.admit(s, g, obs, t['role'])
     item = dict(task_id=t['task_id'], world=w, role=t['role'], split=bank['split'], start=s, goal=g, geometry=geo)
     r = compute(item); r['band_rho'] = band_density(item); r.pop('path', None); lab = labels(r)
-    declared = t.get('target_class') or t.get('density_class') or p.get('target_class')
-    rows.append(dict(task_id=t['task_id'], world=w, role=t['role'], rho_1=r['rho_1.0'], w1=lab['w1'], declared=declared,
+    declared = t.get('category')
+    rows.append(dict(task_id=t['task_id'], world=w, role=t['role'], rho_1=r['rho_1.0'], rho_2=r['rho_2.0'], w1=lab['w1'], declared=declared,
+                     z_range=p['z_range'], yaw_ok=yaw_ok, start=s, goal=g,
                      range_ok=rng_ok, dist_ok=dist_ok, admitted=adm))
     if expect:
-        check(rng_ok and dist_ok and adm, f"任务 {t['task_id'][:10]} 范围={rng_ok} 距离={dist_ok} 准入={adm}")
+        check(rng_ok and dist_ok and adm and yaw_ok, f"任务 {t['task_id'][:10]} 范围={rng_ok} 距离={dist_ok} 准入={adm} 偏航={yaw_ok}")
+        check(zr_ok, f"任务 {t['task_id'][:10]} 环境高度界限 z_range={p['z_range']}，应与其余三集相同 [1.0, 5.0]")
         if declared is not None: check(declared == lab['w1'], f"任务 {t['task_id'][:10]} 声明类别 {declared} = 复算 {lab['w1']}")
 
+if '--review-input' in sys.argv:
+    ri = json.load(open(sys.argv[sys.argv.index('--review-input') + 1]))
+    check(ri['candidate_content_hash'] == bank.get('candidate_content_hash'), f"候选 content_hash 与 bank 一致 {ri['candidate_content_hash'][:12]}…")
+    key = lambda w, a, b: (w, tuple(round(v, 9) for v in a), tuple(round(v, 9) for v in b))
+    sel = {key(x['world'], x['start'], x['goal']): x for x in ri['selected']}
+    check(len(sel) == len(ri['selected']) == len(rows), f"抽取清单 {len(ri['selected'])} 条与 bank 任务一一对应")
+    for r in rows:
+        x = sel.get(key(r['world'], r['start'], r['goal']))
+        check(x is not None and x['category'] == r['w1'] and abs(x['rho_1_0'] - r['rho_1']) < 1e-9 and abs(x['rho_2_0'] - r['rho_2']) < 1e-9 and x['role'] == r['role'],
+              f"任务 {r['task_id'][:10]} 抽取清单类别/ρ 与复算一致")
+    seeds = collections.defaultdict(set)
+    for x in ri['selected']: seeds[x['world']].add(x['sampling_seed'])
+    check(all(len(v) == 1 for v in seeds.values()) and len({next(iter(v)) for v in seeds.values()}) == len(seeds),
+          f"每世界一个采样种子且互不相同：{sorted(next(iter(v)) - 20261103 for v in seeds.values())}")
 cnt = collections.Counter(r['w1'] for r in rows)
 if expect: check(cnt == collections.Counter(zero=20, low=20, high=20), f'分类计数 {dict(cnt)}，期望 20/20/20')
 pw = collections.Counter((r['world'], r['w1']) for r in rows); pt = collections.Counter(r['world'] for r in rows)
@@ -90,5 +109,6 @@ json.dump(dict(schema='c4_testext_review_v1_claude', bank_hash=bank['content_has
                per_world_total=dict(pt), worlds=world_rows, tasks=rows, fails=fails),
           open(out, 'w'), indent=1, ensure_ascii=False, default=float)
 for x in notes[:3] + fails: print(x)
+print('PASS 项数', len(notes), '；FAIL 项数', len(fails))
 print('分类计数', dict(cnt), '角色', dict(roles), '世界', len(pt))
 print('ALL_PASS' if not fails else f'FAILED {len(fails)}')
