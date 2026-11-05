@@ -105,15 +105,16 @@ for split in ('ext', 'merged'):
     for cat in ('Sparse', 'Moderate', 'Dense'):
         for p in POL:
             rs = sel(p, split, cat); c = collections.Counter(r['outcome'] for r in rs); nw = len({r['world'] for r in rs})
+            effc = sorted(D0[r['task']] / r['path'] for r in rs if r['outcome'] == 'reached' and r['path'] > 0)
             cls.append(dict(split=split, category=cat, policy=p, n=len(rs), worlds=nw, reached=c['reached'],
                             collision=c['collision'], time_limit=c['time_limit'], arrival_pct=f"{100*c['reached']/len(rs):.1f}",
-                            ci=fmt(boot(rs, arr)) if nw >= 5 else 'n/a'))
+                            ci=fmt(boot(rs, arr)) if nw >= 5 else 'n/a', path_eff_median=f'{effc[len(effc)//2]:.3f}' if effc else ''))
         for a, b in (('P6', 'P0'), ('P6', 'P4'), ('P4', 'P0')):
             pr = pair(a, b, split, cat); nw = len({x['world'] for x in pr})
             cls.append(dict(split=split, category=cat, policy=f'{a}-{b}', n=len(pr), worlds=nw,
                             reached=sum(x['a'] == 'reached' for x in pr) - sum(x['b'] == 'reached' for x in pr),
                             collision='', time_limit='', arrival_pct=f'{100*dstat(pr):.1f}',
-                            ci=fmt(boot(pr, dstat)) if nw >= 5 else 'n/a'))
+                            ci=fmt(boot(pr, dstat)) if nw >= 5 else 'n/a', path_eff_median=''))
 
 trans = []
 for split in ('ext', 'merged'):
