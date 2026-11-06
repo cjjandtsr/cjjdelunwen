@@ -111,9 +111,9 @@
     "obs_encoder_total": 268608,
     "denoiser_total": 71254667,
     "normalizer": 78,
-    "value_critic_total": 214977,
-    "value_critic_layout": "LayerNorm(192) + 位置嵌入(3x192) + Linear(576->256) + SiLU + Linear(256->256) + SiLU + Linear(256->1) + history_weight(256)",
-    "value_critic_ref": "diffusion_policy_3d/rl/dppo_uav_rebuild/engine/value.py:13-39, build_system.py:73-77 (hidden_dim=256, history_scalar=True)",
+    "value_critic_total": 216257,
+    "value_critic_layout": "LayerNorm(192) + 位置嵌入(3x192) + Linear(576->256) + SiLU + Linear(256->256) + SiLU + Linear(256->1) + context_weight(256x6，零初始化，6维任务上下文e_t加到第一隐藏层)",
+    "value_critic_ref": "diffusion_policy_3d/rl/dppo_uav_rebuild/engine/value.py:13-39, build_system.py:73-77 (hidden_dim=256, episode_context=True，P6因task_protocol=open_space_finite_v1启用；见checkpointing/a2_fork.py:120)。2026-11-03更正：原214977为history_scalar(β)版本；216257为按结构推算，未从检查点加载核对",
     "post_training_trainable": {
       "lora_rank": 8,
       "lora_alpha": 8.0,
