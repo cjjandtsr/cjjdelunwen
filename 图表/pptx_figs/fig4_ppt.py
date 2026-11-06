@@ -6,7 +6,7 @@ from pp import Fig
 S = 8; F = 9.33
 PANEL = ("#F7F9FC", "#A9BEDD"); TPANEL = ("#FBF6EE", "#CDB089")
 EXE = ("#8EA7CF", "#6E8DBE"); EVA = ("#C9D8EC", "#8EA7CF"); OUT = ("#F4F7FB", "#C9D8EC"); ALI = ("#E3E6EA", "#AEB4BD")
-COND = ("#DCE6F3", "#6E8DBE"); TR = ("#F6EBDA", "#C49E6C"); TR2 = ("#EDD9BC", "#B88A52")
+COND = ("#E7E0F4", "#8E7CC3"); TR = ("#F6EBDA", "#C49E6C"); TR2 = ("#EDD9BC", "#B88A52")
 DARK = "#2E4A73"; GREY = "#5A6B85"; AMB = "#B88A52"; NOTE = "#5A6270"; TXT = "#6B5434"
 i = lambda s: f"<i>{s}</i>"
 
@@ -96,10 +96,10 @@ def build(slide, oy=0):
             seg(xa + R, NY, xb - R, NY, sw=1.0)
             mids.append((xa + xb) / 2)
     # condition bus into every transition
-    f.card(80, 222, 62, 26, "condition " + i("c") + "<sub>" + i("t") + "</sub><br>(3 frames)", COND[0], COND[1], fs=S, color=DARK)
-    seg(142, 235, mids[-1] - 4, 235, color="#6E8DBE", sw=0.9, head=False)
+    f.card(80, 222, 62, 26, "condition " + i("c") + "<sub>" + i("t") + "</sub><br>(3 frames)", COND[0], COND[1], fs=S, color="#4B3B78")
+    seg(142, 235, mids[-1] - 4, 235, color="#8E7CC3", sw=0.9, head=False)
     for m in mids:
-        seg(m - 4, 235, m - 4, NY + 3, color="#6E8DBE", sw=0.9)
+        seg(m - 4, 235, m - 4, NY + 3, color="#8E7CC3", sw=0.9)
     # output sequence
     seg(415, NY, 440, NY, color=DARK, sw=1.2)
     f.label(440, 168, 256, "action sequence (16 × 11)", fs=S, color=DARK, bold=True)

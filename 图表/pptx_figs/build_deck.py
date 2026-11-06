@@ -16,8 +16,11 @@ def clear(slide):
             tree.remove(el)
 
 
-if "2" in which:
+if "2" in which and "2b" not in which:
     s = prs.slides[1]; clear(s); fig2_ppt.build(s)
+if "2b" in which:
+    import fig2b_ppt
+    s = prs.slides[1]; clear(s); fig2b_ppt.build(s)
 if "3" in which:
     import fig4_ppt
     s = prs.slides[2]; clear(s); fig4_ppt.build(s)
