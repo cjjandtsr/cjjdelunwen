@@ -53,9 +53,6 @@ def build(slide, oy=0):
     f.label(260, 2, 150, "latest observation feeds the next decision", fs=S, italic=True, color=DARK)
     seg(329, 11, 329, 35, color=DARK, sw=0.9)
     # notes
-    note(548, 20, 166, "new observation after every 0.3 s segment")
-    note(548, 31, 166, "replan after 4 segments (every 1.2 s)")
-    note(548, 42, 166, "arrival or collision ends the episode early")
     # generated sequence at decision t
     f.label(76, 80, 40, "plan at<br>decision " + i("t"), fs=S, italic=True, color=NOTE, align="left")
     CW = 24; X0 = 118; CY = 82; CH = 18
@@ -72,7 +69,6 @@ def build(slide, oy=0):
     f.label(X0 + 10 * CW + 3, 110, 140, "<b>planning window</b> (steps 3–10)", fs=S, align="left", color=DARK)
     bracket(X0, X0 + 16 * CW, 123)
     f.label(X0 + 16 * CW + 3, 120, 160, "<b>generated sequence</b> (16 steps × 0.3 s)", fs=S, align="left", color=DARK)
-    note(548, 80, 166, "steps 1–2 align with the two past frames;<br>the unexecuted tail is regenerated<br>at the next decision")
 
     # ============ layer 2: denoising (inside decision t) ============
     f.rect(2, 152, 714, 110, *PANEL, radius=6)
@@ -113,14 +109,8 @@ def build(slide, oy=0):
     f.rect(2, 266, 714, 120, *TPANEL, radius=6)
     side(270, 112, "3", "Credit<br>assignment", "post-training only", (TR[0], None))
     BY, BH = 312, 30; MY = BY + BH / 2
-    # reward terms
-    f.rect(77, 274, 76, 104, "#FFFFFF", "#C49E6C", radius=3, dashed=True)
-    f.label(77, 276, 76, "<b>reward terms</b>", fs=S, color=TXT)
-    for k, t in enumerate(["terminal reward", "progress reward", "risk penalty", "time penalty", "detour cost"]):
-        f.card(82, 291 + k * 17, 66, 13, t, "#FBF6EE", "#D8C3A0", fs=S, radius=2, lw=0.8)
-    seg(153, MY, 157, MY, color=AMB)
     boxes = [
-        (158, 40, "reward<br>" + i("r") + "<sub>" + i("t") + "</sub>"),
+        (96, 56, "reward<br>" + i("r") + "<sub>" + i("t") + "</sub>"),
         (206, 62, "critic " + i("V") + "<sub>" + i("φ") + "</sub>(" + i("c") + "<sub>" + i("t") + "</sub>, " + i("e") + "<sub>" + i("t") + "</sub>)<br>+ GAE"),
         (276, 46, "normalize<br>" + "Â<sub>" + i("t") + "</sub>"),
         (330, 86, "Ã<sub>" + i("t,j") + "</sub> = " + i("γ") + "<sub>" + i("d") + "</sub><sup>" + i("K") + "−" + i("j") + "−1</sup><br>× Norm(Â<sub>" + i("t") + "</sub>)"),
