@@ -43,11 +43,11 @@ def build(slide, oy=0):
     seg(312, 26, 346, 26, color="#4A5563", sw=0.6, head=False, dash="dot")
     # row label
     f.label(76, 40, 40, "flight", fs=S, italic=True, color=NOTE, align="left")
-    f.card(118, 36, 34, 22, "<b>decide</b><br>" + i("t"), "#FFFFFF", DARK, fs=S, color=DARK)
-    f.card(312, 36, 34, 22, "<b>decide</b><br>" + i("t") + "+1", "#FFFFFF", DARK, fs=S, color=DARK)
+    f.card(118, 36, 34, 22, "<b>decision</b><br>" + i("t"), "#FFFFFF", DARK, fs=S, color=DARK)
+    f.card(312, 36, 34, 22, "<b>decision</b><br>" + i("t") + "+1", "#FFFFFF", DARK, fs=S, color=DARK)
     times = ["0–0.3 s", "0.3–0.6 s", "0.6–0.9 s", "0.9–1.2 s", "1.2–1.5 s", "1.5–1.8 s", "1.8–2.1 s", "2.1–2.4 s"]
     for k, ((a, b), t) in enumerate(zip(ex, times)):
-        f.card(a, 36, b - a, 22, f"exec {k % 4 + 1}<br>{t}", EXE[0], EXE[1], fs=S, radius=0)
+        f.card(a, 36, b - a, 22, f"step {k % 4 + 3}<br>{t}", EXE[0], EXE[1], fs=S, radius=0)
     f.card(506, 36, 30, 22, i("t") + "+2 …", "#FFFFFF", DARK, fs=S, color=DARK)
     # latest observation -> next decision
     f.label(260, 2, 150, "latest observation feeds the next decision", fs=S, italic=True, color=DARK)
@@ -67,11 +67,11 @@ def build(slide, oy=0):
         pal = ALI if k < 2 else EXE if k < 6 else EVA if k < 10 else OUT
         f.card(X0 + k * CW, CY, CW, CH, str(k + 1), pal[0], pal[1], fs=S, radius=0, lw=0.8)
     bracket(X0 + 2 * CW, X0 + 6 * CW, 103)
-    f.label(X0 + 6 * CW + 3, 100, 120, "<b>H4</b>: executed prefix (steps 3–6)", fs=S, align="left", color=DARK)
+    f.label(X0 + 6 * CW + 3, 100, 120, "<b>executed prefix</b> (steps 3–6)", fs=S, align="left", color=DARK)
     bracket(X0 + 2 * CW, X0 + 10 * CW, 113)
-    f.label(X0 + 10 * CW + 3, 110, 140, "<b>H8</b>: planning and risk window (3–10)", fs=S, align="left", color=DARK)
+    f.label(X0 + 10 * CW + 3, 110, 140, "<b>planning window</b> (steps 3–10)", fs=S, align="left", color=DARK)
     bracket(X0, X0 + 16 * CW, 123)
-    f.label(X0 + 16 * CW + 3, 120, 160, "<b>H16</b>: generated sequence, 16 × 0.3 s", fs=S, align="left", color=DARK)
+    f.label(X0 + 16 * CW + 3, 120, 160, "<b>generated sequence</b> (16 steps × 0.3 s)", fs=S, align="left", color=DARK)
     note(548, 80, 166, "steps 1–2 align with the two past frames;<br>the unexecuted tail is regenerated<br>at the next decision")
 
     # ============ layer 2: denoising (inside decision t) ============
@@ -102,7 +102,7 @@ def build(slide, oy=0):
         seg(m - 4, 235, m - 4, NY + 3, color="#6E8DBE", sw=0.9)
     # output sequence
     seg(415, NY, 440, NY, color=DARK, sw=1.2)
-    f.label(440, 168, 256, "action sequence " + i("H") + "16 (16 × 11)", fs=S, color=DARK, bold=True)
+    f.label(440, 168, 256, "action sequence (16 × 11)", fs=S, color=DARK, bold=True)
     for k in range(16):
         pal = ALI if k < 2 else EXE if k < 6 else EVA if k < 10 else OUT
         f.card(440 + k * 16, NY - 8, 16, 16, str(k + 1), pal[0], pal[1], fs=S, radius=0, lw=0.8)
@@ -115,8 +115,8 @@ def build(slide, oy=0):
     BY, BH = 312, 30; MY = BY + BH / 2
     # reward terms
     f.rect(77, 274, 76, 104, "#FFFFFF", "#C49E6C", radius=3, dashed=True)
-    f.label(77, 276, 76, "<b>reward terms</b> (Eq. 7)", fs=S, color=TXT)
-    for k, t in enumerate(["terminal", "progress", "risk (H4 + plan)", "time", "space"]):
+    f.label(77, 276, 76, "<b>reward terms</b>", fs=S, color=TXT)
+    for k, t in enumerate(["terminal reward", "progress reward", "risk penalty", "time penalty", "detour cost"]):
         f.card(82, 291 + k * 17, 66, 13, t, "#FBF6EE", "#D8C3A0", fs=S, radius=2, lw=0.8)
     seg(153, MY, 157, MY, color=AMB)
     boxes = [
@@ -124,8 +124,7 @@ def build(slide, oy=0):
         (206, 62, "critic " + i("V") + "<sub>" + i("φ") + "</sub>(" + i("c") + "<sub>" + i("t") + "</sub>, " + i("e") + "<sub>" + i("t") + "</sub>)<br>+ GAE"),
         (276, 46, "normalize<br>" + "Â<sub>" + i("t") + "</sub>"),
         (330, 86, "Ã<sub>" + i("t,j") + "</sub> = " + i("γ") + "<sub>" + i("d") + "</sub><sup>" + i("K") + "−" + i("j") + "−1</sup><br>× Norm(Â<sub>" + i("t") + "</sub>)"),
-        (424, 52, "ratio " + i("R") + "<sub>" + i("t,j") + "</sub><br>on H8"),
-        (484, 50, "clipped<br>PPO " + i("L") + "<sub>π</sub>"),
+        (426, 58, "clipped PPO<br>loss " + i("L") + "<sub>π</sub>"),
     ]
     prev = None
     for x, w, t in boxes:
@@ -133,22 +132,26 @@ def build(slide, oy=0):
         if prev:
             seg(prev, MY, x - 1, MY, color=AMB)
         prev = x + w
+    # probability ratio of every denoising step, computed over the planning window, enters the PPO loss
+    f.card(399, 352, 112, 24, "per-step ratio " + i("R") + "<sub>" + i("t,j") + "</sub><br>over the planning window", TR[0], TR[1], fs=S, color="#3A2F1E")
+    seg(455, 352, 455, BY + BH + 1, color=AMB)
     # critic: separate value-loss update
     seg(255, BY + BH, 255, 352, color=AMB, sw=0.8, head=False)
     seg(255, 352, 222, 352, color=AMB, sw=0.8, head=False)
     seg(222, 352, 222, BY + BH + 1, color=AMB, sw=0.8)
     note(206, 354, 120, "value loss: critic " + i("φ") + " updated separately", color=TXT)
-    # (+) with stage-2 retention
-    seg(534, MY, 544, MY, color=AMB)
-    f.plus(550, MY, r=6)
-    f.rect(484, 271, 132, 25, "#FFFFFF", AMB, radius=3, dashed=True)
-    f.label(484, 272, 132, "<b>stage 2</b>: fixed successful-behavior<br>retention " + i("λL") + "<sub>keep</sub>", fs=S, color=TXT, h=22, anchor="middle")
-    seg(550, 296, 550, MY - 7, color=AMB)
-    seg(556, MY, 565, MY, color=AMB)
-    f.card(566, BY, 62, BH, "actor loss<br>" + i("L") + "<sub>π</sub> + " + i("λL") + "<sub>keep</sub>", TR[0], TR[1], fs=S, color="#3A2F1E")
-    seg(628, MY, 635, MY, color=AMB)
-    f.card(636, BY, 76, BH, "<b>update LoRA</b> " + i("θ") + "<br>(backbone frozen)", TR2[0], TR2[1], fs=S, color="#3A2F1E", lw=1.2)
-    note(566, 346, 146, "stage 1: " + i("λ") + " = 0; stage 2: " + i("λ") + " calibrated once", color=TXT)
+    # (+) with the stage-2 regularizer
+    seg(484, MY, 494, MY, color=AMB)
+    PX_ = 500
+    f.plus(PX_, MY, r=6)
+    f.rect(444, 271, 150, 25, "#FFFFFF", AMB, radius=3, dashed=True)
+    f.label(444, 272, 150, "<b>Stage 2</b>: BC regularization on fixed<br>successful trajectories " + i("λL") + "<sub>reg</sub>", fs=S, color=TXT, h=22, anchor="middle")
+    seg(PX_, 296, PX_, MY - 7, color=AMB)
+    seg(PX_ + 6, MY, 515, MY, color=AMB)
+    f.card(516, BY, 70, BH, "actor loss<br>" + i("L") + "<sub>π</sub> + " + i("λL") + "<sub>reg</sub>", TR[0], TR[1], fs=S, color="#3A2F1E")
+    seg(586, MY, 594, MY, color=AMB)
+    f.card(595, BY, 114, BH, "<b>update LoRA</b> " + i("θ") + "<br>(pretrained weights frozen)", TR2[0], TR2[1], fs=S, color="#3A2F1E", lw=1.2)
+    note(516, 348, 196, "Stage 1: " + i("λ") + " = 0; Stage 2: " + i("λ") + " set once from gradient norms", color=TXT)
 
     # credit trunk from Ã box up into the denoising layer, fanning out (thin -> thick)
     TX, TY = 400, 252
@@ -160,7 +163,7 @@ def build(slide, oy=0):
 
     # legend
     LY = 391
-    items = [(("#FFFFFF", DARK), "decision (policy inference)"), (EXE, "executed (H4)"), (EVA, "evaluated only (H8 tail)"), (OUT, "outside window"), (ALI, "aligned with history"),
+    items = [(("#FFFFFF", DARK), "decision (policy inference)"), (EXE, "executed"), (EVA, "evaluated, not executed"), (OUT, "outside window"), (ALI, "aligned with history"),
              (COND, "condition"), (TR, "post-training only")]
     x = 12
     for pal, t in items:

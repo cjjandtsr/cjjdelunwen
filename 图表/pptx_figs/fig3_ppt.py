@@ -161,8 +161,8 @@ def build(slide, variant="curve", oy=0):
         f.label(xs[m + 1] - 5, zs[m + 1] - 13, 10, str(m + 1), fs=S, color=DARK)
     f.oval(xs[0], zs[0], 3.2, fill=DARK, line=DARK)
     note(xs[0] - 40, zs[0] + 5, 60, "UAV at decision " + i("t"), align="left", color=DARK)
-    f.label(xs[1] - 6, zs[0] + 16, 70, "executed 1–4", fs=S, color=DARK, align="left")
-    f.label(xs[5] - 4, zs[0] + 16, 70, "planned 5–8", fs=S, color="#6E8DBE", align="left")
+    f.label(xs[1] - 6, zs[0] + 16, 70, "executed prefix 1–4", fs=S, color=DARK, align="left")
+    f.label(xs[5] - 2, zs[0] + 26, 80, "unexecuted plan 5–8", fs=S, color="#6E8DBE", align="left")
 
     # bar chart of q_m
     BX0, BYB, BW, GAP, HS = 604, 180, 10, 3, 0.3
