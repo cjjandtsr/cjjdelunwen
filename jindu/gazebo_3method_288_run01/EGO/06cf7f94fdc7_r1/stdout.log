@@ -1,0 +1,827 @@
+GAZEBO_PLUGIN_PATH :/root/autodl-tmp/AUV/PX4-Autopilot/build/px4_sitl_default/build_gazebo
+GAZEBO_MODEL_PATH :/root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/models
+LD_LIBRARY_PATH /root/autodl-tmp/AUV/catkin_ws0/devel/lib:/opt/ros/noetic/lib:/root/autodl-tmp/AUV/PX4-Autopilot/build/px4_sitl_default/build_gazebo
+════════════════════════════════════════════════════════════
+  BC TRIAL  tier=EGO world_id=routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039 trial=1
+  world : /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039.world
+  spawn : (-12.1277961731, 2.9571912289, z=0 地面) yaw=1.1182818387   → odom 原点 = 起点
+  takeoff target: odom (0, 0, 3.9348797798)   [offboard_node_goto]
+  goal  : world (-7.4701490402, 11.5704622269, 4.2145624161)  → odom (4.6576471329, 8.6132709980, 4.2145624161)   frame=world
+  obs   : /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039.world.obstacles.json
+  timeout=240s rviz=0  ckpt=/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/2026.08.16/08.53.26_e5_lambda0p5/checkpoints/latest.ckpt
+  engine=ego  policy_type=auto  lora_enabled=true  lora_ckpt=<none>
+  out   : /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/EGO/06cf7f94fdc7_r1/result.json
+  python3: /root/autodl-tmp/conda_envs/idp3/bin/python3 Python 3.8.20
+════════════════════════════════════════════════════════════
+[run_task_flight] 清理所有进程...
+[run_task_flight] 启动 SITL: /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039.world  spawn=(-12.1277961731,2.9571912289,0) yaw=1.1182818387
+[start_sitl] DISPLAY=:1  (空则深度点云不会发布)
+[start_sitl] 清理旧进程...
+[start_sitl] 启动 SITL (系统 python 优先, world=/root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039.world)...
+[start_sitl] gui=false
+[start_sitl] spawn=(-12.1277961731, 2.9571912289, 0) yaw=1.1182818387
+[start_sitl] 日志: /root/autodl-tmp/logs/sitl.log
+[start_sitl] 已后台启动。看进度: tail -f /root/autodl-tmp/logs/sitl.log
+[run_task_flight] 启动 MAVProxy 地面站 (udpout:127.0.0.1:18570)...
+[run_task_flight] 等待 MAVROS connected (上限 120s)...
+[run_task_flight] ✓ MAVROS connected
+[run_task_flight] 设置 COM_RCL_EXCEPT=4, 上限 120s...
+[run_task_flight] ✓ COM_RCL_EXCEPT = 4 (写 0 次)
+[run_task_flight] offboard 起飞 (target odom 0,0,3.9348797798), 飞行 30s, 等 40s...
+[run_task_flight]   ⚠ offboard_node_goto 仍存活, 兜底 pkill
+[run_task_flight]   ✓ 当前模式: AUTO.LOITER
+[run_task_flight]   起飞后 odom 位置: (0.01772051304578781 0.06288235634565353 4.1505937576293945 )  期望 (0, 0, 3.9348797798)
+[run_task_flight] 启动 px4ctrl...
+[run_task_flight]   px4ctrl PID: 457595, 等 12s...
+... logging to /root/.ros/log/a752bed6-daa2-11f1-96b1-0242ac11000a/roslaunch-autodl-container-b97c4a8ab8-708d1592-457595.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[31mWARNING: disk usage in log directory [/root/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/px4ctrl/launch/run_node.launch
+[1mstarted roslaunch server http://autodl-container-b97c4a8ab8-708d1592:34013/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /px4ctrl/auto_takeoff_land/enable: True
+ * /px4ctrl/auto_takeoff_land/enable_auto_arm: True
+ * /px4ctrl/auto_takeoff_land/no_RC: True
+ * /px4ctrl/auto_takeoff_land/takeoff_height: 1.0
+ * /px4ctrl/auto_takeoff_land/takeoff_land_speed: 0.3
+ * /px4ctrl/ctrl_freq_max: 100.0
+ * /px4ctrl/debug: True
+ * /px4ctrl/full_thrust: 13.6
+ * /px4ctrl/gain/normal/KAngP: 10.0
+ * /px4ctrl/gain/normal/KAngR: 10.0
+ * /px4ctrl/gain/normal/KAngY: 5.0
+ * /px4ctrl/gain/normal/Kp0: 3.5
+ * /px4ctrl/gain/normal/Kp1: 3.5
+ * /px4ctrl/gain/normal/Kp2: 3.5
+ * /px4ctrl/gain/normal/Kv0: 3.5
+ * /px4ctrl/gain/normal/Kv1: 3.5
+ * /px4ctrl/gain/normal/Kv2: 3.5
+ * /px4ctrl/gain/normal/Kvd0: 0.0
+ * /px4ctrl/gain/normal/Kvd1: 0.0
+ * /px4ctrl/gain/normal/Kvd2: 0.0
+ * /px4ctrl/gain/normal/Kvi0: 0.0
+ * /px4ctrl/gain/normal/Kvi1: 0.0
+ * /px4ctrl/gain/normal/Kvi2: 0.0
+ * /px4ctrl/gain/track/Ka0: 1.0
+ * /px4ctrl/gain/track/Ka1: 1.0
+ * /px4ctrl/gain/track/Ka2: 1.0
+ * /px4ctrl/gain/track/Kp0: 1.5
+ * /px4ctrl/gain/track/Kp1: 1.5
+ * /px4ctrl/gain/track/Kp2: 1.5
+ * /px4ctrl/gain/track/Krp: 30.0
+ * /px4ctrl/gain/track/Kv0: 1.5
+ * /px4ctrl/gain/track/Kv1: 1.5
+ * /px4ctrl/gain/track/Kv2: 1.5
+ * /px4ctrl/gain/track/Kvi0: 0.2
+ * /px4ctrl/gain/track/Kvi1: 0.2
+ * /px4ctrl/gain/track/Kvi2: 0.2
+ * /px4ctrl/gain/track/Kyaw: 10.0
+ * /px4ctrl/gra: 9.81
+ * /px4ctrl/hov_percent: 0.72
+ * /px4ctrl/leader: True
+ * /px4ctrl/low_voltage: 13.2
+ * /px4ctrl/mass: 1.0
+ * /px4ctrl/max_angle: 30
+ * /px4ctrl/max_manual_vel: 1.0
+ * /px4ctrl/msg_timeout/bat: 0.5
+ * /px4ctrl/msg_timeout/cmd: 0.5
+ * /px4ctrl/msg_timeout/imu: 0.5
+ * /px4ctrl/msg_timeout/odom: 0.5
+ * /px4ctrl/msg_timeout/rc: 0.5
+ * /px4ctrl/perform_aerodynamics_compensation: False
+ * /px4ctrl/pose_solver: 1
+ * /px4ctrl/rc_reverse/pitch: False
+ * /px4ctrl/rc_reverse/roll: False
+ * /px4ctrl/rc_reverse/throttle: True
+ * /px4ctrl/rc_reverse/yaw: False
+ * /px4ctrl/rotor_drag/k_thrust_horz: 0.0
+ * /px4ctrl/rotor_drag/x: 0.0
+ * /px4ctrl/rotor_drag/y: 0.0
+ * /px4ctrl/rotor_drag/z: 0.0
+ * /px4ctrl/thrust_model/K1: 0.7583
+ * /px4ctrl/thrust_model/K2: 1.6942
+ * /px4ctrl/thrust_model/K3: 0.6786
+ * /px4ctrl/thrust_model/accurate_thrust_model: False
+ * /px4ctrl/thrust_model/hover_percentage: 0.72
+ * /px4ctrl/thrust_model/print_value: False
+ * /px4ctrl/use_bodyrate_ctrl: False
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    px4ctrl (px4ctrl/px4ctrl_node)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/px4ctrl/launch/run_node.launch http://localhost:11311
+[1mprocess[px4ctrl-1]: started with pid [457610][0m
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+[33m[WARN] [1794067463.519461811, 60.160000000]: PX4CTRL] Remote controller disabled, be careful![0m
+[33m[WARN] [1794067463.520720011, 60.164000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794067464.533745975, 61.176000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067464.533806833, 61.176000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067465.573429785, 62.216000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067466.574310026, 63.216000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067466.602172826, 63.244000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067467.595072953, 64.236000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067467.635069080, 64.276000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067468.615740191, 65.256000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067468.675931570, 65.316000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067469.636851402, 66.276000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067469.704671430, 66.344000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067470.657097156, 67.296000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067470.716943183, 67.356000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067471.677522166, 68.316000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067471.737848826, 68.376000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067472.698290627, 69.336000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067472.778401857, 69.416000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] 配置 px4ctrl...
+[33m[WARN] [1794067473.819077387, 70.356000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067473.905089692, 70.448000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067474.813354750, 71.376000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067474.912686098, 71.476000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067475.831896399, 72.396000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067475.924169609, 72.488000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067476.852605818, 73.416000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067476.952484641, 73.516000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067477.881952864, 74.436000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067477.992184028, 74.548000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067478.894351258, 75.456000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067479.026373617, 75.588000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067479.914386698, 76.476000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067480.054464162, 76.616000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794067480.054525022, 76.616000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067481.016905215, 77.480000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067481.147254244, 77.620000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067482.007344899, 78.500000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067482.154508139, 78.648000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067483.025412448, 79.520000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067483.185654419, 79.680000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067484.046500890, 80.540000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067484.226517010, 80.720000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067485.067000900, 81.560000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067485.301195355, 81.748000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067486.134637213, 82.580000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067486.334600832, 82.780000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067487.154292542, 83.600000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067487.374743739, 83.820000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067488.175107169, 84.620000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067488.403043041, 84.848000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067489.195968367, 85.640000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] ✓ px4ctrl 配置完成
+[run_task_flight] 启动 EGO planner, launch=single_run_in_gazebo_task.launch, goal odom=(4.6576471329, 8.6132709980, 4.2145624161)...
+[run_task_flight]   EGO PID: 457984, 等 10s...
+[33m[WARN] [1794067489.436120985, 85.880000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+... logging to /root/.ros/log/a752bed6-daa2-11f1-96b1-0242ac11000a/roslaunch-autodl-container-b97c4a8ab8-708d1592-457984.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[31mWARNING: disk usage in log directory [/root/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/ego-planner-swarm/src/planner/plan_manage/launch/single_run_in_gazebo_task.launch
+[1mstarted roslaunch server http://autodl-container-b97c4a8ab8-708d1592:41947/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /drone_0_ego_planner_node/bspline/limit_acc: 0.25
+ * /drone_0_ego_planner_node/bspline/limit_ratio: 1.1
+ * /drone_0_ego_planner_node/bspline/limit_vel: 0.5
+ * /drone_0_ego_planner_node/evaluation_mode: False
+ * /drone_0_ego_planner_node/fsm/emergency_time: 1.0
+ * /drone_0_ego_planner_node/fsm/fail_safe: True
+ * /drone_0_ego_planner_node/fsm/flight_type: 1
+ * /drone_0_ego_planner_node/fsm/planning_horizen_time: 3.0
+ * /drone_0_ego_planner_node/fsm/planning_horizon: 7.5
+ * /drone_0_ego_planner_node/fsm/realworld_experiment: False
+ * /drone_0_ego_planner_node/fsm/thresh_no_replan_meter: 1.0
+ * /drone_0_ego_planner_node/fsm/thresh_replan_time: 1.0
+ * /drone_0_ego_planner_node/fsm/waypoint0_x: 16.0
+ * /drone_0_ego_planner_node/fsm/waypoint0_y: 0.0
+ * /drone_0_ego_planner_node/fsm/waypoint0_z: 2.0
+ * /drone_0_ego_planner_node/fsm/waypoint1_x: 8.0
+ * /drone_0_ego_planner_node/fsm/waypoint1_y: 0.0
+ * /drone_0_ego_planner_node/fsm/waypoint1_z: 1.2
+ * /drone_0_ego_planner_node/fsm/waypoint2_x: 13.0
+ * /drone_0_ego_planner_node/fsm/waypoint2_y: 4.0
+ * /drone_0_ego_planner_node/fsm/waypoint2_z: 1.0
+ * /drone_0_ego_planner_node/fsm/waypoint3_x: 4.0
+ * /drone_0_ego_planner_node/fsm/waypoint3_y: 5.0
+ * /drone_0_ego_planner_node/fsm/waypoint3_z: 1.5
+ * /drone_0_ego_planner_node/fsm/waypoint4_x: 15.0
+ * /drone_0_ego_planner_node/fsm/waypoint4_y: 0.0
+ * /drone_0_ego_planner_node/fsm/waypoint4_z: 1.0
+ * /drone_0_ego_planner_node/fsm/waypoint_num: 1
+ * /drone_0_ego_planner_node/grid_map/cx: 320.5
+ * /drone_0_ego_planner_node/grid_map/cy: 240.5
+ * /drone_0_ego_planner_node/grid_map/depth_filter_margin: 2
+ * /drone_0_ego_planner_node/grid_map/depth_filter_maxdist: 5.0
+ * /drone_0_ego_planner_node/grid_map/depth_filter_mindist: 0.2
+ * /drone_0_ego_planner_node/grid_map/depth_filter_tolerance: 0.15
+ * /drone_0_ego_planner_node/grid_map/frame_id: world
+ * /drone_0_ego_planner_node/grid_map/fx: 554.254691191187
+ * /drone_0_ego_planner_node/grid_map/fy: 554.254691191187
+ * /drone_0_ego_planner_node/grid_map/ground_height: -0.01
+ * /drone_0_ego_planner_node/grid_map/k_depth_scaling_factor: 1000.0
+ * /drone_0_ego_planner_node/grid_map/local_map_margin: 10
+ * /drone_0_ego_planner_node/grid_map/local_update_range_x: 5.5
+ * /drone_0_ego_planner_node/grid_map/local_update_range_y: 5.5
+ * /drone_0_ego_planner_node/grid_map/local_update_range_z: 4.5
+ * /drone_0_ego_planner_node/grid_map/map_size_x: 58.0
+ * /drone_0_ego_planner_node/grid_map/map_size_y: 58.0
+ * /drone_0_ego_planner_node/grid_map/map_size_z: 10.0
+ * /drone_0_ego_planner_node/grid_map/max_ray_length: 4.5
+ * /drone_0_ego_planner_node/grid_map/min_ray_length: 0.1
+ * /drone_0_ego_planner_node/grid_map/obstacles_inflation: 0.3
+ * /drone_0_ego_planner_node/grid_map/p_hit: 0.65
+ * /drone_0_ego_planner_node/grid_map/p_max: 0.9
+ * /drone_0_ego_planner_node/grid_map/p_min: 0.12
+ * /drone_0_ego_planner_node/grid_map/p_miss: 0.35
+ * /drone_0_ego_planner_node/grid_map/p_occ: 0.8
+ * /drone_0_ego_planner_node/grid_map/pose_type: 2
+ * /drone_0_ego_planner_node/grid_map/resolution: 0.1
+ * /drone_0_ego_planner_node/grid_map/show_occ_time: False
+ * /drone_0_ego_planner_node/grid_map/skip_pixel: 2
+ * /drone_0_ego_planner_node/grid_map/use_depth_filter: True
+ * /drone_0_ego_planner_node/grid_map/virtual_ceil_height: 9.9
+ * /drone_0_ego_planner_node/grid_map/visualization_truncate_height: 1.8
+ * /drone_0_ego_planner_node/manager/control_points_distance: 0.4
+ * /drone_0_ego_planner_node/manager/drone_id: 0
+ * /drone_0_ego_planner_node/manager/feasibility_tolerance: 0.05
+ * /drone_0_ego_planner_node/manager/max_acc: 0.25
+ * /drone_0_ego_planner_node/manager/max_jerk: 4.0
+ * /drone_0_ego_planner_node/manager/max_vel: 0.5
+ * /drone_0_ego_planner_node/manager/planning_horizon: 7.5
+ * /drone_0_ego_planner_node/manager/use_distinctive_trajs: True
+ * /drone_0_ego_planner_node/optimization/dist0: 0.5
+ * /drone_0_ego_planner_node/optimization/lambda_collision: 0.5
+ * /drone_0_ego_planner_node/optimization/lambda_feasibility: 0.1
+ * /drone_0_ego_planner_node/optimization/lambda_fitness: 1.0
+ * /drone_0_ego_planner_node/optimization/lambda_smooth: 1.0
+ * /drone_0_ego_planner_node/optimization/max_acc: 0.25
+ * /drone_0_ego_planner_node/optimization/max_vel: 0.5
+ * /drone_0_ego_planner_node/optimization/swarm_clearance: 0.5
+ * /drone_0_ego_planner_node/prediction/lambda: 1.0
+ * /drone_0_ego_planner_node/prediction/obj_num: 10
+ * /drone_0_ego_planner_node/prediction/predict_rate: 1.0
+ * /drone_0_odom_visualization/color/a: 1.0
+ * /drone_0_odom_visualization/color/b: 0.0
+ * /drone_0_odom_visualization/color/g: 0.0
+ * /drone_0_odom_visualization/color/r: 0.0
+ * /drone_0_odom_visualization/covariance_scale: 100.0
+ * /drone_0_odom_visualization/drone_id: drone_id
+ * /drone_0_odom_visualization/robot_scale: 1.0
+ * /drone_0_odom_visualization/tf45: False
+ * /drone_0_traj_server/traj_server/time_forward: 1.0
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    drone_0_ego_planner_node (ego_planner/ego_planner_node)
+    drone_0_odom_visualization (odom_visualization/odom_visualization)
+    drone_0_traj_server (ego_planner/traj_server)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/ego-planner-swarm/src/planner/plan_manage/launch/single_run_in_gazebo_task.launch http://localhost:11311
+[1mprocess[drone_0_ego_planner_node-1]: started with pid [457999][0m
+[1mprocess[drone_0_traj_server-2]: started with pid [458000][0m
+[1mprocess[drone_0_odom_visualization-3]: started with pid [458001][0m
+[33m[WARN] [1794067490.216602185, 86.660000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+hit: 0.619039
+miss: -0.619039
+min log: -1.99243
+max: 2.19722
+thresh log: 1.38629
+[0m[INFO] [1794067464.520867287, 61.164000000]: PX4CTRL] Is OK![0m
+[0m[INFO] [1794067481.087615846, 77.556000000]: [32m[px4ctrl] MANUAL_CTRL(L1) --> AUTO_HOVER(L2)[32m[0m
+[0m[INFO] [1794067485.602535488, 82.044000000]: [32m[px4ctrl] TRIGGER sent, allow user command.[32m[0m
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+[33m[WARN] [1794067490.476909837, 86.920000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from INIT to WAIT_TARGET
+[33m[WARN] [1794067491.236855630, 87.680000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067491.469389644, 87.912000000]: [Traj server]: ready.[0m
+[33m[WARN] [1794067491.505119672, 87.948000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067492.257090603, 88.700000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067492.537118886, 88.980000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067493.278578915, 89.720000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067493.579035340, 90.020000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067494.299226047, 90.740000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067494.607474577, 91.048000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067495.320264616, 91.760000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067495.640318150, 92.080000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067496.340645897, 92.780000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067496.681079603, 93.120000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067496.841341240, 93.280000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794067497.360984978, 93.800000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067497.709078872, 94.148000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067498.381828701, 94.820000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067498.742084253, 95.180000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[run_task_flight] 等深度图实际出流 (/iris_D435i/realsense/depth_camera/depth/image_raw, 上限 60s)...
+[33m[WARN] [1794067499.402873071, 95.840000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067499.771339598, 96.208000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067500.423824065, 96.860000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067500.811411741, 97.248000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight]   ✓ 深度图已出流
+[run_task_flight] EGO 建图缓冲 (12s)...
+[33m[WARN] [1794067501.444135139, 97.880000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067501.844492422, 98.280000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067502.464974197, 98.900000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067502.873132937, 99.308000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067503.485320865, 99.920000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067503.885518506, 100.320000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067504.506390519, 100.940000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067504.916613394, 101.348000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067505.526895768, 101.960000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067505.947337142, 102.380000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067506.547375225, 102.980000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067506.987758722, 103.420000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067507.568122034, 104.000000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067508.016474467, 104.448000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067508.589028492, 105.020000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067509.048864821, 105.480000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067509.609188268, 106.040000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067510.089929908, 106.520000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067510.631180501, 107.060000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067511.118765986, 107.548000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067511.651766398, 108.080000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067512.151829108, 108.580000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067512.672019638, 109.100000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] 发布 EGO 目标 /move_base_simple/goal (odom 4.6576471329, 8.6132709980, 4.2145624161)...
+[FSM]: state: WAIT_TARGET
+wait for goal or trigger.
+[33m[WARN] [1794067513.180739381, 109.608000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067513.520814569, 109.948000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794067513.692969416, 110.120000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+Triggered!
+[TRIG]: from WAIT_TARGET to GEN_NEW_TRAJ
+[47;30m
+[drone 0 replan 0]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=1,time(ms)=0.000,total_t(ms)=0.000,cost=0.026
+[0mtraj 1 success.
+plan_success=1
+Need to reallocate time.
+total time:[42m0.004[0m,optimize:0.004,refine:0,avg_time=0.004
+refine_success=1
+[FSM]: from GEN_NEW_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067514.223229354, 110.648000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067514.713096961, 111.140000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 1]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=22,time(ms)=0.000,total_t(ms)=0.000,cost=0.061
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.002
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067515.252813410, 111.680000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067515.732942457, 112.160000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 2]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=12,time(ms)=0.000,total_t(ms)=0.000,cost=0.035
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0.004[0m,optimize:0.004,refine:0,avg_time=0.00266667
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067516.293884247, 112.720000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067516.754610080, 113.180000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 3]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=4,time(ms)=0.000,total_t(ms)=0.000,cost=0.028
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.002
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067517.323060113, 113.748000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067517.774826749, 114.200000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 4]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=4,time(ms)=0.000,total_t(ms)=0.000,cost=0.009
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.0016
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067518.355465918, 114.780000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067518.796058408, 115.220000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 5]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=3,time(ms)=0.000,total_t(ms)=0.000,cost=0.001
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.00133333
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067519.384202574, 115.808000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067519.816626216, 116.240000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 6]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=6,time(ms)=0.000,total_t(ms)=0.000,cost=0.005
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.00114286
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067520.396753410, 116.820000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067520.837359342, 117.260000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 7]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=4,time(ms)=0.000,total_t(ms)=0.000,cost=0.004
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.001
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067521.425207508, 117.848000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067521.857800893, 118.280000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight]   ✓ 当前模式 OFFBOARD
+[run_task_flight] 等待 /planning/pos_cmd publisher (上限 90s)...
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 8]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.017
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000888889
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067522.458429403, 118.880000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] ✓ pos_cmd 已发布, 开始监控
+[run_task_flight] 启动 monitor (timeout=240s, goal odom=4.6576471329,8.6132709980,4.2145624161)...
+[33m[WARN] [1794067522.928399236, 119.300000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 9]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.013
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.0008
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[INFO] [1794067523.206424, 0.000000]: [Monitor] Loaded 27 obstacles from /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000039.world.obstacles.json
+[INFO] [1794067523.228827, 119.612000]: [Monitor] Drone confirmed in Gazebo model_states
+[INFO] [1794067523.273578, 119.660000]: [Monitor] Subscribed to /planning/pos_cmd for trajectory recording
+[INFO] [1794067523.277572, 119.664000]: [Monitor] Starting trial. Goal=(4.7, 8.6, 4.2), timeout=240.0s, obs=27
+[INFO] [1794067523.281397, 119.668000]: [Monitor DEBUG] world=(-10.92,5.06,4.28) local=(1.18,2.08,4.13) clearance=6.973m closest=trap_scatter_15 flyover=False n_obs=27
+[33m[WARN] [1794067523.515619662, 119.908000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067523.925990701, 120.320000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 10]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.015
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000727273
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067524.525216114, 120.920000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067524.944694672, 121.340000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 11]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.018
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000666667
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067525.552986992, 121.948000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067525.965544217, 122.360000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 12]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.021
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000615385
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067526.585645701, 122.980000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067526.986562968, 123.380000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 13]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.021
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000571429
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067527.614329713, 124.008000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067528.007512195, 124.400000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 14]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.023
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000533333
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067528.627727539, 125.020000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067529.027828107, 125.420000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794067529.272355, 125.664000]: [Monitor DEBUG] world=(-10.04,6.82,4.12) local=(2.08,3.84,4.11) clearance=6.361m closest=trap_scatter_15 flyover=False n_obs=27
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 15]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.012
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.0005
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067529.655914453, 126.048000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067530.048248295, 126.440000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067530.222269630, 126.612000000]: VEL_IN_BODY!!![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 16]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.013
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000470588
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067530.688745487, 127.080000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067531.069163320, 127.460000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 17]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.015
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000444444
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067531.717596602, 128.108000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067532.089832357, 128.480000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 18]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.017
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000421053
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067532.730449543, 129.120000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067533.110768527, 129.500000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 19]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=11,time(ms)=0.000,total_t(ms)=0.000,cost=0.015
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.0004
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067533.758621772, 130.148000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067534.131279733, 130.520000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 20]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.020
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000380952
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067534.792406803, 131.180000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067535.152003397, 131.540000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[INFO] [1794067535.278877, 131.664000]: [Monitor DEBUG] world=(-9.13,8.62,4.09) local=(3.02,5.63,4.11) clearance=6.279m closest=trap_scatter_15 flyover=False n_obs=27
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 21]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.021
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000363636
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067535.820754817, 132.208000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067536.172506405, 132.560000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 22]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.027
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000347826
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067536.833205062, 133.220000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067537.193606885, 133.580000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 23]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=9,time(ms)=0.000,total_t(ms)=0.000,cost=0.013
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000333333
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067537.862759604, 134.248000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067538.215059112, 134.600000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 24]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=11,time(ms)=0.000,total_t(ms)=0.000,cost=0.011
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.00032
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067538.894396153, 135.280000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067539.234731147, 135.620000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 25]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=12,time(ms)=0.000,total_t(ms)=0.000,cost=0.013
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000307692
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067539.935567397, 136.320000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067540.255599252, 136.640000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 26]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=10,time(ms)=0.000,total_t(ms)=0.000,cost=0.008
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000296296
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067540.964017722, 137.348000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067541.276413388, 137.660000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794067541.281027, 137.664000]: [Monitor DEBUG] world=(-8.22,10.32,4.23) local=(3.93,7.33,4.18) clearance=6.697m closest=trap_scatter_15 flyover=False n_obs=27
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 27]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=7,time(ms)=0.000,total_t(ms)=0.000,cost=0.013
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000285714
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067541.996949106, 138.380000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067542.296782346, 138.680000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 28]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=7,time(ms)=0.000,total_t(ms)=0.000,cost=0.009
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000275862
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[33m[WARN] [1794067543.025816128, 139.408000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067543.317697833, 139.700000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: from EXEC_TRAJ to REPLAN_TRAJ
+[47;30m
+[drone 0 replan 29]==============================================[0m
+[1;33mmulti-trajs=1[1;0m
+[32miter(+1)=6,time(ms)=0.000,total_t(ms)=0.000,cost=0.008
+[0mtraj 1 success.
+plan_success=1
+total time:[42m0[0m,optimize:0,refine:0,avg_time=0.000266667
+refine_success=1
+[FSM]: from REPLAN_TRAJ to EXEC_TRAJ
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067544.066079983, 140.448000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067544.338501635, 140.720000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067545.099416195, 141.480000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067545.359660379, 141.740000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067546.129073534, 142.508000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[FSM]: state: EXEC_TRAJ
+[33m[WARN] [1794067546.380844447, 142.760000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794067546.900775759, 143.280000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794067547.172723014, 143.552000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794067547.286279, 143.664000]: [Monitor DEBUG] world=(-7.68,11.16,4.37) local=(4.43,8.17,4.27) clearance=7.023m closest=trap_scatter_15 flyover=False n_obs=27
+[INFO] [1794067547.385998, 143.764000]: [Monitor] Trial ended: reason=success_deploy, deploy_success=True, fb_success=True, collision=False, timeout=False, lost=False, T=24.1s, min_clear=6.233m, final_dxy=0.485m
+[33m[WARN] [1794067547.400761661, 143.780000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794067547.407945, 143.784000]: [Monitor] State history saved: 618 frames → /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/EGO/06cf7f94fdc7_r1/result_state.csv
+[INFO] [1794067547.435221, 143.812000]: [Monitor] Pos_cmd history saved: 2411 entries → /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/EGO/06cf7f94fdc7_r1/result_pos_cmd.csv
+Result saved to /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/EGO/06cf7f94fdc7_r1/result.json
+  success_deploy=True, collision=False, timeout=False, final_dxy=0.49m, min_clearance=6.23m
+[FSM]: state: EXEC_TRAJ
+[run_task_flight] monitor 退出 (rc=0, 以 JSON 为准)
+[run_task_flight] 清理所有进程...
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 457984 Killed                  roslaunch ego_planner "$EGO_LAUNCH" point0_x:="$GX" point0_y:="$GY" point0_z:="$GZ"
+[33m[WARN] [1794067548.201790083, 144.580000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 457595 Killed                  roslaunch px4ctrl run_node.launch
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 456471 Killed                  mavproxy.py --master=udpout:127.0.0.1:18570 --daemon --state-basedir="$LOG_DIR/mavproxy" > "$LOG_DIR/mavproxy.log" 2>&1 < /dev/null
+[run_task_flight] 结果:
+  success_deploy = True
+  success_fb     = True
+  collision      = False
+  timeout        = False
+  final_dxy      = 0.49 m
+  min_clearance  = 6.23 m
+  time_to_goal   = 24.1 s
+[run_task_flight] TRIAL 完成: /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/EGO/06cf7f94fdc7_r1/result.json
