@@ -29,7 +29,7 @@ def add(p, part, rs):
     for r in rs:
         rows.append(dict(policy=p, part=part, task=r['task_id'], rep=r['repeat'], world=r['world_id'], cat=CAT[r['category']],
                          out=r['done_reason'], near=r['nearest_goal_distance_m'], tm=r['trajectory_metrics'], t=r['physical_time_s'],
-                         init=r.get('initial_hash')))
+                         init=r.get('initial_hash'), rho=r.get('rho_1_0')))
 for p, d in src.items():
     for part, f in d.items():
         rs = json.load(open(f))['records']; add(p, part, rs)
