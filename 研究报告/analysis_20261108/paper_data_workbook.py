@@ -10,8 +10,8 @@ from openpyxl.utils import get_column_letter as L
 rows_p, OP, G12, G3, OUT = sys.argv[1:6]
 R = json.load(open(rows_p))
 rd = lambda p: list(csv.reader(open(p, encoding='utf-8-sig')))[1:]
-NAME = {'P0': 'BC策略', 'P2': '单阶段后训练', 'P6': '本文方法', 'P3': '两阶段后训练（不中断，不加正则）',
-        'P4': '两阶段后训练（分叉，不加正则）', 'P14': '单阶段后训练（第二次运行）', 'P15': '本文方法（第二次运行）'}
+NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P6': '本文方法', 'P3': 'Single-stage DPPO',
+        'P4': 'Reg-DPPO w/o BC reg.', 'P14': 'Reg-DPPO w/o Stage II（第二次运行）', 'P15': '本文方法（第二次运行）'}
 DIFF = ['总体', '稀疏', '适中', '密集']
 F = 'Arial'; H = PatternFill('solid', start_color='DCE6F3'); th = Side(style='thin', color='BFBFBF'); B = Border(left=th, right=th, top=th, bottom=th)
 BLUE = '0000FF'
@@ -78,7 +78,7 @@ outcome_rows(ws, ['P0', 'P2', 'P6'], '表 3、图 6、图 7'); style(ws)
 ws = sheet('主比较', '同一任务同一次重复配对的成功率差（1 m 标准）及按世界聚类的 95% 区间。', ['比较', '难度', '回合', '差值（百分点）', '95% 区间'], [30, 7, 7, 14, 16])
 for d in DIFF:
     rs = sel('P6', d); it = [(r['world'], ok(r) - ok(idx[('P0', r['task'], r['rep'])])) for r in rs]
-    ws.append(['本文方法 − BC策略', d, len(rs), round(100 * sum(x for _, x in it) / len(rs), 1), boot(it)]); blue(ws, ws.max_row, 'CDE')
+    ws.append(['本文方法 − UAV-iDP3', d, len(rs), round(100 * sum(x for _, x in it) / len(rs), 1), boot(it)]); blue(ws, ws.max_row, 'CDE')
 style(ws)
 
 ws = sheet('表4 消融', '1 m 标准。正文 5 行；第二次运行见 S4。', ['方法', '难度', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [30, 7, 7, 7, 7, 7, 9, 9, 9, 10])
