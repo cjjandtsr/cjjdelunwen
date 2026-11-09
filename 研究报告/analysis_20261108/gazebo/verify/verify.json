@@ -1,0 +1,89 @@
+{
+ "A1 每方法96回合、三方法任务×重复相同": {
+  "ok": true,
+  "info": {
+   "EGO": 96,
+   "P0": 96,
+   "P6": 96
+  }
+ },
+ "A2 任务均属 O′，类别与 O′ 分类一致": {
+  "ok": true,
+  "info": {
+   "密集": 18,
+   "适中": 18,
+   "稀疏": 12
+  }
+ },
+ "A3 涉及世界数": {
+  "ok": true,
+  "info": 31
+ },
+ "B1 起终点与冻结任务库一致": {
+  "ok": true,
+  "info": "最大偏差 0.00e+00 m"
+ },
+ "B2 障碍文件哈希与运动学评价同一世界一致": {
+  "ok": true,
+  "info": "31/31 个世界有运动学几何"
+ },
+ "C1 P0 关 LoRA、P6 开 LoRA，主干同一检查点": {
+  "ok": true,
+  "info": {
+   "ckpt": "2026.08.16/08.53.26_e5_lambda0p5/checkpoints/latest.ckpt",
+   "lora": "dppo_uav_rebuild/routea_a2_selective_keep_run01/T/checkpoint_update_000256"
+  }
+ },
+ "C2 EGO 回合策略类型": {
+  "ok": true,
+  "info": {
+   "ego": 96
+  }
+ },
+ "D1 运行日志：重跑后每条件最终一条，状态与结果一致": {
+  "ok": true,
+  "info": {
+   "entries": 291,
+   "status": {
+    "no_result": 3,
+    "collision": 96,
+    "reached": 126,
+    "timeout": 65,
+    "lost": 1
+   }
+  }
+ },
+ "E1 碰撞回合：末段贴近障碍(<0.6 m)或已触地(z<0.3 m)": {
+  "ok": false,
+  "info": "95/96；崩溃原因 {'crashed_ground': 70, 'flipped': 26}"
+ },
+ "E2 非碰撞回合未穿入障碍（最小距离 ≥ 0.1 m 机体半径）": {
+  "ok": false,
+  "info": "违例 9；非碰撞回合最小净距中位数 0.49 m；例 [{'method': 'EGO', 'task': '1994e73c36bb', 'rep': 1, 'status': 'timeout', 'crash': '', 'min_obs': -0.073, 'end_obs': 0.208, 'end_z': 3.505, 'monitor_min_clear': 0.005, 'start_gap': 1.927, 'n': 6077, 't': 240.0}, {'method': 'P0', 'task': '07eb9d5bfef7', 'rep': 2, 'status': 'timeout', 'crash': '', 'min_obs': 0.013, 'end_obs': 8.673, 'end_z': 2.472, 'monitor_min_clear': 0.24, 'start_gap': 0.221, 'n': 5995, 't': 240.0}, {'method': 'P0', 'task': '141058d1266b', 'rep': 1, 'status': 'reached', 'crash': '', 'min_obs': 0.088, 'end_obs': 5.184, 'end_z': 2.822, 'monitor_min_clear': 0.001, 'start_gap': 0.142, 'n': 2264, 't': 91.4}]"
+ },
+ "E3 碰撞回合的末段离障碍距离分布": {
+  "ok": true,
+  "info": {
+   "贴近障碍": 87,
+   "仅触地": 8
+  }
+ },
+ "F1 超时回合持续时间约为 240 s 期限": {
+  "ok": true,
+  "info": "范围 240.0—240.1 s，n=65"
+ },
+ "G1 学习策略重规划间隔（中位数，s）": {
+  "ok": true,
+  "info": {
+   "P0": 1.072,
+   "P6": 1.248
+  }
+ },
+ "H1 记录首帧与任务起点的距离（中位数/最大，m）": {
+  "ok": true,
+  "info": {
+   "median": 0.2215,
+   "max": 3.555
+  }
+ }
+}

@@ -2,7 +2,7 @@
 运行：python3 -I paper_data_workbook.py <oprime/rows.json> <oprime 目录> <g12_summary.csv> <g3 table_main.csv> <out.xlsx> <gazebo 输出目录> <论文数据索取回复 details 目录>
 第 6 个参数为 gazebo_analysis.py 的输出目录；第 7 个参数为 Codex 回传的 worlds_63.csv、tasks_199.csv 所在目录（环境规模）。
 成功 = 碰撞前进入目标 1 m（arrival_1m.py 的判据）；碰撞 = 进入 1 m 之前碰撞；超时 = 其余。
-路径效率待成功回合执行轨迹补齐后按 1 m 重算（C侧_2026-11-08 导出），本版不列。"""
+路径效率由 path_eff_1m.py 从执行轨迹计算，见"路径效率"表。"""
 import json, sys, csv, collections, random
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -57,7 +57,7 @@ ws = wb.active; ws.title = '说明'
 for i, t in enumerate([
     '论文数据表（唯一版本，2026-11-08，1 m 主终点）',
     '成功：飞行中未碰撞且进入目标 1 m 范围。结局分成功、碰撞、超时三类。训练外评价集 42 个世界、199 个任务（稀疏 59 / 适中 70 / 密集 70），每种方法 995 回合。',
-    '蓝字为原始记录计数，黑字为公式。区间只给主比较（按世界聚类 bootstrap，20000 次）。路径效率待成功回合执行轨迹补齐后列入。'], 1):
+    '蓝字为原始记录计数，黑字为公式。区间只给主比较（按世界聚类 bootstrap，20000 次）。路径效率见"路径效率"表。'], 1):
     ws.cell(i, 1, t).font = Font(name=F, bold=(i == 1)); ws.cell(i, 1).alignment = Alignment(wrap_text=True)
 ws.column_dimensions['A'].width = 120
 ws.append([]); ws.append(['页 — 用在论文哪里 — 支撑什么结论'])
@@ -153,6 +153,11 @@ style(ws)
 ws = sheet('S3 训练过程', '第二次运行的训练采集到达率（训练到达奖励口径）与近似 KL 中位数，每 16 轮（oprime/curve_blocks.csv；图 S1）。', ['方法', '轮', '采集到达率%', 'KL 中位数', '用在'], [30, 12, 12, 12, 10])
 for r in rd(f'{OP}/curve_blocks.csv'):
     if r[0] in ('P14', 'P15'): i = ws.max_row + 1; ws.append([NAME[r[0]], r[1], float(r[2]), float(r[3]), '图 S1']); blue(ws, i, 'CD')
+style(ws)
+
+ws = sheet('路径效率', '1 m 标准成功回合的路径效率 D0/(L+d_entry)，按方法与难度取中位数（path_eff_1m.py；表 3、表 4）。', ['方法', '难度', '成功回合', '中位数', '四分位下', '四分位上', '用在'], [30, 7, 9, 9, 9, 9, 10])
+for r in rd(f'{OP}/../path_eff_1m/path_eff_1m.csv'):
+    i = ws.max_row + 1; ws.append([NAME[r[0]], r[1], int(r[2]), float(r[3]), float(r[4]), float(r[5]), '表 3、表 4']); blue(ws, i, 'CDEF')
 style(ws)
 
 import statistics as stt
