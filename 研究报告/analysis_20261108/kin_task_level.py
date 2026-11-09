@@ -1,11 +1,11 @@
 """运动学 O′ 按任务统计（用户 11-09 决定为正文表 4 口径）。
 口径：每个任务评价 5 次，至少 3 次成功记该任务成功；否则按失败回合中较多的一类记碰撞或超时，两类相同时记碰撞（与 Gazebo 两次均失败、任一次碰撞记碰撞一致）。
-成功 = 碰撞前进入目标 R（1 m 为正文，0.5 m 为补充材料）。去除 oprime/exclusions.json 中的任务。
+成功 = 碰撞前进入目标 R：正文 RAD = 1.5 m（用户 11-09 由 1 m 改为 1.5 m），补充材料 0.5 m（训练到达奖励半径，也是预先登记判定所用标准）。去除 oprime/exclusions.json 中的任务。
 运行：python3 -I kin_task_level.py <rows.json> <analysis_20261108 目录>
-输出（<目录>/oprime_task/）：main_1m.csv、main_05m.csv、second_run_1m.csv、pairs.csv、text_numbers.json、table3.csv、full199_episode_1m.csv（补充材料：去除前、按每次评价）。
+输出（<目录>/oprime_task/）：main.csv、main_05m.csv、second_run.csv、pairs.csv、text_numbers.json、table3.csv、full199_episode_05m.csv（补充材料：去除前、按每次评价、0.5 m 原标准）。
 区间：按世界聚类自助法 20000 次，seed 2026102601（工程阈值，非显著性检验）。"""
 import json, sys, csv, collections, random, os, statistics as st
-ROWS, A = sys.argv[1:3]; OUT = f'{A}/oprime_task'; os.makedirs(OUT, exist_ok=True)
+ROWS, A = sys.argv[1:3]; RAD = 1.5; OUT = f'{A}/oprime_task'; os.makedirs(OUT, exist_ok=True)
 R = json.load(open(ROWS)); EXC = set(json.load(open(f'{A}/oprime/exclusions.json'))['tasks'])
 NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P3': 'Single-stage DPPO', 'P4': 'Reg-DPPO w/o BC reg.', 'P6': '本文方法',
         'P14': 'Reg-DPPO w/o Stage II（第二次运行）', 'P15': '本文方法（第二次运行）'}
@@ -20,7 +20,7 @@ def tasks(rows, rad):
     return lab, info
 keep = [r for r in R if r['task'] not in EXC]
 PE = collections.defaultdict(list)
-for r in csv.DictReader(open(f'{A}/path_eff_1m/path_eff_episodes.csv')): PE[(r['策略'], r['任务'])].append(float(r['路径效率']))
+for r in csv.DictReader(open(f'{A}/path_eff_main/path_eff_episodes.csv')): PE[(r['策略'], r['任务'])].append(float(r['路径效率']))
 H = ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '路径效率']
 def table(rows, rad, pols, fn, pe=True):
     lab, info = tasks(rows, rad); out = []
@@ -34,9 +34,9 @@ def table(rows, rad, pols, fn, pe=True):
     with open(f'{OUT}/{fn}', 'w', newline='') as f: w = csv.writer(f); w.writerow(H); w.writerows(out)
     return lab, info
 P5 = ['P0', 'P2', 'P3', 'P4', 'P6']
-lab, info = table(keep, 1.0, P5, 'main_1m.csv')
+lab, info = table(keep, RAD, P5, 'main.csv')
 table(keep, 0.5, P5, 'main_05m.csv', pe=False)
-table(keep, 1.0, ['P14', 'P15'], 'second_run_1m.csv', pe=False)
+table(keep, RAD, ['P14', 'P15'], 'second_run.csv', pe=False)
 # 配对差（任务级）
 def boot(items):
     by = collections.defaultdict(lambda: [0, 0])
@@ -71,11 +71,11 @@ with open(f'{OUT}/table3.csv', 'w', newline='') as f:
         w.writerow([d, len(tt), len({TK[t]['world_id'] for t in tt}), round(st.median(dist), 1), round(min(dist), 1), round(max(dist), 1), sum(G[t] for t in tt),
                     sum(1 for g in GZ if any(t.startswith(g) for t in tt))])
 # 补充：去除前、按每次评价（原表 4）
-with open(f'{OUT}/full199_episode_1m.csv', 'w', newline='') as f:
+with open(f'{OUT}/full199_episode_05m.csv', 'w', newline='') as f:
     w = csv.writer(f); w.writerow(['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时'])
     for p in P5:
-        x = [r for r in R if r['policy'] == p]; c = collections.Counter(ep(r, 1.0) for r in x); row = [NAME[p], len(x), c['成功']]
-        for d in ['稀疏', '适中', '密集']: xd = [r for r in x if r['cat'] == d]; row += [len(xd), sum(ep(r, 1.0) == '成功' for r in xd)]
+        x = [r for r in R if r['policy'] == p]; c = collections.Counter(ep(r, 0.5) for r in x); row = [NAME[p], len(x), c['成功']]
+        for d in ['稀疏', '适中', '密集']: xd = [r for r in x if r['cat'] == d]; row += [len(xd), sum(ep(r, 0.5) == '成功' for r in xd)]
         w.writerow(row + [c['碰撞'], c['超时']])
-for fn in ['main_1m.csv', 'main_05m.csv', 'second_run_1m.csv', 'pairs.csv', 'table3.csv']: print(fn); print(open(f'{OUT}/{fn}').read())
+for fn in ['main.csv', 'main_05m.csv', 'second_run.csv', 'pairs.csv', 'table3.csv']: print(fn); print(open(f'{OUT}/{fn}').read())
 print(open(f'{OUT}/text_numbers.json').read())

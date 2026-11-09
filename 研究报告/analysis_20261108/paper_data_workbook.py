@@ -1,6 +1,6 @@
 """论文数据表（唯一版本）：正文与补充材料中每一张图表、每一个实验数字的数据，按论文顺序，一页对应一个图表。
 运行：python3 -I paper_data_workbook.py <rows.json> <analysis_20261108 目录> <g3 table_main.csv（未用，保留位置）> <论文大稿_v3.md> <out.xlsx>
-rows.json 由 o_prime_analysis.py 生成（O′ 7 个策略各 995 回合）。成功 = 碰撞前进入目标 1 m（任务书 D10）。
+rows.json 由 o_prime_analysis.py 生成（O′ 7 个策略各 995 回合）。成功 = 碰撞前进入目标 1.5 m（用户 11-09；任务书 v3.7）。
 蓝字为原始计数或原始值，黑字为公式。区间：按世界聚类 bootstrap，20000 次，seed 2026102601（工程阈值，非显著性检验）。"""
 import json, sys, csv, collections, random, re, statistics as stt
 from openpyxl import Workbook
@@ -14,7 +14,7 @@ NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P3': 'Single-stage DPP
         'P14': 'Reg-DPPO w/o Stage II（第二次运行）', 'P15': '本文方法（第二次运行）'}
 DIFF = ['总体', '稀疏', '适中', '密集']
 F = 'Arial'; H = PatternFill('solid', start_color='DCE6F3'); th = Side(style='thin', color='BFBFBF'); B = Border(left=th, right=th, top=th, bottom=th); BLUE = '0000FF'
-ok = lambda r: r['out'] == 'reached' or r['near'] < 1.0
+ok = lambda r: r['out'] == 'reached' or r['near'] < 1.5
 out1m = lambda r: '成功' if ok(r) else ('碰撞' if r['out'] == 'collision' else '超时')
 sel = lambda p, d: [r for r in R if r['policy'] == p and (d == '总体' or r['cat'] == d)]
 idx = {(r['policy'], r['task'], r['rep']): r for r in R}
@@ -69,7 +69,7 @@ style(ws)
 
 # ---- 表4 主要结果
 ws = sheet('表4 主要结果', '表4（4.2节总体性能、消融分析）；摘要、贡献3、结论', '按任务统计（5 次中至少 3 次成功）：后训练提高成功率且三类难度都提高；第一阶段贡献主体，加正则的第二阶段继续提高；碰撞率不增加，超时显著减少', ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率', '路径效率（成功任务的成功飞行中位数）'], [24] + [7] * 10 + [9] * 6 + [12])
-for r in rd(f'{A}/oprime_task/main_1m.csv'):
+for r in rd(f'{A}/oprime_task/main.csv'):
     i = ws.max_row + 1
     ws.append([r['方法']] + [int(r[k]) for k in ['任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'] + [float(r['路径效率'])])
     blue(ws, i, 'BCDEFGHIJKR')
@@ -90,9 +90,9 @@ for r in rd(f'{A}/oprime/curve_blocks.csv'):
 style(ws)
 
 # ---- 图6 典型轨迹
-ws = sheet('图6 典型轨迹', '图6（4.2节避障行为）', '三类难度各一例：UAV-iDP3 失败、本文方法成功（选取规则：同一任务同一次重复，按世界名、任务编号、重复序号取最小者；fig10_select_1m.py）',
+ws = sheet('图6 典型轨迹', '图6（4.2节避障行为）', '三类难度各一例：UAV-iDP3 失败、本文方法成功（1.5 m；同一任务同一次重复，按世界名、任务编号、重复序号取最小者；fig10_select_1m.py）',
            ['难度', '世界', '任务编号', '重复', 'UAV-iDP3 结局', '本文方法结局'], [7, 34, 30, 6, 12, 12])
-for d, w, t, rp in [('稀疏', 'front_offset_obstacle__000003', '00401b423993', 1), ('适中', 'front_offset_obstacle__000052', 'b9e88976c05a', 2), ('密集', 'front_offset_obstacle__000050', '5b955d1a9431', 3)]:
+for d, w, t, rp in [('稀疏', 'front_offset_obstacle__000003', '00401b423993', 1), ('适中', 'front_offset_obstacle__000053', '056f74e9a874', 1), ('密集', 'front_offset_obstacle__000050', '5b955d1a9431', 3)]:
     a = [r for r in R if r['task'].startswith(t) and r['rep'] == rp]
     ws.append([d, w, t, rp] + [out1m(next(r for r in a if r['policy'] == p)) for p in ('P0', 'P6')])
 style(ws)
@@ -123,7 +123,7 @@ style(ws)
 
 # ---- 表S2 第二次运行
 ws = sheet('表S2 第二次运行', '补充材料 S3 表S2；第5章局限一句', '后训练结果对训练随机性敏感（预先登记 R4、R2 判为本预算下不符合采纳标准，判定在 0.5 m、按每次评价下作出）', ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
-for r in rd(f'{A}/oprime_task/second_run_1m.csv'):
+for r in rd(f'{A}/oprime_task/second_run.csv'):
     i = ws.max_row + 1
     ws.append([r['方法']] + [int(r[k]) for k in ['任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'])
     blue(ws, i, 'BCDEFGHIJK')
@@ -139,8 +139,8 @@ for r in rd(f'{A}/oprime/curve_blocks.csv'):
 style(ws)
 
 # ---- 表S3 运动学全部 199 个任务（按每次评价）
-ws = sheet('表S3 运动学全部任务', '补充材料 S4 表S3', '去除 9 个任务、改按任务统计之前的结果（全部 199 个任务，按每次评价）', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
-for r in rd(f'{A}/oprime_task/full199_episode_1m.csv'):
+ws = sheet('表S3 运动学全部任务', '补充材料 S4 表S3', '评价前确定的标准：全部 199 个任务、每次评价单独统计、0.5 m（预先登记判定所用标准）', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
+for r in rd(f'{A}/oprime_task/full199_episode_05m.csv'):
     i = ws.max_row + 1
     ws.append([r['方法']] + [int(r[k]) for k in ['回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'])
     blue(ws, i, 'BCDEFGHIJK')
@@ -154,7 +154,7 @@ for r in rd(f'{A}/gazebo/full48_task.csv'):
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 ws = sheet('表S5 Gazebo按次', '补充材料 S5 表S5', '正文 40 个任务按每次飞行统计（改口径前的结果）', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
-for r in rd(f'{A}/gazebo/table5_1m.csv'):
+for r in rd(f'{A}/gazebo/table5_episode.csv'):
     i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['回合']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
@@ -162,7 +162,7 @@ style(ws)
 # ---- 说明
 ws = wb.active; ws.title = '说明'; ws.column_dimensions['A'].width = 22; ws.column_dimensions['B'].width = 46; ws.column_dimensions['C'].width = 90
 for t in ['论文数据表（2026-11-08）：论文正文与补充材料中全部图表及正文实验数字的数据，一页一个图表，按论文顺序。',
-          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。运动学评价：41 个世界、190 个任务，每任务 5 次，按任务统计（至少 3 次成功即成功；否则按失败较多的一类，相同记碰撞）；全部 199 个任务按每次评价见表S3 页；Gazebo：正文 40 个任务 × 2 次，按任务统计（至少一次成功即成功；两次均失败时任一次碰撞记碰撞，否则超时）；全部 48 个任务见表S4 页，按每次飞行见表S5 页。',
+          '成功 = 碰撞前进入目标 1.5 m；结局分成功、碰撞、超时。运动学评价：41 个世界、190 个任务，每任务 5 次，按任务统计（至少 3 次成功即成功；否则按失败较多的一类，相同记碰撞）；全部 199 个任务按评价前标准（每次评价、0.5 m）见表S3 页；Gazebo：正文 40 个任务 × 2 次，按任务统计（至少一次成功即成功；两次均失败时任一次碰撞记碰撞，否则超时）；全部 48 个任务见表S4 页，按每次飞行见表S5 页。',
           '图1—图4 为方法示意图，不含实验数据。蓝字为原始计数或原始值，黑字为公式。', '']:
     ws.append([t]); ws.cell(ws.max_row, 1).font = Font(name=F, bold=(ws.max_row == 1))
 ws.append(['页', '用在论文哪里', '支撑什么结论'])

@@ -1,7 +1,7 @@
-"""Gazebo 三方法 288 回合按论文主终点（D10：碰撞前进入目标 1 m）重新判定，并给出 0.5 m（补充 S2）结果。
+"""Gazebo 三方法 288 回合按论文主终点重新判定：碰撞前进入目标 RAD = 1.5 m（用户 11-09 由 1 m 改为 1.5 m）；行内另存 1 m（out1m，历史）与 0.5 m（out05）。
 运行：python3 -I gazebo_analysis.py <jindu/gazebo_3method_288_run01> <输出目录> [exclusions.json]
-任务级结果（用户 11-09 决定为正文表 5 口径）：每个任务飞行 2 次，至少一次成功记该任务成功；两次都失败时，任一次碰撞记碰撞，否则记超时。输出 table5_task.csv（去除后）与 full48_task.csv（全部任务）；table5_1m.csv 为按每次飞行统计（补充材料 S4）。
-给出 exclusions.json 时，table5_1m.csv、s2_gazebo_05m.csv、pairs.csv、checks.json 按去除后的任务统计，另写 full48_table_1m.csv（全部 48 个任务，补充材料 S4）；gazebo_rows.json 始终为全部 288 回合。
+任务级结果（用户 11-09 决定为正文表 5 口径）：每个任务飞行 2 次，至少一次成功记该任务成功；两次都失败时，任一次碰撞记碰撞，否则记超时。输出 table5_task.csv（去除后）与 full48_task.csv（全部任务）；table5_episode.csv 为按每次飞行统计（补充材料 S5）。
+给出 exclusions.json 时，table5_episode.csv、s2_gazebo_05m.csv、pairs.csv、checks.json 按去除后的任务统计，另写 full48_table_episode.csv（全部 48 个任务）；gazebo_rows.json 始终为全部 288 回合。
 判定：轨迹（odom 系，goal_odom = goal_world − (start_x, start_y, 0)）任一帧到目标 3D 距离 ≤ r 即成功；
 碰撞或越界即结束轨迹记录，故"任一帧 ≤ r"等价于"碰撞前进入"。其余：monitor 为 collision/lost 记碰撞（越界单列计数），否则记超时。
 难度：tasks.json 的 zero/low/high 即稀疏/适中/密集。区间：按世界聚类自助法，20000 次，seed 2026102601（工程阈值，非显著性检验）。
@@ -20,7 +20,7 @@ for r in csv.DictReader(open(f'{G}/regrade_1m.csv')):
     fail = '碰撞' if r['monitor_status'] in ('collision', 'lost') else '超时'
     rows.append(dict(method=r['method'], task=r['task_id'], rep=r['repeat'], world=r['world'], cat=CAT[r['category']],
                      monitor=r['monitor_status'], min3d=round(m, 4),
-                     out1m='成功' if m <= 1.0 else fail, out05='成功' if m <= 0.5 else fail))
+                     out_main='成功' if m <= 1.5 else fail, out1m='成功' if m <= 1.0 else fail, out05='成功' if m <= 0.5 else fail))
 json.dump(rows, open(f'{OUT}/gazebo_rows.json', 'w'), ensure_ascii=False, indent=0)
 ALL = rows
 rows = [r for r in ALL if not any(r['world'].endswith(w) for w in EXC['worlds']) and not any(r['task'].startswith(t) for t in EXC['tasks'])]
@@ -35,14 +35,14 @@ def table(key):
 H = ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率%', '碰撞率%', '超时率%']
 if EXC['worlds'] or EXC['tasks']:
     kept = rows; rows = ALL
-    with open(f'{OUT}/full48_table_1m.csv', 'w', newline='') as f: w = csv.writer(f); w.writerow(H); w.writerows(table('out1m'))
+    with open(f'{OUT}/full48_table_episode.csv', 'w', newline='') as f: w = csv.writer(f); w.writerow(H); w.writerows(table('out_main'))
     rows = kept
-for key, fn in [('out1m', 'table5_1m.csv'), ('out05', 's2_gazebo_05m.csv')]:
+for key, fn in [('out_main', 'table5_episode.csv'), ('out05', 's2_gazebo_05m.csv')]:
     with open(f'{OUT}/{fn}', 'w', newline='') as f: w = csv.writer(f); w.writerow(H); w.writerows(table(key))
 
 def task_table(rs):
     T = collections.defaultdict(list); cat = {}
-    for r in rs: T[(r['method'], r['task'])].append(r['out1m']); cat[r['task']] = r['cat']
+    for r in rs: T[(r['method'], r['task'])].append(r['out_main']); cat[r['task']] = r['cat']
     lab = {k: '成功' if '成功' in v else ('碰撞' if '碰撞' in v else '超时') for k, v in T.items()}
     out = []
     for d in ['总体', '稀疏', '适中', '密集']:
@@ -66,12 +66,12 @@ def pair(a, b, key, cat='总体'):
     v.sort(); return [a, b, key, cat, len(it), len(ws), round(100 * sum(x for _, x in it) / len(it), 1), round(100 * v[500], 1), round(100 * v[19499], 1)]
 with open(f'{OUT}/pairs.csv', 'w', newline='') as f:
     w = csv.writer(f); w.writerow(['方法', '对照', '判据', '难度', '配对回合', '世界数', '差%', '区间下%', '区间上%'])
-    for key in ['out1m', 'out05']:
+    for key in ['out_main', 'out05']:
         for cat in ['总体', '稀疏', '适中', '密集']: w.writerow(pair('P6', 'P0', key, cat))
         w.writerow(pair('EGO', 'P6', key))
 lost = collections.Counter(r['method'] for r in rows if r['monitor'] == 'lost')
-trans = collections.Counter((idx[('P0', r['task'], r['rep'])]['out1m'], r['out1m']) for r in rows if r['method'] == 'P6')
-coll_after = collections.Counter(r['method'] for r in rows if r['out1m'] == '成功' and r['monitor'] in ('collision', 'lost'))
-json.dump(dict(lost=lost, p0_to_p6_1m={f'{a}->{b}': n for (a, b), n in trans.items()}, success_then_collision_1m=coll_after),
+trans = collections.Counter((idx[('P0', r['task'], r['rep'])]['out_main'], r['out_main']) for r in rows if r['method'] == 'P6')
+coll_after = collections.Counter(r['method'] for r in rows if r['out_main'] == '成功' and r['monitor'] in ('collision', 'lost'))
+json.dump(dict(lost=lost, p0_to_p6_main={f'{a}->{b}': n for (a, b), n in trans.items()}, success_then_collision_main=coll_after),
           open(f'{OUT}/checks.json', 'w'), ensure_ascii=False, indent=1)
-print(open(f'{OUT}/table5_1m.csv').read()); print(open(f'{OUT}/s2_gazebo_05m.csv').read()); print(open(f'{OUT}/pairs.csv').read()); print(open(f'{OUT}/checks.json').read())
+print(open(f'{OUT}/table5_episode.csv').read()); print(open(f'{OUT}/s2_gazebo_05m.csv').read()); print(open(f'{OUT}/pairs.csv').read()); print(open(f'{OUT}/checks.json').read())
