@@ -15,7 +15,7 @@ DARK = "#2F3E5C"; NOTE = "#5A6270"; AR = "#5C6B85"; GREYT = "#3A3F47"
 i = lambda s: f"<i>{s}</i>"
 
 
-def build(slide, oy=30):
+def build(slide, oy=30, only_a=False):
     f = Fig(slide, 0, oy)
     seg = lambda x1, y1, x2, y2, color=AR, sw=0.9, head=True, dash=None: f.line(x1, y1, x2, y2, color, sw, head, dash)
     box = lambda x, y, w, h, t, pal, bold=False, color=DARK, dashed=False: f.card(x, y, w, h, t, pal[0], pal[1], S, bold=bold, color=color, dashed=dashed)
@@ -23,7 +23,7 @@ def build(slide, oy=30):
 
     # ===================== (a) task difficulty =====================
     f.rect(4, 4, 254, 326, *PANEL, radius=6)
-    f.label(10, 7, 246, "<b>(a) Task difficulty from corridor occupancy</b>", fs=TT, align="left")
+    f.label(10, 7, 246, "<b>Task difficulty classes</b>", fs=TT, align="left")
     W = 16.0                                    # px per metre in the main sketch
     SX, GX, Y = 34, 228, 98
     f.rect(SX, Y - W, GX - SX, 2 * W, "#EEF2F8", "#95A9CE", radius=0, dashed=True, lw=0.8)
@@ -40,7 +40,7 @@ def build(slide, oy=30):
     seg(238, Y - W, 238, Y + W, color=NOTE, sw=0.7, head=True, dash=None)
     seg(238, Y + W, 238, Y - W, color=NOTE, sw=0.7, head=True, dash=None)
     f.label(240, Y - 5, 20, "2 m", fs=S, align="left", color=NOTE)
-    f.label(10, 150, 244, i("ρ") + " = volume of obstacles inside the 1 m corridor / corridor volume", fs=S, color=GREYT)
+    f.label(10, 150, 244, i("ρ") + " = obstacle volume within 1.0 m of the route / volume of that region", fs=S, color=GREYT)
     f.rect(70, 164, 8, 8, RISK[0], RISK[1], radius=0)
     f.label(81, 163, 160, "obstacle volume counted in " + i("ρ"), fs=S, align="left", color=GREYT)
     # three classes
@@ -64,8 +64,10 @@ def build(slide, oy=30):
             if bot > top:
                 f.rect(ox, top, w, bot - top, RISK[0], RISK[1], radius=0, lw=0.5)
         f.label(x0, y0 + 86, 76, f"<b>{name}</b><br>{rule}", fs=S, color=GREYT)
-    note(10, 306, 244, i("ρ") + "<sub>med</sub>: median over training-world tasks, fixed before evaluation", align="center")
+    note(10, 306, 244, i("ρ") + "<sub>med</sub> = 0.04623, fixed before evaluation", align="center")
 
+    if only_a:
+        return f
     # ===================== (b) kinematic closed loop =====================
     f.rect(264, 4, 450, 150, *PANEL, radius=6)
     f.label(270, 7, 440, "<b>(b) Kinematic closed-loop environment</b> (training and main evaluation)", fs=TT, align="left")

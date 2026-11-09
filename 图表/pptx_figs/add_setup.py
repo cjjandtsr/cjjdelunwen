@@ -8,5 +8,5 @@ prs = Presentation(src)
 while len(prs.slides) > 5:
     sid = prs.slides._sldIdLst[-1]; prs.part.drop_rel(sid.rId); prs.slides._sldIdLst.remove(sid)
 blank = [l for l in prs.slide_layouts if l.name == "Blank"][0]
-fig_setup_ppt.build(prs.slides.add_slide(blank), oy=20)
+fig_setup_ppt.build(prs.slides.add_slide(blank), oy=20, only_a=True)
 prs.save(dst); print("slides:", len(prs.slides))

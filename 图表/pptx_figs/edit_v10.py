@@ -45,7 +45,7 @@ if txt:
         sh = cands[0][0]; sh.fill.solid(); sh.fill.fore_color.rgb = RGBColor.from_string(CONDF[0][1:])
         sh.line.color.rgb = RGBColor.from_string(CONDF[1][1:])
 n1 = clear_region(s1, (120, 279, 540, 389), keep=(10, 316))
-n2 = clear_region(s1, (559, 276, 709, 393), keep=(11, 319, 320))
+n2 = 0  # execution panel kept as drawn by the user (11-09)
 f = Fig(s1)
 seg = lambda x1, y1, x2, y2, color=AR, sw=0.9, head=True, dash=None: f.line(x1, y1, x2, y2, color, sw, head, dash)
 # Reg-DPPO post-training (module level)
@@ -66,39 +66,6 @@ seg(455, 360, 455, 377, color=BROWN, head=False)
 seg(455, 377, 171, 377, color=BROWN, head=False)
 seg(171, 377, 171, 361, color=BROWN)
 f.label(230, 366, 170, "next iteration uses the updated LoRA", fs=S, italic=True, color=TXT)
-# Receding-horizon execution: rolling plans
-f.label(560, 279, 148, "plan 16 steps · execute 4 · replan", fs=S, italic=True, color=DARK)
-
-
-def plan(sx, sy, th0, dk, n=8, step=9.0):
-    pts = [(sx, sy)]; th = th0
-    for _ in range(n):
-        th += dk
-        x, y = pts[-1]
-        pts.append((x + step * math.cos(math.radians(th)), y - step * math.sin(math.radians(th))))
-    return pts
-
-
-# obstacle that the first plan heads into; the replans bend around it
-f.rect(632, 322, 14, 20, "#D5D9DF", "#8A8F98", radius=1)
-p0 = plan(574, 332, 0, 0.0)
-p1 = plan(p0[4][0], p0[4][1], 38, -6.0)
-p2 = plan(p1[4][0], p1[4][1], -6, -4.0, step=7.0)
-plans = [p0, p1, p2]
-for k, p in enumerate(plans):
-    f.poly(p[4:9], None, "#95A9CE" if k == 2 else "#C5CCD9", 1.0, closed=False, dash="dash")
-for p in plans:
-    f.poly(p[0:5], None, "#4F6390", 2.0, closed=False)
-for k, p in enumerate(plans):
-    f.oval(p[0][0], p[0][1], 2.6, fill=DARK, line=DARK, lw=0.6)
-    f.label(p[0][0] - 12, p[0][1] + (-13 if k == 2 else 3), 24, i("t") + ("" if k == 0 else f"+{k}"), fs=S, color=DARK)
-f.label(616, 343, 46, "obstacle", fs=S, italic=True, color=NOTE)
-LG = 368
-seg(566, LG, 582, LG, color="#4F6390", sw=2.0, head=False)
-f.label(585, LG - 5, 120, "executed prefix (1.2 s)", fs=S, align="left")
-seg(566, LG + 11, 582, LG + 11, color="#95A9CE", sw=1.0, head=False, dash="dash")
-f.label(585, LG + 6, 120, "rest of planning window", fs=S, align="left")
-
 # ---------------- Fig. 2 ----------------
 s2 = prs.slides[1]
 n3 = clear_region(s2, (8, 286, 300, 380))
