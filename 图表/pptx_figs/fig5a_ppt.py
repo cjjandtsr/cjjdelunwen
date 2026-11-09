@@ -46,7 +46,7 @@ def build(slide, oy=0):
                ("dense", "Dense", "ρ > ρ<sub>med</sub>", 64, 9.4)]
     for c, (key, name, cond, n, succ) in enumerate(classes):
         x0 = 6 + 178 * c
-        f.rect(x0, 4, 172, 252, "#FFFFFF", HEAD[c][1], radius=6)
+        f.rect(x0, 4, 172, 218, "#FFFFFF", HEAD[c][1], radius=6)
         f.card(x0 + 4, 8, 164, 18, f"<b>{name}</b>,  {cond}", HEAD[c][0], None, fs=F, radius=4)
         ax, ay = x0 + 16, 40                    # obstacle area, 20 m × 20 m = 140 px
         P = lambda x, y: (ax + SC * x, ay + 140 - SC * y)
@@ -70,21 +70,18 @@ def build(slide, oy=0):
         f.oval(gx, gy, 3.6, fill=GOAL[0], line=GOAL[1], lw=1.2)
         f.label(sx - 2, sy + 3, 10, i("S"), fs=S, color=START[1])
         f.label(gx - 15, gy - 4, 10, i("G"), fs=S, color=GOAL[1])
-        f.label(ax + 70, ay + 141, 70, "20 m", fs=S, color=NOTE)
-        f.label(ax + 141, ay + 64, 24, "20 m", fs=S, color=NOTE, align="left")
-        f.card(x0 + 4, 200, 164, 50, f"{i('n')} = {n} held-out tasks<br>straight-route success {succ:g}%", HEAD[c][0], None, fs=F, radius=4)
-        f.rect(x0 + 22, 238, 128, 5, "#FFFFFF", "#B5B8BD", radius=0, lw=0.5)
+        if c == 0:
+            f.label(ax + 35, ay + 141, 70, "20 m × 20 m obstacle area", fs=S, color=NOTE)
+        f.label(x0 + 8, 202, 40, f"{i('n')} = {n}", fs=F, align="left")
+        f.rect(x0 + 50, 205, 92, 8, "#FFFFFF", "#B5B8BD", radius=0, lw=0.5)
         if succ > 0:
-            f.rect(x0 + 22, 238, 128 * succ / 100, 5, "#95A9CE", None, radius=0)
+            f.rect(x0 + 50, 205, 92 * succ / 100, 8, "#95A9CE", None, radius=0)
+        f.label(x0 + 144, 202, 26, f"{succ:g}%", fs=F, align="left")
     # ---------- definition column ----------
     X = 542
-    f.rect(X, 4, 170, 252, "#FFFFFF", "#A9AEB5", radius=6, dashed=True)
-    f.label(X, 9, 170, "<b>Route-centred obstacle density</b>", fs=F, color=DARK)
-    f.label(X, 26, 170, "ρ = Vol(" + i("O") + " ∩ " + i("R") + ") / Vol(" + i("R") + ")", fs=F)
-    f.label(X + 6, 40, 160, i("R") + ": region within 1.0 m on either side of<br>the straight start–goal route; " + i("O") + ": obstacles",
-            fs=S, align="left", color=NOTE)
-    # oblique sketch of R: length 110 px, 2.0 m wide (depth), height (z_G − z_S) + 2 m; 1 m = 8 px
-    bx, by, Lx, H, dx, dy = X + 30, 140, 96, 34, 14, -8
+    f.rect(X, 4, 170, 218, "#FFFFFF", "#A9AEB5", radius=6, dashed=True)
+    f.label(X, 12, 170, "ρ = Vol(" + i("O") + " ∩ " + i("R") + ") / Vol(" + i("R") + ")", fs=F, bold=True, color=DARK)
+    bx, by, Lx, H, dx, dy = X + 30, 104, 96, 34, 14, -8
     A, B = (bx, by), (bx + Lx, by)
     A2, B2 = (bx, by - H), (bx + Lx, by - H)
     C2, D2, D = (bx + dx, by - H + dy), (bx + Lx + dx, by - H + dy), (bx + Lx + dx, by + dy)
@@ -95,27 +92,29 @@ def build(slide, oy=0):
     seg(*sxy, *gxy, DARK, 0.8, head=False, dash="dash")
     f.oval(*sxy, 3.2, fill=START[0], line=START[1], lw=1.0)
     f.oval(*gxy, 3.2, fill=GOAL[0], line=GOAL[1], lw=1.2)
+    f.label(sxy[0] - 3, sxy[1] + 2, 10, i("S"), fs=S, color=START[1])
+    f.label(gxy[0] - 12, gxy[1] - 4, 10, i("G"), fs=S, color=GOAL[1])
     seg(bx - 6, by, bx - 6, sxy[1] - 3, GREY, 0.6, head=False)
     f.label(bx - 30, by - 9, 22, "1.0 m", fs=S, color=NOTE, align="right")
     seg(bx + Lx + dx + 6, by - H + dy, bx + Lx + dx + 6, gxy[1] + 3, GREY, 0.6, head=False)
     f.label(bx + Lx + dx + 8, by - H + dy - 1, 22, "1.0 m", fs=S, color=NOTE, align="left")
-    f.label(bx + Lx - 20, by + 2, 50, "2.0 m wide", fs=S, color=NOTE, align="left")
-    f.label(X + 6, 152, 160, "lower end 1.0 m below the lower of " + i("S") + ", " + i("G") +
-            "<br>(not below 0.2 m); upper end 1.0 m above<br>the higher of " + i("S") + ", " + i("G"), fs=S, align="left", color=NOTE)
-    f.label(X + 6, 186, 160, "ρ<sub>med</sub>: median ρ over training-world tasks,<br>fixed before evaluation", fs=S, align="left", color=NOTE)
+    f.label(bx + Lx - 6, by - 2, 40, "2.0 m", fs=S, color=NOTE, align="left")
+    f.label(X, 118, 170, "region " + i("R") + " around the straight route", fs=S, color=NOTE)
     # legend
-    ly = 214
-    f.rect(X + 8, ly, 12, 7, BAND[0], BAND[1], radius=0, lw=0.6, dashed=True)
-    f.label(X + 24, ly - 2, 60, i("R"), fs=S, align="left")
-    f.rect(X + 50, ly, 10, 7, HIT[0], HIT[1], radius=0, lw=0.8)
-    f.label(X + 63, ly - 2, 100, "obstacle overlapping " + i("R"), fs=S, align="left")
-    f.rect(X + 8, ly + 13, 10, 7, OBST[0], OBST[1], radius=0, lw=0.8)
-    f.oval(X + 26, ly + 16.5, 3.5, fill=OBST[0], line=OBST[1], lw=0.8)
-    f.label(X + 33, ly + 11, 130, "other obstacle (box / cylinder)", fs=S, align="left")
-    f.oval(X + 12, ly + 30, 3.2, fill=START[0], line=START[1], lw=1.0)
-    f.label(X + 18, ly + 25, 40, i("S") + " start", fs=S, align="left")
-    f.oval(X + 58, ly + 30, 3.2, fill=GOAL[0], line=GOAL[1], lw=1.2)
-    f.label(X + 64, ly + 25, 40, i("G") + " goal", fs=S, align="left")
-    seg(X + 100, ly + 30, X + 116, ly + 30, DARK, 0.8, head=False, dash="dash")
-    f.label(X + 119, ly + 25, 50, "straight route", fs=S, align="left")
+    ly = 142
+    rows = [("band", "region " + i("R")), ("hit", "obstacle in " + i("R")), ("obst", "other obstacle"),
+            ("sg", i("S") + " start,  " + i("G") + " goal"), ("bar", "straight-route success")]
+    for k, (kind, t) in enumerate(rows):
+        y = ly + 15 * k; x = X + 14
+        if kind == "band":
+            f.rect(x, y, 16, 8, BAND[0], BAND[1], radius=0, lw=0.6, dashed=True)
+        elif kind == "hit":
+            f.rect(x + 2, y, 10, 8, HIT[0], HIT[1], radius=0, lw=0.8)
+        elif kind == "obst":
+            f.rect(x, y, 8, 8, OBST[0], OBST[1], radius=0, lw=0.8); f.oval(x + 13, y + 4, 3.8, fill=OBST[0], line=OBST[1], lw=0.8)
+        elif kind == "sg":
+            f.oval(x + 3, y + 4, 3.2, fill=START[0], line=START[1], lw=1.0); f.oval(x + 13, y + 4, 3.2, fill=GOAL[0], line=GOAL[1], lw=1.2)
+        else:
+            f.rect(x, y + 1, 16, 6, "#95A9CE", None, radius=0)
+        f.label(x + 24, y - 2, 120, t, fs=S, align="left")
     return f
