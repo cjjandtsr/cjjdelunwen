@@ -1,0 +1,611 @@
+﻿项目,论文表述,判定,说明,文件,sha256,行号,片段
+式1,9D状态与3帧,一致,环境缓存8帧；策略取最新3帧，不能把缓存首维8当并行环境数。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\env\kinematic_uav_env.py,8f840e471d47b00f8b13f1a946a1aa6c3447aac7908cb3c3f6fc144544c2629a,913-924,"913         """"""9D state [pos_world(3), goal_body(3), dist, sin_yaw, cos_yaw].
+914         与 GazeboUAVEnv._build_state_v65 一致 (但直接用 yaw, 不经 quat).""""""
+915         dx, dy, dz = goal_w[0]-pos_w[0], goal_w[1]-pos_w[1], goal_w[2]-pos_w[2]
+916         c, s = np.cos(yaw), np.sin(yaw)
+917         gbx = c*dx + s*dy
+918         gby = -s*dx + c*dy
+919         gbz = dz
+920         gd = float(np.sqrt(dx*dx + dy*dy + dz*dz))
+921         return np.array([pos_w[0], pos_w[1], pos_w[2],
+922                          gbx, gby, gbz, gd,
+923                          np.sin(yaw), np.cos(yaw)], np.float32)
+924 "
+式2/式3,x0扩散加噪/预测,一致,此处验证后训练正则中的加噪；预训练MSE另见phase1a_policy。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\selective_keep.py,cfaad0ddc5b2bdda2c9794fd8e666813fde4d24037e5cb8be2c431a6b819c0c0,107-122,"107     def loss(self, runtime, *, device):
+108         if getattr(runtime, 'predict_epsilon', None) is not False:
+109             raise ValueError('A2 requires actual x0 FT prediction')
+110         indices = self.draw_indices()
+111         x0 = self.actions[indices].to(device)
+112         cond = self.conditions[indices].to(device)
+113         w = self.weights[indices].to(device)
+114         times = runtime.ddim_t[-runtime.ft_denoising_steps:].detach().cpu().long()
+115         positions = torch.randint(len(times),(len(indices),),generator=self.generator)
+116         t = times[positions].to(device)
+117         noise = torch.randn(x0.shape, generator=self.generator, dtype=x0.dtype).to(device)
+118         # E5 exposes DDIM-position coefficients, paired with the same time table.
+119         alpha = runtime.ddim_alphas[-runtime.ft_denoising_steps:].to(device)[positions.to(device)].to(x0.dtype).reshape(-1,1,1)
+120         xt = alpha.sqrt()*x0 + (1-alpha).sqrt()*noise
+121         pred = runtime.actor_ft(xt, t, {'state':cond, 'global_cond':cond})
+122         return (((pred-x0).square()*w).sum((1,2))/16.).mean()"
+式2/式3预训练,DDPM加噪与sample预测MSE,一致,add_noise后sample分支target=trajectory，逐元素MSE后取均值；BC的实际训练完成轮数另缺原始训练日志。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\policy\phase1a_policy.py,502ef9e9c5ff27f868217e30e7fa9e8bd1e5ca185ef50c55d732b3f35283d4d4,802-820,"802             0, self.noise_scheduler.config.num_train_timesteps,
+803             (B,), device=device).long()
+804 
+805         noisy = self.noise_scheduler.add_noise(trajectory, noise, timesteps)
+806 
+807         cond_data = torch.zeros(B, T, Da, device=device, dtype=dtype)
+808         cond_mask = torch.zeros_like(cond_data, dtype=torch.bool)
+809         noisy[cond_mask] = cond_data[cond_mask]
+810 
+811         pred = self.model(sample=noisy, timestep=timesteps,
+812                           local_cond=None, global_cond=global_cond)
+813 
+814         target = noise if self.noise_scheduler.config.prediction_type == 'epsilon' \
+815                  else trajectory
+816         loss_mask = ~cond_mask
+817         diff_loss = F.mse_loss(pred, target, reduction='none')
+818         diff_loss = (diff_loss * loss_mask.float()).mean()
+819 
+820         anchor_loss = torch.tensor(0.0, device=device)"
+式4/S1/S2,归一化softmin与softplus几何损失,一致,有sqrt(d²+eps)数值floor；归一化log(k)/tau修正与非负clamp存在。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\model\common\collision_loss.py,498853b4a0e89eb3677a6140101d7d63fbeed2b69ec51f36ded7caf2ddcc39bc,145-167,"145         - N=4096, H=16: cdist 矩阵 (B, 16, 4096), B=60 时约 60×16×4096×4byte ≈ 15MB, 可接受
+146     """"""
+147     import math
+148 
+149     B, H, _ = waypoints.shape
+150     N = point_cloud.shape[1]
+151 
+152     # 全量距离矩阵 (B, H, N)
+153     dists = torch.cdist(waypoints, point_cloud, p=2.0)  # (B, H, N)
+154 
+155     # 取 k 个最近邻的距离 (B, H, k)
+156     k_actual = min(k, N)
+157     d_knn, _ = torch.topk(dists, k=k_actual, dim=-1, largest=False)  # (B, H, k)
+158 
+159     # 数值 floor (防 sqrt(0) 梯度奇异)
+160     d_knn = torch.sqrt(d_knn * d_knn + eps)
+161 
+162     # soft-min via LogSumExp + 偏差修正
+163     #   d_soft = -1/τ · logsumexp(-τ d_knn) + log(k)/τ
+164     log_k_over_tau = math.log(k_actual) / tau  # 偏差修正项
+165     d_soft = -(1.0 / tau) * torch.logsumexp(-tau * d_knn, dim=-1) + log_k_over_tau  # (B, H)
+166 
+167     # 物理护栏: 距离不可能为负 (即使修正后, τ 有限时仍有微小残余偏差可能小于 0)"
+式4/S2,几何损失上限与时序权重,一致,margin先限幅，softplus后再限幅2*d_safe，指数权重归一化。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\model\common\collision_loss.py,498853b4a0e89eb3677a6140101d7d63fbeed2b69ec51f36ded7caf2ddcc39bc,256-285,"256         waypoints, pc_xyz, k=k_nn, tau=tau_softmin)  # (B, H)
+257 
+258     # softplus-hinge 惩罚
+259     # c_t = softplus(β·(d_safe − d_soft)) / β
+260     #   d_soft >> d_safe → c ≈ 0
+261     #   d_soft << d_safe → c ≈ (d_safe − d_soft)
+262     #
+263     # 数值稳定性: 当 d_soft << d_safe 时, β·(d_safe − d_soft) 可能很大,
+264     #   softplus(x) ≈ x (x >> 0), 梯度 ≈ 1, 无问题
+265     # 当 d_soft >> d_safe 时, β·(d_safe − d_soft) 很负,
+266     #   softplus(x) ≈ exp(x) ≈ 0, 梯度 ≈ exp(x) ≈ 0, 无问题
+267     # 关键: β 控制过渡区锐度, 梯度在过渡区内最大为 1 (softplus 的 sigmoid 导数 ≤ 1)
+268     # 但 β 放大了输入, 使过渡区更窄, 梯度变化更陡 → 需要限制 β·(d_safe − d_soft) 的范围
+269     margin = d_safe - d_soft  # (B, H) 正值=违规, 负值=安全
+270     # clamp margin 防止极端值: 当 d_soft 为负或极小时 margin 会爆炸
+271     margin = margin.clamp(max=2.0 * d_safe)  # 最多惩罚到 2×d_safe 距离
+272     c_per_waypoint = F.softplus(beta * margin) / beta  # (B, H)
+273     # [BUG FIX 2026-05-15] 单 waypoint c 的上限 ≈ d_safe (margin clamp 后 softplus 的上界)
+274     #   双重护栏: 即使 margin clamp 失效, c 也不会超过这个值
+275     c_per_waypoint = c_per_waypoint.clamp(max=2.0 * d_safe)
+276 
+277     # 横向加权 w_k = exp(-k / τ)
+278     k_idx = torch.arange(H, device=device, dtype=c_per_waypoint.dtype)
+279     w_k = torch.exp(-k_idx / horizon_decay_tau)  # (H,)
+280     w_k = w_k / w_k.sum()  # 归一化, 保证 loss 尺度与 d_safe 同量级
+281 
+282     # 加权平均 (per batch, 再 batch 平均)
+283     loss_per_sample = (c_per_waypoint * w_k.unsqueeze(0)).sum(dim=1)  # (B,)
+284     loss = loss_per_sample.mean()
+285 "
+式5/表1终止进展时间,+100/-50/10预算/-0.05,一致,进展沿实际连续执行路径；失败还覆盖无效/越界等硬异常，正文只列正常范围的碰撞/触地。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\env\reward_v2_support\reward.py,b6d914ac7a935f75fde42ed80aa1e82911caa20fba2d8b2f2d4868b762728efc,118-155,"118         terminal = 100.
+119     elif done_reason in (""collision"", ""ground_crash"", ""out_of_bounds"",
+120                          ""altitude_exceed"", ""invalid_state""):
+121         terminal = -50.
+122     else:
+123         terminal = 0.
+124 
+125     exec_risk, exec_provenance = _risk_for_segments(
+126         executed, obstacles, ground_z, range(1, len(executed)))
+127     tail_risk = 0.
+128     tail_provenance = dict(argmax_segment=None, risk_type=""none"", clearance=None,
+129                            weight=0., risk_source=""none"")
+130     if done_reason == ""none"":
+131         tail_risk, tail_provenance = _risk_for_segments(
+132             planned[4:9], obstacles, ground_z, range(5, 9))
+133     risk = max(exec_risk, tail_risk)
+134     provenance = exec_provenance if exec_risk >= tail_risk else tail_provenance
+135     terms = dict(terminal=terminal, newbest=float(newbest), risk=-float(risk), time=-.05)
+136     metrics = dict(risk=float(risk), risk_exec=float(exec_risk),
+137                    risk_tail=float(tail_risk), best_before=float(best_distance),
+138                    best_after=float(next_best), training_usable=done_reason != ""invalid_state"",
+139                    **provenance)
+140     if not (0. <= newbest <= 10. + 1e-10 and 0. <= risk <= 1. + 1e-10):
+141         raise ValueError(""R1 reward bound violation"")
+142     return float(sum(terms.values())), terms, metrics, float(next_best)"
+式6/表1风险,prefix/tail障碍与触地barrier,一致,0.45/0.10、1.0/0.20、前4段1、后4段指数衰减，取最大风险。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\env\reward_v2_support\reward.py,b6d914ac7a935f75fde42ed80aa1e82911caa20fba2d8b2f2d4868b762728efc,70-90,"70     best = 0.
+71     clearances = _obstacle_clearances(np.asarray(path, dtype=np.float64), obstacles)
+72     provenance = dict(argmax_segment=None, risk_type=""none"", clearance=None,
+73                       weight=0., risk_source=""none"")
+74     for (a, b, c), j in zip(zip(path[:-1], path[1:], clearances), indices):
+75         z = float(min(a[2], b[2]) - ground_z)
+76         obstacle_part = _barrier(c, .45, .10)
+77         ground_part = _barrier(z, 1., .20)
+78         weight = 1. if j <= 4 else 2. ** (-(j - 4) / 4.)
+79         value = .5 * weight * (obstacle_part + ground_part)
+80         if value > best:
+81             best = value
+82             provenance = dict(argmax_segment=j,
+83                               risk_type=""obstacle"" if obstacle_part >= ground_part else ""ground"",
+84                               clearance=c if obstacle_part >= ground_part else z,
+85                               weight=weight,
+86                               risk_source=""exec"" if j <= 4 else ""tail"")
+87     return best, provenance
+88 
+89 
+90 def compute_reward_v2(executed_path, planned_path, goal, obstacles,"
+式5/S1.2/表1绕行,梯形积分、名义72s、预算1,一致,函数返回负cost，正文将C定义正量并减去，符号等价。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\env\reward_v2_support\reward.py,b6d914ac7a935f75fde42ed80aa1e82911caa20fba2d8b2f2d4868b762728efc,13-29,"13 def space_running_cost(executed_path, start, goal, segment_durations, budget, horizon_s):
+14     """"""Task-relative bounded running cost, trapezoidal in actual elapsed time.""""""
+15     path = np.asarray(executed_path, dtype=np.float64)
+16     start, goal = np.asarray(start, dtype=np.float64), np.asarray(goal, dtype=np.float64)
+17     durations = np.asarray(segment_durations, dtype=np.float64)
+18     if (path.ndim != 2 or path.shape[1] != 3 or len(path) < 2 or
+19             start.shape != (3,) or goal.shape != (3,) or
+20             durations.shape != (len(path) - 1,) or
+21             not all(np.isfinite(x).all() for x in (path, start, goal, durations)) or
+22             np.any(durations < 0.) or not math.isfinite(budget) or budget < 0. or
+23             not math.isfinite(horizon_s) or horizon_s <= 0.):
+24         raise ValueError(""invalid actual path/time for space running cost"")
+25     initial = np.linalg.norm(start - goal)
+26     if initial <= .5:
+27         raise ValueError(""space cost requires start outside goal sphere"")
+28     distance_sum = np.linalg.norm(path - start, axis=1) + np.linalg.norm(path - goal, axis=1)
+29     q = np.maximum(0., 1. - initial / distance_sum)"
+式7,LoRA W0+alpha/r BA,一致,Linear与Conv1d的LoRA实现，原参数冻结、B零初始化；后训练层数见已存network_spec实测。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\actor_ddpm\lora.py,bf8c34c8d47406c6cbb6f858c7b99fd55c4d1eaf03bbf382e3f15a1beb742c7d,35-101,"35 class LoRALinear(nn.Module):
+36     def __init__(self, base: nn.Linear, rank: int, alpha: float, gate: _Gate):
+37         super().__init__()
+38         self.base = base
+39         self.rank = int(rank)
+40         self.scale = float(alpha) / self.rank
+41         self.__dict__[""_gate""] = gate
+42         parameter_options = {
+43             ""device"": base.weight.device,
+44             ""dtype"": base.weight.dtype,
+45         }
+46         self.lora_a = nn.Parameter(
+47             torch.empty(self.rank, base.in_features, **parameter_options)
+48         )
+49         self.lora_b = nn.Parameter(
+50             torch.zeros(base.out_features, self.rank, **parameter_options)
+51         )
+52         nn.init.kaiming_uniform_(self.lora_a, a=math.sqrt(5))
+53 
+54     def forward(self, value):
+55         result = self.base(value)
+56         if self.__dict__[""_gate""].enabled:
+57             result = result + F.linear(
+58                 F.linear(value, self.lora_a), self.lora_b
+59             ) * self.scale
+60         return result
+61 
+62 
+63 class LoRAConv1d(nn.Module):
+64     def __init__(self, base: nn.Conv1d, rank: int, alpha: float, gate: _Gate):
+65         super().__init__()
+66         if base.groups != 1:
+67             raise LoRAContractError(""grouped Conv1d is not an approved E5 LoRA target"")
+68         if base.padding_mode != ""zeros"":
+69             raise LoRAContractError(""non-zero Conv1d padding mode is not supported"")
+70         self.base = base
+71         self.rank = int(rank)
+72         self.scale = float(alpha) / self.rank
+73         self.__dict__[""_gate""] = gate
+74         kernel = base.kernel_size[0]
+75         parameter_options = {
+76             ""device"": base.weight.device,
+77             ""dtype"": base.weight.dtype,
+78         }
+79         self.lora_a = nn.Parameter(
+80             torch.empty(
+81                 self.rank, base.in_channels, kernel, **parameter_options
+82             )
+83         )
+84         self.lora_b = nn.Parameter(
+85             torch.zeros(
+86                 base.out_channels, self.rank, 1, **parameter_options
+87             )
+88         )
+89         nn.init.kaiming_uniform_(self.lora_a, a=math.sqrt(5))
+90 
+91     def forward(self, value):
+92         result = self.base(value)
+93         if self.__dict__[""_gate""].enabled:
+94             low_rank = F.conv1d(
+95                 value,
+96                 self.lora_a,
+97                 stride=self.base.stride,
+98                 padding=self.base.padding,
+99                 dilation=self.base.dilation,
+100             )
+101             result = result + F.conv1d(low_rank, self.lora_b) * self.scale"
+式8/S3/S4,GAE/bootstrap/return,正文需补说明，补充一致,正文单mask写法未表达批次中途结束m^b=1而m^c=0；S3已区分。硬终止和期限不自举。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\gae.py,024561fe66302881ed8e5b082bc5a1522821abc7e7103a5c873c41a843076e3e,6-31,"6 def compute_gae(
+7     rewards, values, next_values, terminated, truncated, gamma: float, lam: float,
+8     bootstrap_allowed=None,
+9 ):
+10     tensors = (rewards, values, next_values, terminated, truncated)
+11     if any(tensor.ndim != 1 for tensor in tensors):
+12         raise ValueError(""GAE inputs must be rank-1"")
+13     if len({len(tensor) for tensor in tensors}) != 1:
+14         raise ValueError(""GAE input lengths differ"")
+15     if bootstrap_allowed is None:
+16         bootstrap_allowed = ~terminated.bool()
+17     if bootstrap_allowed.shape != rewards.shape or bootstrap_allowed.dtype != torch.bool:
+18         raise ValueError(""bootstrap_allowed must be a matching boolean vector"")
+19     if torch.any(bootstrap_allowed & terminated.bool()):
+20         raise ValueError(""terminated transitions cannot bootstrap"")
+21     advantages = torch.zeros_like(rewards)
+22     carry = torch.zeros((), dtype=rewards.dtype, device=rewards.device)
+23     for index in range(len(rewards) - 1, -1, -1):
+24         bootstrap = bootstrap_allowed[index].to(rewards.dtype)
+25         continuation = 1.0 - torch.logical_or(
+26             terminated[index], truncated[index]
+27         ).to(rewards.dtype)
+28         delta = rewards[index] + gamma * next_values[index] * bootstrap - values[index]
+29         carry = delta + gamma * lam * continuation * carry
+30         advantages[index] = carry
+31     return advantages, advantages + values"
+式9,H8×11对数概率平均,不完整,"实际先将每元素logprob clamp到[-5,2]，再取[2:10]的8×11均值。正文式9遗漏这一截断。",C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\official_loss_components.py,43d9068d092706521202daa1ad0bd25b7778ee80d287b18649cccd3116d386ac,76-95,"76     reward_end = reward_start + reward_horizon
+77     if reward_start != 2 or reward_horizon not in (4, 8) or reward_end > newlogprobs.shape[1]:
+78         raise ValueError(""E5 logical loss requires A0 [2:6] or R1 [2:10]"")
+79     if newlogprobs.shape != batch.oldlogprobs.shape:
+80         raise ValueError(""new/old logprob tensors must pair every action index"")
+81     new = newlogprobs.clamp(-5, 2)[:, reward_start:reward_end, :].mean(dim=(-1, -2))
+82     old = batch.oldlogprobs.clamp(-5, 2)[:, reward_start:reward_end, :].mean(dim=(-1, -2))
+83     advantages = (batch.advantages - stats.mean) / (stats.std + 1e-8)
+84     advantages = advantages.clamp(stats.lower_quantile, stats.upper_quantile)
+85     discount = torch.stack([
+86         torch.as_tensor(
+87             runtime.gamma_denoising ** (runtime.ft_denoising_steps - int(index) - 1),
+88             device=advantages.device,
+89             dtype=advantages.dtype,
+90         )
+91         for index in batch.denoising_inds
+92     ])
+93     advantages = advantages * discount
+94     logratio = new - old
+95     ratio = logratio.exp()"
+式9配置,reward_start=2/reward_horizon=8,一致,v2明确H8，非只用执行前缀H4。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\entrypoints\build_system.py,307e33e41ea6b6e5bf7cf67335de02a450c1b1567d5a970b65358102dd8f4c9f,109-123,"109         weight_decay=float(config.optimizer.weight_decay),
+110     )
+111     trainer = DDPMTrainer(
+112         runtime=official_runtime,
+113         lora_bundle=lora_bundle,
+114         actor_optimizer=actor_optimizer,
+115         critic_optimizer=critic_optimizer,
+116         config=TrainerConfig(
+117             value_loss_coefficient=float(config.dppo.value_loss_coefficient),
+118             entropy_loss_coefficient=float(config.dppo.entropy_loss_coefficient),
+119             reward_start=2,
+120             reward_horizon=8 if str(config.reward_version) == ""v2"" else 4,
+121             max_approx_kl=float(config.gates.max_approx_kl),
+122             ratio_mean_min=float(config.gates.ratio_mean_min),
+123             ratio_mean_max=float(config.gates.ratio_mean_max),"
+式10/S1.4,PPO最小目标与指数clip调度,一致,优势按外层批统计标准化，去噪折扣0.8，clip基值0.001至0.1。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\official_loss_components.py,43d9068d092706521202daa1ad0bd25b7778ee80d287b18649cccd3116d386ac,83-125,"83     advantages = (batch.advantages - stats.mean) / (stats.std + 1e-8)
+84     advantages = advantages.clamp(stats.lower_quantile, stats.upper_quantile)
+85     discount = torch.stack([
+86         torch.as_tensor(
+87             runtime.gamma_denoising ** (runtime.ft_denoising_steps - int(index) - 1),
+88             device=advantages.device,
+89             dtype=advantages.dtype,
+90         )
+91         for index in batch.denoising_inds
+92     ])
+93     advantages = advantages * discount
+94     logratio = new - old
+95     ratio = logratio.exp()
+96     t = batch.denoising_inds.float() / (runtime.ft_denoising_steps - 1)
+97     if runtime.ft_denoising_steps > 1:
+98         clip = runtime.clip_ploss_coef_base + (
+99             runtime.clip_ploss_coef - runtime.clip_ploss_coef_base
+100         ) * (torch.exp(runtime.clip_ploss_coef_rate * t) - 1) / (
+101             math.exp(runtime.clip_ploss_coef_rate) - 1
+102         )
+103     else:
+104         clip = t
+105     slice_diagnostics = None
+106     if reward_horizon == 8:
+107         with torch.no_grad():
+108             slice_diagnostics = {}
+109             for label, start, end in ((""prefix"", 2, 6), (""tail"", 6, 10), (""full"", 2, 10)):
+110                 new_slice = newlogprobs.detach().clamp(-5, 2)[:, start:end, :]
+111                 old_slice = batch.oldlogprobs.detach().clamp(-5, 2)[:, start:end, :]
+112                 lr = new_slice.mean(dim=(-1, -2)) - old_slice.mean(dim=(-1, -2))
+113                 rr = lr.exp()
+114                 selected_actions = batch.chains_next.detach()[:, start:end, :]
+115                 slice_diagnostics[label] = {
+116                     ""logratio"": lr,
+117                     ""approx_kl"": (rr - 1) - lr,
+118                     ""clip_mask"": ((rr - 1).abs() > clip),
+119                     ""logprob_drift"": (new_slice - old_slice).abs().mean(dim=(-1, -2)),
+120                     ""action_variance"": selected_actions.var(dim=0, unbiased=False).mean(),
+121                 }
+122     policy = torch.maximum(
+123         -advantages * ratio,
+124         -advantages * torch.clamp(ratio, 1 - clip, 1 + clip),
+125     )"
+式11/S5,BC正则与1/16尺度,正文不完整，补充一致,实际loss先对16×11加权误差求和再除16。正文式11无1/16，S5包含；应由Claude统一定义，λ沿用实测不能静默改尺度。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\selective_keep.py,cfaad0ddc5b2bdda2c9794fd8e666813fde4d24037e5cb8be2c431a6b819c0c0,107-122,"107     def loss(self, runtime, *, device):
+108         if getattr(runtime, 'predict_epsilon', None) is not False:
+109             raise ValueError('A2 requires actual x0 FT prediction')
+110         indices = self.draw_indices()
+111         x0 = self.actions[indices].to(device)
+112         cond = self.conditions[indices].to(device)
+113         w = self.weights[indices].to(device)
+114         times = runtime.ddim_t[-runtime.ft_denoising_steps:].detach().cpu().long()
+115         positions = torch.randint(len(times),(len(indices),),generator=self.generator)
+116         t = times[positions].to(device)
+117         noise = torch.randn(x0.shape, generator=self.generator, dtype=x0.dtype).to(device)
+118         # E5 exposes DDIM-position coefficients, paired with the same time table.
+119         alpha = runtime.ddim_alphas[-runtime.ft_denoising_steps:].to(device)[positions.to(device)].to(x0.dtype).reshape(-1,1,1)
+120         xt = alpha.sqrt()*x0 + (1-alpha).sqrt()*noise
+121         pred = runtime.actor_ft(xt, t, {'state':cond, 'global_cond':cond})
+122         return (((pred-x0).square()*w).sum((1,2))/16.).mean()"
+式11/S5,执行前缀位置yaw掩码,一致,"完整段仅[2:6]×通道[0,1,2,9]；中途到达的部分段只位置、权重fraction²。",C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\selective_keep.py,cfaad0ddc5b2bdda2c9794fd8e666813fde4d24037e5cb8be2c431a6b819c0c0,11-28,"11 def executed_weights(reason, segment=None, fraction=None):
+12     weights = torch.zeros(16, 11, dtype=torch.float32)
+13     if reason == 'none':
+14         completed, partial = 4, 0.
+15     elif reason == 'reached':
+16         if segment not in range(4) or fraction is None or not 0 <= fraction <= 1:
+17             raise ValueError('invalid arrival event')
+18         completed, partial = int(segment), float(fraction)
+19         if partial == 1.:
+20             completed, partial = completed + 1, 0.
+21     else:
+22         raise ValueError('only safe successful-episode prefixes are eligible')
+23     weights[2:2+completed, [0, 1, 2, 9]] = 1.
+24     if partial:
+25         # Linear interpolation: (fraction * displacement error)^2.
+26         # No claim that the unexecuted endpoint or its yaw was reached.
+27         weights[2+completed, :3] = partial * partial
+28     return weights"
+S1.5,任务/来源/状态均匀抽样与batch32,一致,先均匀task，再来源和样本；不是三类别各1/3。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\selective_keep.py,cfaad0ddc5b2bdda2c9794fd8e666813fde4d24037e5cb8be2c431a6b819c0c0,95-105,"95     def draw_indices(self):
+96         # Equivalent to category weight proportional to distinct available tasks,
+97         # then uniform task/source/state. A both-success task is not doubled.
+98         out = []
+99         for _ in range(self.batch_size):
+100             task = self.task_ids[int(torch.randint(len(self.task_ids),(1,),generator=self.generator))]
+101             sources = self.tasks[task]
+102             source = sorted(sources)[int(torch.randint(len(sources),(1,),generator=self.generator))]
+103             indices = sources[source]
+104             out.append(indices[int(torch.randint(len(indices),(1,),generator=self.generator))])
+105         return torch.tensor(out, dtype=torch.long)"
+S1.5/λ,四批标定0.1中位数比,一致,λ=0.1*median(PPO norm)/median(keep norm)，非每批比值都为0.1；P6原标定0.01061006086489362。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\selective_keep.py,cfaad0ddc5b2bdda2c9794fd8e666813fde4d24037e5cb8be2c431a6b819c0c0,148-179,"148 def calibrate_keep(trainer, batches, keep, *, microbatch_pairs=128, target_ratio=.1):
+149     from .trainer import _slice_batch
+150     parameters = trainer.actor_parameters
+151     saved = keep.state_dict()
+152     rows = []
+153     try:
+154         devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+155         with torch.random.fork_rng(devices=devices):
+156             for batch in batches:
+157                 runtime = trainer.runtime
+158                 stats = AdvantageStats.from_tensor(batch.advantages,
+159                     getattr(runtime,'clip_advantage_lower_quantile',0.),
+160                     getattr(runtime,'clip_advantage_upper_quantile',1.))
+161                 n = len(batch.chains_prev)
+162                 gp = torch.zeros(sum(p.numel() for p in parameters), device=parameters[0].device)
+163                 for start in range(0,n,microbatch_pairs):
+164                     end = min(n,start+microbatch_pairs)
+165                     parts = compute_official_components(runtime, _slice_batch(batch,start,end), stats,
+166                         reward_start=trainer.config.reward_start, reward_horizon=trainer.config.reward_horizon)
+167                     loss = (parts.policy.mean() + trainer.config.entropy_loss_coefficient*parts.entropy.mean())*((end-start)/n)
+168                     gp += gradient_vector(torch.autograd.grad(loss, parameters, allow_unused=True),parameters)
+169                 loss = keep.loss(runtime,device=parameters[0].device)
+170                 gk = gradient_vector(torch.autograd.grad(loss,parameters,allow_unused=True),parameters)
+171                 row = gradient_relation(gp,gk,1.)
+172                 if any(not math.isfinite(row[k]) or row[k] <= 0 for k in ('ppo_norm','keep_norm')):
+173                     raise ValueError('nonfinite or zero calibration gradient')
+174                 rows.append(row)
+175         if len(rows) != 4: raise ValueError('calibration requires exactly four logical batches')
+176         coefficient = target_ratio * float(np.median([r['ppo_norm'] for r in rows])) / float(np.median([r['keep_norm'] for r in rows]))
+177         for row in rows: row['ratio'] *= coefficient
+178         return dict(coefficient=coefficient, target_ratio=target_ratio, batches=rows,
+179                     gradient_semantics='actual PPO objective before final gradient-norm clipping')"
+S6,sample→epsilon代数换算,一致,actual direct-x0分支在clamp前由x0计算epsilon方向项；E5ActorBackend不先转换以避免往返漂移。clip后不重新计算epsilon。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\third_party\dppo_official_cc7234a\model\diffusion\diffusion_vpg.py,7ab594d7c3f22a2127219b1b62c665449427d552bedb92f3b3b4378e0dc8d70c,192-221,"192         if self.predict_epsilon:
+193             if self.use_ddim:
+194                 """"""
+195                 x₀ = (xₜ - √ (1-αₜ) ε )/ √ αₜ
+196                 """"""
+197                 x_recon = (x - sqrt_one_minus_alpha * noise) / (alpha**0.5)
+198             else:
+199                 """"""
+200                 x₀ = √ 1\α̅ₜ xₜ - √ 1\α̅ₜ-1 ε
+201                 """"""
+202                 x_recon = (
+203                     extract(self.sqrt_recip_alphas_cumprod, t, x.shape) * x
+204                     - extract(self.sqrt_recipm1_alphas_cumprod, t, x.shape) * noise
+205                 )
+206         else:  # directly predicting x₀
+207             x_recon = noise
+208             if self.use_ddim:
+209                 # The DDIM direction term still requires epsilon.  Keep the
+210                 # actor output as x_0, matching diffusers prediction_type
+211                 # ""sample"", and derive epsilon once from the unclipped x_0.
+212                 noise = (
+213                     x - alpha ** (0.5) * x_recon
+214                 ) / sqrt_one_minus_alpha
+215         if self.denoised_clip_value is not None:
+216             x_recon.clamp_(-self.denoised_clip_value, self.denoised_clip_value)
+217             if self.use_ddim and getattr(
+218                 self, ""recalculate_epsilon_after_clip"", True
+219             ):
+220                 # re-calculate noise based on clamped x_recon - default to false in HF, but let's use it here
+221                 noise = (x - alpha ** (0.5) * x_recon) / sqrt_one_minus_alpha"
+S6/表2,likelihood std floor0.1,一致,get_logprobs使用min_logprob_denoising_std；训练采样另有min_sampling下限。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\third_party\dppo_official_cc7234a\model\diffusion\diffusion_vpg.py,7ab594d7c3f22a2127219b1b62c665449427d552bedb92f3b3b4378e0dc8d70c,353-399,"353             chain = torch.stack(chain, dim=1)
+354         return Sample(x, chain)
+355 
+356     # ---------- RL training ----------#
+357 
+358     def get_logprobs(
+359         self,
+360         cond,
+361         chains,
+362         get_ent: bool = False,
+363         use_base_policy: bool = False,
+364     ):
+365         """"""
+366         Calculating the logprobs of the entire chain of denoised actions.
+367 
+368         Args:
+369             cond: dict with key state/rgb; more recent obs at the end
+370                 state: (B, To, Do)
+371                 rgb: (B, To, C, H, W)
+372             chains: (B, K+1, Ta, Da)
+373             get_ent: flag for returning entropy
+374             use_base_policy: flag for using base policy
+375 
+376         Returns:
+377             logprobs: (B x K, Ta, Da)
+378             entropy (if get_ent=True):  (B x K, Ta)
+379         """"""
+380         # Repeat cond for denoising_steps, flatten batch and time dimensions
+381         cond = {
+382             key: cond[key]
+383             .unsqueeze(1)
+384             .repeat(1, self.ft_denoising_steps, *(1,) * (cond[key].ndim - 1))
+385             .flatten(start_dim=0, end_dim=1)
+386             for key in cond
+387         }  # less memory usage than einops?
+388 
+389         # Repeat t for batch dim, keep it 1-dim
+390         if self.use_ddim:
+391             t_single = self.ddim_t[-self.ft_denoising_steps :]
+392         else:
+393             t_single = torch.arange(
+394                 start=self.ft_denoising_steps - 1,
+395                 end=-1,
+396                 step=-1,
+397                 device=self.device,
+398             )
+399             # 4,3,2,1,0,4,3,2,1,0,...,4,3,2,1,0"
+S6/表2,deterministic与采样std floor,需区分语义,deterministic DDIM采样std=0；0.1用于随机训练采样及logprob，不应说确定性评价仍添加0.1噪声。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\third_party\dppo_official_cc7234a\model\diffusion\diffusion_vpg.py,7ab594d7c3f22a2127219b1b62c665449427d552bedb92f3b3b4378e0dc8d70c,310-337,"310             mean, logvar, _ = self.p_mean_var(
+311                 x=x,
+312                 t=t_b,
+313                 cond=cond,
+314                 index=index_b,
+315                 use_base_policy=use_base_policy,
+316                 deterministic=deterministic,
+317             )
+318             std = torch.exp(0.5 * logvar)
+319 
+320             # Determine noise level
+321             if self.use_ddim:
+322                 if deterministic:
+323                     std = torch.zeros_like(std)
+324                 else:
+325                     std = torch.clip(std, min=min_sampling_denoising_std)
+326             else:
+327                 if deterministic and t == 0:
+328                     std = torch.zeros_like(std)
+329                 elif deterministic:  # still keep the original noise
+330                     std = torch.clip(std, min=1e-3)
+331                 else:  # use higher minimum noise
+332                     std = torch.clip(std, min=min_sampling_denoising_std)
+333             noise = torch.randn_like(x).clamp_(
+334                 -self.randn_clip_value, self.randn_clip_value
+335             )
+336             x = mean + std * noise
+337 "
+S6/表2,训练clip±1，评价±2,训练一致,训练继承BC clip_sample_range默认1.0；评价2.0为外部受控override，见run_routea_xk_evaluation与E2包。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\third_party\dppo_official_cc7234a\uav_idp3\e5_runtime.py,8bd5dd3ca629755f2e586b81556b284e603b2ed74f4d94d5c83a791976fc0910,238-265,"238         # Official DPPO names the direct x0 path ``predict_epsilon=False``.
+239         # E5 is prediction_type=sample, so this preserves native coordinates
+240         # and avoids a numerically lossy x0 -> epsilon -> x0 round trip.
+241         self.predict_epsilon = prediction_type == ""epsilon""
+242         native_clip_enabled = bool(getattr(scheduler.config, ""clip_sample"", False))
+243         native_clip_value = (
+244             float(getattr(scheduler.config, ""clip_sample_range"", 1.0))
+245             if native_clip_enabled
+246             else None
+247         )
+248         if denoised_clip_value is not None and denoised_clip_value != native_clip_value:
+249             raise E5RuntimeError(
+250                 ""denoised_clip_value must match the native E5 scheduler""
+251             )
+252         self.denoised_clip_value = native_clip_value
+253         self.recalculate_epsilon_after_clip = False
+254         self.native_ddim_pow_compat = True
+255         self.native_ddim_cpu_scalar_compat = True
+256         self.eps_clip_value = None
+257         self.randn_clip_value = float(randn_clip_value)
+258         self.final_action_clip_value = None
+259 
+260         self.ft_denoising_steps = int(ft_denoising_steps)
+261         self.ft_denoising_steps_d = 0
+262         self.ft_denoising_steps_t = 0
+263         self.ft_denoising_steps_cnt = 0
+264         self.min_sampling_denoising_std = float(min_sampling_denoising_std)
+265         self.min_logprob_denoising_std = float(min_logprob_denoising_std)"
+S1.3/价值网络,6维上下文,一致,beta、D0/10、起点偏移body/10、剩余比例共6维，不进入actor输入。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\critic_state.py,84d7a5d3591ab7a9e6d5b0099b7030035f6e950b5de1e2db60543f85678e1ade,23-42,"23 def with_episode_context(actor_condition, environment):
+24     """"""Finite-task critic context at the current state, before any reset.
+25 
+26     Ten metres is a scale, not a flight limit. Actor inputs are untouched.
+27     """"""
+28     env = environment
+29     beta = with_history_scalar(actor_condition, env._reward_history)[""beta""]
+30     offset = (np.asarray(env._episode_start_world, dtype=np.float64) -
+31               np.asarray(env._drone_pos, dtype=np.float64)) / 10.
+32     c, s = math.cos(env._drone_yaw), math.sin(env._drone_yaw)
+33     remaining = (env.max_episode_steps - env.episode_step) / env.max_episode_steps
+34     context = [float(beta[0, 0]), env._reward_history[""initial_distance""] / 10.,
+35                c * offset[0] + s * offset[1], -s * offset[0] + c * offset[1],
+36                offset[2], remaining]
+37     if not np.isfinite(context).all() or not 0. <= remaining <= 1.:
+38         raise ValueError(""invalid finite-task critic context"")
+39     reference = actor_condition[""global_cond""]
+40     tensor = torch.tensor(context, dtype=reference.dtype, device=reference.device)
+41     return dict(actor_condition, episode_context=tensor.expand(reference.shape[0], -1))"
+S1.3/表2,LayerNorm/位置嵌入/256×256 SiLU,一致,episode_context映射到首隐藏层且零初始化。,C:\Users\cjj\Desktop\IDP3\wsl_snapshot\routea_test12_independent_run02\results\native_a2\diffusion_policy_3d\rl\dppo_uav_rebuild\engine\value.py,476e64ee17650dcfff8368f9832aae8362e11d5584201778a0b9a5a851e11ea6,13-59,"13 class TemporalValueNetwork(nn.Module):
+14     def __init__(self, history: int = 3, frame_dim: int = 192, hidden_dim: int = 256,
+15                  history_scalar: bool = False, episode_context: bool = False):
+16         super().__init__()
+17         if history != 3 or frame_dim != 192:
+18             raise ValueContractError(""E5 critic requires ordered 3 x 192 features"")
+19         self.history = history
+20         self.frame_dim = frame_dim
+21         self.history_scalar = bool(history_scalar)
+22         self.episode_context = bool(episode_context)
+23         if self.history_scalar and self.episode_context:
+24             raise ValueContractError(""choose beta or episode context, not both"")
+25         self.frame_norm = nn.LayerNorm(frame_dim)
+26         self.position = nn.Parameter(torch.zeros(history, frame_dim))
+27         nn.init.normal_(self.position, std=0.02)
+28         self.mlp = nn.Sequential(
+29             nn.Linear(history * frame_dim, hidden_dim),
+30             nn.SiLU(),
+31             nn.Linear(hidden_dim, hidden_dim),
+32             nn.SiLU(),
+33             nn.Linear(hidden_dim, 1),
+34         )
+35         if self.history_scalar:
+36             # Allocate after A0 initialization; zeros consume no RNG state.
+37             self.history_weight = nn.Parameter(torch.zeros(hidden_dim))
+38         if self.episode_context:
+39             self.context_weight = nn.Parameter(torch.zeros(hidden_dim, 6))
+40 
+41     def forward(self, condition):
+42         global_cond = condition.get(""global_cond"", condition.get(""state""))
+43         if global_cond is None or tuple(global_cond.shape[1:]) != (
+44             self.history * self.frame_dim,
+45         ):
+46             raise ValueContractError(""critic condition must have shape (B,576)"")
+47         frames = global_cond.reshape(-1, self.history, self.frame_dim).detach()
+48         ordered = self.frame_norm(frames) + self.position.unsqueeze(0)
+49         flat = ordered.reshape(ordered.shape[0], -1)
+50         if not self.history_scalar and not self.episode_context:
+51             return self.mlp(flat)
+52         key, width = (""episode_context"", 6) if self.episode_context else (""beta"", 1)
+53         context = condition.get(key)
+54         if context is None or tuple(context.shape) != (flat.shape[0], width):
+55             raise ValueContractError(""critic {} must have shape (B,{})"".format(key, width))
+56         if not torch.isfinite(context).all():
+57             raise ValueContractError(""critic context must be finite"")
+58         extra = (context.to(flat) @ self.context_weight.T if self.episode_context
+59                  else context.to(flat) * self.history_weight)"

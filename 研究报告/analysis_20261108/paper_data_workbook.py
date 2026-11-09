@@ -1,5 +1,6 @@
 """论文数据表（唯一版本，1 m 主终点，研究任务书 D10、D11）。每个数字只出现一次；训练外结果只按难度展示。
-运行：python3 -I paper_data_workbook.py <oprime/rows.json> <oprime 目录> <g12_summary.csv> <g3 table_main.csv> <out.xlsx>
+运行：python3 -I paper_data_workbook.py <oprime/rows.json> <oprime 目录> <g12_summary.csv> <g3 table_main.csv> <out.xlsx> <gazebo 输出目录> <论文数据索取回复 details 目录>
+第 6 个参数为 gazebo_analysis.py 的输出目录；第 7 个参数为 Codex 回传的 worlds_63.csv、tasks_199.csv 所在目录（环境规模）。
 成功 = 碰撞前进入目标 1 m（arrival_1m.py 的判据）；碰撞 = 进入 1 m 之前碰撞；超时 = 其余。
 路径效率待成功回合执行轨迹补齐后按 1 m 重算（C侧_2026-11-08 导出），本版不列。"""
 import json, sys, csv, collections, random
@@ -7,7 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter as L
 
-rows_p, OP, G12, G3, OUT = sys.argv[1:6]
+rows_p, OP, G12, G3, OUT, GZ, DET = sys.argv[1:8]
 R = json.load(open(rows_p))
 rd = lambda p: list(csv.reader(open(p, encoding='utf-8-sig')))[1:]
 NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P6': '本文方法', 'P3': 'Single-stage DPPO',
@@ -117,7 +118,7 @@ for r in [('示范数据', '成功回合 / 帧数 / 划分', '988 / 60151 / 9:1'
           ('优化', '折扣 / GAE λ / 去噪折扣', '0.99 / 0.95 / 0.8', '表 2'), ('优化', 'PPO 截断宽度 ε0 / εmax', '1e-3 / 0.1', '表 2'),
           ('优化', '每轮决策转移数 / 样本复用遍数 / 每轮参数更新次数', '1024 / 5 / 20', '表 2'), ('训练', '第一阶段 / 第二阶段轮数', '128 / 128', '表 2'),
           ('行为克隆正则', '成功轨迹库任务数 / 样本数 / 每次抽样数', '47 / 549 / 32', '表 2'), ('行为克隆正则', '正则系数 λ / 标定目标梯度比', '0.0106 / 0.1', '表 2'),
-          ('回报', '到达 / 碰撞或触地 / 时间惩罚', '+100 / −50 / −0.05 每周期', '表 1'), ('评价', '采样 / 去噪截断 / 成功范围', '确定性 / ±2.0 / 目标 1 m', '表 2、4.1')]:
+          ('回报', '到达 / 碰撞或触地 / 时间惩罚', '+100 / −50 / −0.05 每周期', '表 1'), ('后训练', '采集环境数 / GPU / 第二阶段用时', '1 / RTX 4060 Laptop / 45376 s ≈ 12.6 h（Codex 读出，P6_wallclock.json）', '表 2、3.6'), ('评价', '采样 / 去噪截断 / 成功范围', '确定性 / ±2.0 / 目标 1 m', '表 2、4.1')]:
     ws.append(list(r))
 style(ws)
 
@@ -131,4 +132,34 @@ style(ws)
 
 ws = sheet('S3 第二次运行', '1 m 标准；第二次运行的单阶段与本文方法（补充材料 S3；正文局限一句）。', ['方法', '难度', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [30, 7, 7, 7, 7, 7, 9, 9, 9, 10])
 outcome_rows(ws, ['P14', 'P15'], '补充 S3'); style(ws)
+
+ws = sheet('表5 Gazebo', 'Gazebo + PX4 SITL，48 个任务（稀疏 12 / 适中 18 / 密集 18，31 个世界）× 2 次；成功 = 碰撞前进入目标 1 m（gazebo_analysis.py 重新判定，执行端汇总为碰撞优先，差 9 回合）。越界 1 回合计入碰撞。', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [7, 14, 7, 7, 7, 7, 9, 9, 9, 10])
+for r in rd(f'{GZ}/table5_1m.csv'):
+    i = ws.max_row + 1; ws.append([r[0], r[1], int(r[2]), int(r[3]), int(r[4]), int(r[5]), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}', '表 5、4.3、摘要'])
+    blue(ws, i, 'CDEF')
+    for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
+for r in rd(f'{GZ}/pairs.csv'):
+    if r[2] == 'out1m' and r[3] == '总体' and r[0] == 'P6':
+        ws.append([]); ws.append(['本文方法 − UAV-iDP3（配对，世界聚类 95% 区间）', '', int(r[4]), '', '', '', float(r[6]) / 100, f'[{r[7]}, {r[8]}]', '', '4.3'])
+style(ws)
+
+ws = sheet('S2 Gazebo 0.5m', 'Gazebo，成功 = 碰撞前进入目标 0.5 m 球形范围（补充材料表 S3）。', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [7, 14, 7, 7, 7, 7, 9, 9, 9, 10])
+for r in rd(f'{GZ}/s2_gazebo_05m.csv'):
+    i = ws.max_row + 1; ws.append([r[0], r[1], int(r[2]), int(r[3]), int(r[4]), int(r[5]), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}', '补充 表S3'])
+    blue(ws, i, 'CDEF')
+    for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
+style(ws)
+
+ws = sheet('S3 训练过程', '第二次运行的训练采集到达率（训练到达奖励口径）与近似 KL 中位数，每 16 轮（oprime/curve_blocks.csv；图 S1）。', ['方法', '轮', '采集到达率%', 'KL 中位数', '用在'], [30, 12, 12, 12, 10])
+for r in rd(f'{OP}/curve_blocks.csv'):
+    if r[0] in ('P14', 'P15'): i = ws.max_row + 1; ws.append([NAME[r[0]], r[1], float(r[2]), float(r[3]), '图 S1']); blue(ws, i, 'CD')
+style(ws)
+
+import statistics as stt
+ws = sheet('环境规模', '4.1 节一句。来源：Codex 论文数据索取回复 details/worlds_63.csv、tasks_199.csv（障碍分布区域 obstacle_region 均为 [-10,-10,10,10]，世界真实边界未找到）。', ['项', '最小', '中位数', '最大', '用在'], [36, 10, 10, 10, 8])
+W = [r for r in csv.DictReader(open(f'{DET}/worlds_63.csv', encoding='utf-8-sig')) if r['split'] == 'O_prime']
+T = list(csv.DictReader(open(f'{DET}/tasks_199.csv', encoding='utf-8-sig')))
+for name, v in [('训练外世界障碍数（42 个世界）', [int(r['total_obstacles']) for r in W]), ('起终点直线距离 m（199 个任务）', [float(r['straight_distance_3d_m']) for r in T]), ('目标高度 m', [float(r['goal_z']) for r in T])]:
+    ws.append([name, round(min(v), 2), round(stt.median(v), 2), round(max(v), 2), '4.1'])
+style(ws)
 wb.save(OUT); print('saved')
