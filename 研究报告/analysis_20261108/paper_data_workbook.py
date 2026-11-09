@@ -122,7 +122,7 @@ for r in rd(f'{A}/gazebo/table5_1m.csv'):
 style(ws)
 
 # ---- 正文数字（不在任何图表中的实验数字）
-ws = sheet('正文数字', '4.2、4.3节正文', '只列正文中出现、但不在任何图表里的实验数字', ['位置', '内容', '值', '来源'], [12, 60, 22, 30])
+ws = sheet('正文数字', '4.2节正文', '只列正文中出现、但不在任何图表里的实验数字', ['位置', '内容', '值', '来源'], [12, 60, 22, 30])
 it = [(r['world'], ok(r) - ok(idx[('P0', r['task'], r['rep'])])) for r in sel('P6', '总体')]
 ws.append(['4.2 总体性能', '本文方法 − UAV-iDP3 配对成功率差（百分点）与 95% 区间', f"{100*sum(x for _, x in it)/len(it):.1f} {boot(it)}", 'rows.json，同任务同重复配对'])
 for p in ['P0', 'P6']:
@@ -130,9 +130,6 @@ for p in ['P0', 'P6']:
         c = collections.Counter(map(out1m, sel(p, d))); n = len(sel(p, d))
         ws.append(['4.2 总体性能', f'{NAME[p]} {d}类碰撞率 / 超时率（%）', f"{100*c['碰撞']/n:.1f} / {100*c['超时']/n:.1f}", 'rows.json'])
 gp = {(r['方法'], r['判据'], r['难度']): r for r in rd(f'{A}/gazebo/pairs.csv')}
-g = gp[('P6', 'out1m', '总体')]; ws.append(['4.3', 'Gazebo 本文方法 − UAV-iDP3 配对成功率差（百分点）与 95% 区间', f"{g['差%']} [{g['区间下%']}, {g['区间上%']}]", 'gazebo/pairs.csv'])
-ck = json.load(open(f'{A}/gazebo/checks.json')); to = sum(v for k, v in ck['p0_to_p6_1m'].items() if k.startswith('超时'))
-ws.append(['4.3', 'Gazebo 中 UAV-iDP3 的超时回合在本文方法下成功的个数 / UAV-iDP3 超时回合数', f"{ck['p0_to_p6_1m']['超时->成功']} / {to}", 'gazebo/checks.json'])
 style(ws)
 
 # ---- 表S1 0.5 m
