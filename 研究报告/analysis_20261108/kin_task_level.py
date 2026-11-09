@@ -57,6 +57,15 @@ for p in ['P0', 'P6']:
     for d in ['稀疏', '适中', '密集']:
         kd = [k for k in lab if k[0] == p and info[k[1]][0] == d]; c = collections.Counter(lab[k] for k in kd)
         txt[f'{NAME[p]} {d} 碰撞率/超时率%'] = f"{100*c['碰撞']/len(kd):.1f} / {100*c['超时']/len(kd):.1f}"
+# 突破与保持（4.2、4.3 节）：UAV-iDP3 失败的任务中各方法完成数；UAV-iDP3、第一阶段策略已完成的任务中各方法保持数
+okT = lambda p, t: lab[(p, t)] == '成功'
+f0 = [t for t in ts if not okT('P0', t)]; s0 = [t for t in ts if okT('P0', t)]; s2 = [t for t in ts if okT('P2', t)]
+txt['UAV-iDP3 失败任务数'] = len(f0)
+for p in ['P2', 'P3', 'P4', 'P6']:
+    txt[f'{NAME[p]} 在 UAV-iDP3 失败任务中完成数'] = sum(okT(p, t) for t in f0)
+    txt[f'{NAME[p]} 保持 UAV-iDP3 已完成任务数（共 {len(s0)}）'] = sum(okT(p, t) for t in s0)
+for p in ['P3', 'P4', 'P6']:
+    txt[f'{NAME[p]} 保持第一阶段策略已完成任务数（共 {len(s2)}）'] = sum(okT(p, t) for t in s2)
 json.dump(txt, open(f'{OUT}/text_numbers.json', 'w'), ensure_ascii=False, indent=1)
 # 表3
 TK = {r['task_id']: r for r in csv.DictReader(open(f'{A}/codex_details/tasks_199.csv', encoding='utf-8-sig'))}
