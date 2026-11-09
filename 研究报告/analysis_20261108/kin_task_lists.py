@@ -1,10 +1,12 @@
 """运动学 O′（42 个世界、199 个任务、每任务 5 次）按任务列名单，供用户整理数据（只读）。
-运行：python3 -I kin_task_lists.py <rows.json> <out.xlsx>
+运行：python3 -I kin_task_lists.py <rows.json> <out.xlsx> [oprime/exclusions.json]
+给出 exclusions.json 时去除其中任务后再列名单（"全部任务"页仍列 199 个，并标出已去除）。
 成功 = 碰撞前进入目标 1 m。每个任务给出五种方法的成功次数（/5）与 UAV-iDP3、本文方法的失败方式。"""
 import json, sys, collections
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 R = json.load(open(sys.argv[1])); OUT = sys.argv[2]
+EXC = set(json.load(open(sys.argv[3]))['tasks']) if len(sys.argv) > 3 else set()
 ok = lambda r: r['out'] == 'reached' or r['near'] < 1
 P = ['P0', 'P2', 'P3', 'P4', 'P6']; NM = ['UAV-iDP3', 'w/o Stage II', 'Single-stage DPPO', 'w/o BC reg.', '本文方法']
 S = collections.defaultdict(collections.Counter); F = collections.defaultdict(collections.Counter); cat, wd = {}, {}
@@ -24,13 +26,17 @@ def sheet(name, note, ts):
         ws.append([t[:12], wd[t], typ(t), cat[t], wc[wd[t]]] + [S[t][p] for p in P] + [fm(t, 'P0'), fm(t, 'P6')])
     for i, w in enumerate([14, 52, 28, 6, 8] + [10] * 5 + [12, 12]): ws.column_dimensions[chr(65 + i)].width = w
     ws.freeze_panes = 'A3'
-T = sorted(S)
+T = sorted(t for t in S if t not in EXC)
+for c in ['稀疏', '适中', '密集']:
+    sheet(f'{c}不一致', f'{c}类中 UAV-iDP3 与本文方法成功次数不同的任务（已去除 exclusions 中的任务）', [t for t in T if cat[t] == c and S[t]['P0'] != S[t]['P6']])
 sheet('本文方法少于UAV-iDP3', '本文方法成功次数少于 UAV-iDP3 的任务', [t for t in T if S[t]['P6'] < S[t]['P0']])
 sheet('两者都0', 'UAV-iDP3 与本文方法 5 次都失败的任务', [t for t in T if S[t]['P6'] == 0 and S[t]['P0'] == 0])
 sheet('本文方法0', '本文方法 5 次都失败的任务（含 UAV-iDP3 有成功的）', [t for t in T if S[t]['P6'] == 0])
-sheet('全部任务', '全部 199 个任务', T)
+sheet('全部任务', '全部 199 个任务（已去除的任务见 oprime/exclusions.json）', sorted(S))
 ws = wb.create_sheet('按世界'); ws.append(['世界', '任务类型', '任务数'] + [f'{n} 成功/回合' for n in NM]); 
 for w in sorted(wc):
-    ts = [t for t in T if wd[t] == w]; ws.append([w, typ(ts[0]), len(ts)] + [f'{sum(S[t][p] for t in ts)}/{5*len(ts)}' for p in P])
+    ts = [t for t in T if wd[t] == w]
+    if not ts: continue
+    ws.append([w, typ(ts[0]), len(ts)] + [f'{sum(S[t][p] for t in ts)}/{5*len(ts)}' for p in P])
 ws.column_dimensions['A'].width = 52; ws.column_dimensions['B'].width = 28
 wb.save(OUT); print('saved')
