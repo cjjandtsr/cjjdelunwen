@@ -52,6 +52,10 @@ with open(f'{OUT}/path_eff_1m.csv', 'w', newline='') as f:
             v = sorted(got[k]['eff'] for k, r in want.items() if k[0] == p and got[k]['eff'] is not None and (d == '总体' or r['cat'] == d))
             q = statistics.quantiles(v, n=4)
             w.writerow([p, d, len(v), f'{statistics.median(v):.3f}', f'{q[0]:.3f}', f'{q[2]:.3f}'])
+with open(f'{OUT}/path_eff_episodes.csv', 'w', newline='') as f:
+    w = csv.writer(f); w.writerow(['策略', '任务', '重复', '难度', '路径效率'])
+    for k, r in sorted(want.items()):
+        if got[k]['eff'] is not None: w.writerow([k[0], k[1], k[2], r['cat'], f"{got[k]['eff']:.5f}"])
 json.dump(dict(per_policy={p: sum(1 for k in got if k[0] == p) for p in POL}, success_mismatch=len(bad), mismatch_examples=bad[:5], max_start_gap_m=gap),
           open(f'{OUT}/checks.json', 'w'), ensure_ascii=False, indent=1)
 print(open(f'{OUT}/path_eff_1m.csv').read()); print(open(f'{OUT}/checks.json').read())

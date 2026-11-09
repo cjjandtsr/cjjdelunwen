@@ -59,36 +59,20 @@ for t, where, claim in [('表1　回报组成', '表1（3.4节）', '回报各�
     style(ws)
 
 # ---- 表3 评价任务
-O = {r['task']: r['cat'] for r in R}
-TK = {r['task_id']: r for r in rd(f'{A}/codex_details/tasks_199.csv')}
-G12 = collections.Counter(); N12 = collections.Counter(); CN = {'Sparse': '稀疏', 'Moderate': '适中', 'Dense': '密集'}
-for r in rd(f'{A}/g12/g12_summary.csv'):
-    if r['split'] in ('test12', 'extv2') and r['category'] in CN: N12[CN[r['category']]] += int(r['tasks']); G12[CN[r['category']]] += int(r['reached_tasks'])
-GZ = json.load(open(f'{A}/gazebo/gazebo_rows.json'))
-EXC = json.load(open(f'{A}/gazebo/exclusions.json'))
-GZ = [r for r in GZ if not any(r['world'].endswith(w) for w in EXC['worlds']) and not any(r['task'].startswith(t) for t in EXC['tasks'])]
-ws = sheet('表3 评价任务', '表3（4.1节）', '三类难度的任务规模；直线飞行成功比例随难度下降，说明分类反映避障难度',
+ws = sheet('表3 评价任务', '表3（4.1节）', '三类难度的任务规模；直线飞行成功比例随难度下降（去除 oprime/exclusions.json 中 9 个任务后）',
            ['难度', '任务数', '世界数', '直线距离中位数 m', '最小 m', '最大 m', '直线飞行成功任务数', '直线飞行成功比例', 'Gazebo 任务数'], [7, 8, 8, 12, 8, 8, 12, 12, 10])
-for d in ['稀疏', '适中', '密集', '总体']:
-    ts = [t for t in TK if d == '总体' or O[t] == d]; dist = [float(TK[t]['straight_distance_3d_m']) for t in ts]; i = ws.max_row + 1
-    g, n = (sum(G12.values()), sum(N12.values())) if d == '总体' else (G12[d], N12[d]); assert n == len(ts)
-    ws.append([d, len(ts), len({TK[t]['world_id'] for t in ts}), round(stt.median(dist), 1), round(min(dist), 1), round(max(dist), 1), g, f'=G{i}/B{i}',
-               len({r['task'] for r in GZ if d == '总体' or r['cat'] == d})])
+for r in rd(f'{A}/oprime_task/table3.csv'):
+    i = ws.max_row + 1
+    ws.append([r['难度'], int(r['任务数']), int(r['世界数']), float(r['直线距离中位数']), float(r['最小']), float(r['最大']), int(r['直线飞行成功任务数']), f'=G{i}/B{i}', int(r['Gazebo任务数'])])
     blue(ws, i, 'BCDEFGI'); ws[f'H{i}'].number_format = '0.0%'
 style(ws)
 
 # ---- 表4 主要结果
-PE = {(r['策略'], r['难度']): float(r['路径效率中位数']) for r in rd(f'{A}/path_eff_1m/path_eff_1m.csv')}
-ws = sheet('表4 主要结果', '表4（4.2节总体性能、消融分析）；摘要、贡献3、结论', '后训练提高成功率且三类难度都提高；第一阶段贡献主体，加正则的第二阶段继续提高，不加正则的继续训练不提高；碰撞率不增加，超时显著减少',
-           ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时',
-            '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率', '路径效率（成功回合中位数）'], [24] + [7] * 10 + [9] * 6 + [12])
-for p in ['P0', 'P2', 'P3', 'P4', 'P6']:
-    a = sel(p, '总体'); c = collections.Counter(map(out1m, a)); i = ws.max_row + 1
-    row = [NAME[p], len(a), c['成功']]
-    for d in ['稀疏', '适中', '密集']:
-        s_ = sel(p, d); row += [len(s_), sum(ok(r) for r in s_)]
-    row += [c['碰撞'], c['超时'], f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}', PE[(p, '总体')]]
-    ws.append(row); blue(ws, i, 'BCDEFGHIJKR')
+ws = sheet('表4 主要结果', '表4（4.2节总体性能、消融分析）；摘要、贡献3、结论', '按任务统计（5 次中至少 3 次成功）：后训练提高成功率且三类难度都提高；第一阶段贡献主体，加正则的第二阶段继续提高；碰撞率不增加，超时显著减少', ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率', '路径效率（成功任务的成功飞行中位数）'], [24] + [7] * 10 + [9] * 6 + [12])
+for r in rd(f'{A}/oprime_task/main_1m.csv'):
+    i = ws.max_row + 1
+    ws.append([r['方法']] + [int(r[k]) for k in ['任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'] + [float(r['路径效率'])])
+    blue(ws, i, 'BCDEFGHIJKR')
     for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
@@ -123,33 +107,26 @@ style(ws)
 
 # ---- 正文数字（不在任何图表中的实验数字）
 ws = sheet('正文数字', '4.2节正文', '只列正文中出现、但不在任何图表里的实验数字', ['位置', '内容', '值', '来源'], [12, 60, 22, 30])
-it = [(r['world'], ok(r) - ok(idx[('P0', r['task'], r['rep'])])) for r in sel('P6', '总体')]
-ws.append(['4.2 总体性能', '本文方法 − UAV-iDP3 配对成功率差（百分点）与 95% 区间', f"{100*sum(x for _, x in it)/len(it):.1f} {boot(it)}", 'rows.json，同任务同重复配对'])
-for p in ['P0', 'P6']:
-    for d in ['稀疏', '适中', '密集']:
-        c = collections.Counter(map(out1m, sel(p, d))); n = len(sel(p, d))
-        ws.append(['4.2 总体性能', f'{NAME[p]} {d}类碰撞率 / 超时率（%）', f"{100*c['碰撞']/n:.1f} / {100*c['超时']/n:.1f}", 'rows.json'])
-gp = {(r['方法'], r['判据'], r['难度']): r for r in rd(f'{A}/gazebo/pairs.csv')}
+pr = rd(f'{A}/oprime_task/pairs.csv')[0]
+ws.append(['4.2 总体性能', '本文方法 − UAV-iDP3 任务成功率配对差（百分点）与 95% 区间', f"{pr['差%']} [{pr['区间下%']}, {pr['区间上%']}]", 'oprime_task/pairs.csv'])
+for k, v in json.load(open(f'{A}/oprime_task/text_numbers.json')).items(): ws.append(['4.2 总体性能', k, v, 'oprime_task/text_numbers.json'])
 style(ws)
 
 # ---- 表S1 0.5 m
-ws = sheet('表S1 0.5m', '补充材料 S2 表S1', '0.5 m 标准下本文方法仍为最高', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
-M = {(r['策略'], r['类别']): r for r in rd(f'{A}/oprime/main.csv') if r['评价集'] == 'O′'}
-for p in ['P0', 'P2', 'P3', 'P4', 'P6']:
-    a = M[(p, '总体')]; i = ws.max_row + 1; row = [NAME[p], int(a['回合']), int(a['到达'])]
-    for d in ['稀疏', '适中', '密集']: row += [int(M[(p, d)]['回合']), int(M[(p, d)]['到达'])]
-    row += [int(a['碰撞']), int(a['超时']), f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}']
-    ws.append(row); blue(ws, i, 'BCDEFGHIJK')
+ws = sheet('表S1 0.5m', '补充材料 S2 表S1', '0.5 m 标准、按任务统计下本文方法仍为最高', ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
+for r in rd(f'{A}/oprime_task/main_05m.csv'):
+    i = ws.max_row + 1
+    ws.append([r['方法']] + [int(r[k]) for k in ['任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'])
+    blue(ws, i, 'BCDEFGHIJK')
     for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
 # ---- 表S2 第二次运行
-ws = sheet('表S2 第二次运行', '补充材料 S3 表S2；第5章局限一句', '后训练结果对训练随机性敏感（预先登记 R4、R2 判为本预算下不符合采纳标准，判定在 0.5 m 下作出）', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [30] + [7] * 10 + [9] * 6)
-for p in ['P14', 'P15']:
-    a = sel(p, '总体'); c = collections.Counter(map(out1m, a)); i = ws.max_row + 1; row = [NAME[p], len(a), c['成功']]
-    for d in ['稀疏', '适中', '密集']: s_ = sel(p, d); row += [len(s_), sum(ok(r) for r in s_)]
-    row += [c['碰撞'], c['超时'], f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}']
-    ws.append(row); blue(ws, i, 'BCDEFGHIJK')
+ws = sheet('表S2 第二次运行', '补充材料 S3 表S2；第5章局限一句', '后训练结果对训练随机性敏感（预先登记 R4、R2 判为本预算下不符合采纳标准，判定在 0.5 m、按每次评价下作出）', ['方法', '任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
+for r in rd(f'{A}/oprime_task/second_run_1m.csv'):
+    i = ws.max_row + 1
+    ws.append([r['方法']] + [int(r[k]) for k in ['任务', '成功', '稀疏任务', '稀疏成功', '适中任务', '适中成功', '密集任务', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'])
+    blue(ws, i, 'BCDEFGHIJK')
     for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
@@ -161,13 +138,22 @@ for r in rd(f'{A}/oprime/curve_blocks.csv'):
         ws[f'C{i}'].number_format = '0.0%'; ws[f'D{i}'].number_format = '0.00E+00'
 style(ws)
 
-# ---- 表S3 Gazebo 全部 48 个任务
-ws = sheet('表S3 Gazebo全部任务', '补充材料 S4 表S3', '全部 48 个任务按任务统计（正文表5 去除 8 个任务，清单 gazebo/exclusions.json）', ['难度', '方法', '任务', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+# ---- 表S3 运动学全部 199 个任务（按每次评价）
+ws = sheet('表S3 运动学全部任务', '补充材料 S4 表S3', '去除 9 个任务、改按任务统计之前的结果（全部 199 个任务，按每次评价）', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
+for r in rd(f'{A}/oprime_task/full199_episode_1m.csv'):
+    i = ws.max_row + 1
+    ws.append([r['方法']] + [int(r[k]) for k in ['回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时']] + [f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}'])
+    blue(ws, i, 'BCDEFGHIJK')
+    for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
+style(ws)
+
+# ---- 表S4 Gazebo 全部 48 个任务
+ws = sheet('表S4 Gazebo全部任务', '补充材料 S5 表S4', '全部 48 个任务按任务统计（正文表5 去除 8 个任务，清单 gazebo/exclusions.json）', ['难度', '方法', '任务', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
 for r in rd(f'{A}/gazebo/full48_task.csv'):
     i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['任务']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
-ws = sheet('表S4 Gazebo按次', '补充材料 S4 表S4', '正文 40 个任务按每次飞行统计（改口径前的结果）', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+ws = sheet('表S5 Gazebo按次', '补充材料 S5 表S5', '正文 40 个任务按每次飞行统计（改口径前的结果）', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
 for r in rd(f'{A}/gazebo/table5_1m.csv'):
     i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['回合']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
@@ -176,7 +162,7 @@ style(ws)
 # ---- 说明
 ws = wb.active; ws.title = '说明'; ws.column_dimensions['A'].width = 22; ws.column_dimensions['B'].width = 46; ws.column_dimensions['C'].width = 90
 for t in ['论文数据表（2026-11-08）：论文正文与补充材料中全部图表及正文实验数字的数据，一页一个图表，按论文顺序。',
-          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。训练外评价：42 个世界、199 个任务，每种方法 995 回合；Gazebo：正文 40 个任务 × 2 次，按任务统计（至少一次成功即成功；两次均失败时任一次碰撞记碰撞，否则超时）；全部 48 个任务见表S3 页，按每次飞行见表S4 页。',
+          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。运动学评价：41 个世界、190 个任务，每任务 5 次，按任务统计（至少 3 次成功即成功；否则按失败较多的一类，相同记碰撞）；全部 199 个任务按每次评价见表S3 页；Gazebo：正文 40 个任务 × 2 次，按任务统计（至少一次成功即成功；两次均失败时任一次碰撞记碰撞，否则超时）；全部 48 个任务见表S4 页，按每次飞行见表S5 页。',
           '图1—图4 为方法示意图，不含实验数据。蓝字为原始计数或原始值，黑字为公式。', '']:
     ws.append([t]); ws.cell(ws.max_row, 1).font = Font(name=F, bold=(ws.max_row == 1))
 ws.append(['页', '用在论文哪里', '支撑什么结论'])
