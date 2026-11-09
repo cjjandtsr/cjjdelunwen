@@ -1,5 +1,6 @@
 """Gazebo 三方法 288 回合按论文主终点（D10：碰撞前进入目标 1 m）重新判定，并给出 0.5 m（补充 S2）结果。
 运行：python3 -I gazebo_analysis.py <jindu/gazebo_3method_288_run01> <输出目录> [exclusions.json]
+任务级结果（用户 11-09 决定为正文表 5 口径）：每个任务飞行 2 次，至少一次成功记该任务成功；两次都失败时，任一次碰撞记碰撞，否则记超时。输出 table5_task.csv（去除后）与 full48_task.csv（全部任务）；table5_1m.csv 为按每次飞行统计（补充材料 S4）。
 给出 exclusions.json 时，table5_1m.csv、s2_gazebo_05m.csv、pairs.csv、checks.json 按去除后的任务统计，另写 full48_table_1m.csv（全部 48 个任务，补充材料 S4）；gazebo_rows.json 始终为全部 288 回合。
 判定：轨迹（odom 系，goal_odom = goal_world − (start_x, start_y, 0)）任一帧到目标 3D 距离 ≤ r 即成功；
 碰撞或越界即结束轨迹记录，故"任一帧 ≤ r"等价于"碰撞前进入"。其余：monitor 为 collision/lost 记碰撞（越界单列计数），否则记超时。
@@ -38,6 +39,20 @@ if EXC['worlds'] or EXC['tasks']:
     rows = kept
 for key, fn in [('out1m', 'table5_1m.csv'), ('out05', 's2_gazebo_05m.csv')]:
     with open(f'{OUT}/{fn}', 'w', newline='') as f: w = csv.writer(f); w.writerow(H); w.writerows(table(key))
+
+def task_table(rs):
+    T = collections.defaultdict(list); cat = {}
+    for r in rs: T[(r['method'], r['task'])].append(r['out1m']); cat[r['task']] = r['cat']
+    lab = {k: '成功' if '成功' in v else ('碰撞' if '碰撞' in v else '超时') for k, v in T.items()}
+    out = []
+    for d in ['总体', '稀疏', '适中', '密集']:
+        for m in ['P0', 'P6', 'EGO']:
+            ks = [k for k in lab if k[0] == m and (d == '总体' or cat[k[1]] == d)]; c = collections.Counter(lab[k] for k in ks); n = len(ks)
+            out.append([d, NAME[m], n, c['成功'], c['碰撞'], c['超时'], f"{100*c['成功']/n:.1f}", f"{100*c['碰撞']/n:.1f}", f"{100*c['超时']/n:.1f}"])
+    return out
+HT = ['难度', '方法', '任务', '成功', '碰撞', '超时', '成功率%', '碰撞率%', '超时率%']
+for fn, rs in [('table5_task.csv', rows), ('full48_task.csv', ALL)]:
+    with open(f'{OUT}/{fn}', 'w', newline='') as f: w = csv.writer(f); w.writerow(HT); w.writerows(task_table(rs))
 idx = {(r['method'], r['task'], r['rep']): r for r in rows}
 def pair(a, b, key, cat='总体'):
     it = [(r['world'], (r[key] == '成功') - (idx[(b, r['task'], r['rep'])][key] == '成功')) for r in rows if r['method'] == a and (cat == '总体' or r['cat'] == cat)]

@@ -114,10 +114,10 @@ for d, w, t, rp in [('稀疏', 'front_offset_obstacle__000003', '00401b423993', 
 style(ws)
 
 # ---- 表5 Gazebo
-ws = sheet('表5 Gazebo', '表5（4.3节）；摘要、贡献3、结论', 'Gazebo 中提升方向与运动学一致：超时大幅减少，稀疏与密集类成功率提高；碰撞率较高；EGO-Planner 总体更高（统计不含去除的 8 个任务，见表S3 页）',
-           ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
-for r in rd(f'{A}/gazebo/table5_1m.csv'):
-    i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['回合']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
+ws = sheet('表5 Gazebo', '表5（4.3节）；摘要、贡献3、结论', '按任务统计：成功率提高、超时大幅减少、碰撞率相同；EGO-Planner 总体更高，稀疏与适中类与本文方法相当',
+           ['难度', '方法', '任务', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+for r in rd(f'{A}/gazebo/table5_task.csv'):
+    i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['任务']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
@@ -162,17 +162,21 @@ for r in rd(f'{A}/oprime/curve_blocks.csv'):
 style(ws)
 
 # ---- 表S3 Gazebo 全部 48 个任务
-ws = sheet('表S3 Gazebo全部任务', '补充材料 S4 表S3', '正文表5 去除 8 个任务前的全部 48 个任务结果（去除清单 gazebo/exclusions.json）', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
-for r in rd(f'{A}/gazebo/full48_table_1m.csv'):
+ws = sheet('表S3 Gazebo全部任务', '补充材料 S4 表S3', '全部 48 个任务按任务统计（正文表5 去除 8 个任务，清单 gazebo/exclusions.json）', ['难度', '方法', '任务', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+for r in rd(f'{A}/gazebo/full48_task.csv'):
+    i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['任务']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
+    for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
+style(ws)
+ws = sheet('表S4 Gazebo按次', '补充材料 S4 表S4', '正文 40 个任务按每次飞行统计（改口径前的结果）', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+for r in rd(f'{A}/gazebo/table5_1m.csv'):
     i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['回合']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
-ws.append([]); ws.append(['全部任务配对差（本文方法 − UAV-iDP3）', '8.3 [−2.2, 18.9]（gazebo_analysis.py 不带 exclusions.json 运行）'])
 style(ws)
 
 # ---- 说明
 ws = wb.active; ws.title = '说明'; ws.column_dimensions['A'].width = 22; ws.column_dimensions['B'].width = 46; ws.column_dimensions['C'].width = 90
 for t in ['论文数据表（2026-11-08）：论文正文与补充材料中全部图表及正文实验数字的数据，一页一个图表，按论文顺序。',
-          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。训练外评价：42 个世界、199 个任务，每种方法 995 回合；Gazebo：正文 40 个任务 × 2 次，每种方法 80 回合（全部 48 个任务见表S3 页）。',
+          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。训练外评价：42 个世界、199 个任务，每种方法 995 回合；Gazebo：正文 40 个任务 × 2 次，按任务统计（至少一次成功即成功；两次均失败时任一次碰撞记碰撞，否则超时）；全部 48 个任务见表S3 页，按每次飞行见表S4 页。',
           '图1—图4 为方法示意图，不含实验数据。蓝字为原始计数或原始值，黑字为公式。', '']:
     ws.append([t]); ws.cell(ws.max_row, 1).font = Font(name=F, bold=(ws.max_row == 1))
 ws.append(['页', '用在论文哪里', '支撑什么结论'])
