@@ -1,25 +1,23 @@
-"""论文数据表（唯一版本，1 m 主终点，研究任务书 D10、D11）。每个数字只出现一次；训练外结果只按难度展示。
-运行：python3 -I paper_data_workbook.py <oprime/rows.json> <oprime 目录> <g12_summary.csv> <g3 table_main.csv> <out.xlsx> <gazebo 输出目录> <论文数据索取回复 details 目录>
-第 6 个参数为 gazebo_analysis.py 的输出目录；第 7 个参数为 Codex 回传的 worlds_63.csv、tasks_199.csv 所在目录（环境规模）。
-成功 = 碰撞前进入目标 1 m（arrival_1m.py 的判据）；碰撞 = 进入 1 m 之前碰撞；超时 = 其余。
-路径效率由 path_eff_1m.py 从执行轨迹计算，见"路径效率"表。"""
-import json, sys, csv, collections, random
+"""论文数据表（唯一版本）：正文与补充材料中每一张图表、每一个实验数字的数据，按论文顺序，一页对应一个图表。
+运行：python3 -I paper_data_workbook.py <rows.json> <analysis_20261108 目录> <g3 table_main.csv（未用，保留位置）> <论文大稿_v3.md> <out.xlsx>
+rows.json 由 o_prime_analysis.py 生成（O′ 7 个策略各 995 回合）。成功 = 碰撞前进入目标 1 m（任务书 D10）。
+蓝字为原始计数或原始值，黑字为公式。区间：按世界聚类 bootstrap，20000 次，seed 2026102601（工程阈值，非显著性检验）。"""
+import json, sys, csv, collections, random, re, statistics as stt
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter as L
 
-rows_p, OP, G12, G3, OUT, GZ, DET = sys.argv[1:8]
+rows_p, A, _G3, DRAFT, OUT = sys.argv[1:6]
 R = json.load(open(rows_p))
-rd = lambda p: list(csv.reader(open(p, encoding='utf-8-sig')))[1:]
-NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P6': '本文方法', 'P3': 'Single-stage DPPO',
-        'P4': 'Reg-DPPO w/o BC reg.', 'P14': 'Reg-DPPO w/o Stage II（第二次运行）', 'P15': '本文方法（第二次运行）'}
+rd = lambda p: list(csv.DictReader(open(p, encoding='utf-8-sig')))
+NAME = {'P0': 'UAV-iDP3', 'P2': 'Reg-DPPO w/o Stage II', 'P3': 'Single-stage DPPO', 'P4': 'Reg-DPPO w/o BC reg.', 'P6': '本文方法',
+        'P14': 'Reg-DPPO w/o Stage II（第二次运行）', 'P15': '本文方法（第二次运行）'}
 DIFF = ['总体', '稀疏', '适中', '密集']
-F = 'Arial'; H = PatternFill('solid', start_color='DCE6F3'); th = Side(style='thin', color='BFBFBF'); B = Border(left=th, right=th, top=th, bottom=th)
-BLUE = '0000FF'
+F = 'Arial'; H = PatternFill('solid', start_color='DCE6F3'); th = Side(style='thin', color='BFBFBF'); B = Border(left=th, right=th, top=th, bottom=th); BLUE = '0000FF'
 ok = lambda r: r['out'] == 'reached' or r['near'] < 1.0
-def out1m(r): return '成功' if ok(r) else ('碰撞' if r['out'] == 'collision' else '超时')
-idx = {(r['policy'], r['task'], r['rep']): r for r in R}
+out1m = lambda r: '成功' if ok(r) else ('碰撞' if r['out'] == 'collision' else '超时')
 sel = lambda p, d: [r for r in R if r['policy'] == p and (d == '总体' or r['cat'] == d)]
+idx = {(r['policy'], r['task'], r['rep']): r for r in R}
 def boot(items):
     by = collections.defaultdict(lambda: [0, 0])
     for w, a in items: by[w][0] += a; by[w][1] += 1
@@ -30,11 +28,12 @@ def boot(items):
         v.append(s / n)
     v.sort(); return f'[{100*v[500]:.1f}, {100*v[19499]:.1f}]'
 
-wb = Workbook()
-def sheet(title, note, cols, widths):
+wb = Workbook(); INDEX = []
+def sheet(title, where, claim, cols, widths):
+    INDEX.append((title, where, claim))
     ws = wb.create_sheet(title)
-    ws.append([note]); ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(cols))
-    ws['A1'].font = Font(name=F, italic=True, color='404040'); ws['A1'].alignment = Alignment(wrap_text=True, vertical='top'); ws.row_dimensions[1].height = 45
+    ws.append([f'{where}｜{claim}']); ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(cols))
+    ws['A1'].font = Font(name=F, italic=True, color='404040'); ws['A1'].alignment = Alignment(wrap_text=True, vertical='top'); ws.row_dimensions[1].height = 48
     ws.append(cols)
     for i, w in enumerate(widths, 1): ws.column_dimensions[L(i)].width = w
     for c in ws[2]: c.font = Font(name=F, bold=True); c.fill = H; c.alignment = Alignment(wrap_text=True, vertical='center'); c.border = B
@@ -44,127 +43,133 @@ def style(ws):
         for c in row: c.font = Font(name=F, color=c.font.color, bold=c.font.bold); c.border = B; c.alignment = Alignment(vertical='top', wrap_text=True)
 def blue(ws, r, cols):
     for col in cols: ws[f'{col}{r}'].font = Font(name=F, color=BLUE)
-def outcome_rows(ws, pols, use):
-    for p in pols:
-        for d in DIFF:
-            rs = sel(p, d); c = collections.Counter(map(out1m, rs)); i = ws.max_row + 1
-            ws.append([NAME[p], d, len(rs), c['成功'], c['碰撞'], c['超时'], f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}', use])
-            blue(ws, i, 'CDEF')
-            for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
+def md_table(title):
+    s = open(DRAFT).read(); i = s.index(f'**{title}'); lines = s[i:].split('\n')[2:]
+    out = []
+    for l in lines:
+        if not l.startswith('|'): break
+        if l.startswith('| ---'): continue
+        out.append([c.strip() for c in l.strip('|').split('|')])
+    return out
 
-# 说明
-ws = wb.active; ws.title = '说明'
-for i, t in enumerate([
-    '论文数据表（唯一版本，2026-11-08，1 m 主终点）',
-    '成功：飞行中未碰撞且进入目标 1 m 范围。结局分成功、碰撞、超时三类。训练外评价集 42 个世界、199 个任务（稀疏 59 / 适中 70 / 密集 70），每种方法 995 回合。',
-    '蓝字为原始记录计数，黑字为公式。区间只给主比较（按世界聚类 bootstrap，20000 次）。路径效率见"路径效率"表。'], 1):
-    ws.cell(i, 1, t).font = Font(name=F, bold=(i == 1)); ws.cell(i, 1).alignment = Alignment(wrap_text=True)
-ws.column_dimensions['A'].width = 120
-ws.append([]); ws.append(['页 — 用在论文哪里 — 支撑什么结论'])
-for t in ['表3 主结果 — 表 3、图 6、图 7、摘要 — 后训练提高成功率，三类难度都提高，碰撞不增加',
-          '主比较 — 摘要、贡献、4.2 — 本文方法相对 BC 的提升及区间（图 6 误差线）',
-          '表4 消融 — 表 4、4.2 消融 — 第一阶段贡献主体；第二阶段加正则继续提高，不加正则不提高',
-          '训练过程 — 图 8 — 加正则时第二阶段平稳',
-          '直线参考 — 4.1 — 难度分类有效',
-          '图9选例 — 图 9 — 三类难度各一例',
-          '方法与设置 — 表 1、表 2、3.6',
-          'S2 0.5m — 补充 S2 — 原 0.5 m 标准下的结果',
-          'S3 第二次运行 — 补充 S3、局限一句 — 训练随机性',
-          '（待实验）Gazebo — 4.3、表 5']:
-    ws.append([t]); ws.cell(ws.max_row, 1).font = Font(name=F)
+# ---- 表1、表2：取自正文
+for t, where, claim in [('表1　回报组成', '表1（3.4节）', '回报各项的取值与设计依据'), ('表2　主要超参数', '表2（3.6节）', '实现与训练设置')]:
+    T = md_table(t); ws = sheet(t.split('　')[0] + ' ' + t.split('　')[1][:6], where, claim, T[0], [22, 44, 60][:len(T[0])])
+    for r in T[1:]: ws.append(r)
+    style(ws)
 
-ws = sheet('表3 主结果', '1 m 标准；比例由计数公式计算。', ['方法', '难度', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [30, 7, 7, 7, 7, 7, 9, 9, 9, 16])
-outcome_rows(ws, ['P0', 'P2', 'P6'], '表 3、图 6、图 7'); style(ws)
-
-ws = sheet('主比较', '同一任务同一次重复配对的成功率差（1 m 标准）及按世界聚类的 95% 区间。', ['比较', '难度', '回合', '差值（百分点）', '95% 区间'], [30, 7, 7, 14, 16])
-for d in DIFF:
-    rs = sel('P6', d); it = [(r['world'], ok(r) - ok(idx[('P0', r['task'], r['rep'])])) for r in rs]
-    ws.append(['本文方法 − UAV-iDP3', d, len(rs), round(100 * sum(x for _, x in it) / len(rs), 1), boot(it)]); blue(ws, ws.max_row, 'CDE')
+# ---- 表3 评价任务
+O = {r['task']: r['cat'] for r in R}
+TK = {r['task_id']: r for r in rd(f'{A}/codex_details/tasks_199.csv')}
+G12 = collections.Counter(); N12 = collections.Counter(); CN = {'Sparse': '稀疏', 'Moderate': '适中', 'Dense': '密集'}
+for r in rd(f'{A}/g12/g12_summary.csv'):
+    if r['split'] in ('test12', 'extv2') and r['category'] in CN: N12[CN[r['category']]] += int(r['tasks']); G12[CN[r['category']]] += int(r['reached_tasks'])
+GZ = json.load(open(f'{A}/gazebo/gazebo_rows.json'))
+ws = sheet('表3 评价任务', '表3（4.1节）', '三类难度的任务规模；直线飞行成功比例随难度下降，说明分类反映避障难度',
+           ['难度', '任务数', '世界数', '直线距离中位数 m', '最小 m', '最大 m', '直线飞行成功任务数', '直线飞行成功比例', 'Gazebo 任务数'], [7, 8, 8, 12, 8, 8, 12, 12, 10])
+for d in ['稀疏', '适中', '密集', '总体']:
+    ts = [t for t in TK if d == '总体' or O[t] == d]; dist = [float(TK[t]['straight_distance_3d_m']) for t in ts]; i = ws.max_row + 1
+    g, n = (sum(G12.values()), sum(N12.values())) if d == '总体' else (G12[d], N12[d]); assert n == len(ts)
+    ws.append([d, len(ts), len({TK[t]['world_id'] for t in ts}), round(stt.median(dist), 1), round(min(dist), 1), round(max(dist), 1), g, f'=G{i}/B{i}',
+               len({r['task'] for r in GZ if d == '总体' or r['cat'] == d})])
+    blue(ws, i, 'BCDEFGI'); ws[f'H{i}'].number_format = '0.0%'
 style(ws)
 
-ws = sheet('表4 消融', '1 m 标准。正文 5 行；第二次运行见 S4。', ['方法', '难度', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [30, 7, 7, 7, 7, 7, 9, 9, 9, 10])
-outcome_rows(ws, ['P0', 'P2', 'P3', 'P4', 'P6'], '表 4'); style(ws)
-
-RUN = {'P2_P3': '第一阶段 + 不中断续训（同一运行）', 'P6': '本文方法第二阶段', 'P4': '分叉不加正则（第二阶段）'}
-ws = sheet('训练过程', '训练中每 16 轮的采集到达率与近似 KL 中位数（图 8）。', ['运行', '轮次', '采集到达率', '近似 KL'], [34, 12, 12, 12])
-for r in rd(f'{OP}/curve_blocks.csv'):
-    if r[0] not in RUN: continue
-    ws.append([RUN[r[0]], r[1], float(r[2]) / 100, float(r[3])]); i = ws.max_row
-    ws[f'C{i}'].number_format = '0.0%'; ws[f'D{i}'].number_format = '0.0E+00'; blue(ws, i, 'CD')
-style(ws)
-
-ws = sheet('直线参考', '沿起点到目标直线飞行，按任务计。', ['难度', '任务数', '直线到达任务数', '直线成功率'], [8, 8, 14, 12])
-g = collections.Counter(); n = collections.Counter(); CN = {'Sparse': '稀疏', 'Moderate': '适中', 'Dense': '密集', 'All': '总体'}
-for r in rd(G12):
-    if r[0] in ('test12', 'extv2'): n[CN[r[1]]] += int(r[2]); g[CN[r[1]]] += int(r[4])
-for d in DIFF:
-    i = ws.max_row + 1; ws.append([d, n[d], g[d], f'=C{i}/B{i}']); blue(ws, i, 'BC'); ws[f'D{i}'].number_format = '0.0%'
-style(ws)
-
-ws = sheet('图9选例', '1 m 标准：BC 失败、本文方法成功的同一任务同一次重复，每类取世界名、任务编号、重复序号最小者（fig10_select_1m.py）。', ['难度', '世界', '任务编号', '重复'], [7, 34, 68, 6])
-for r in [('稀疏', 'front_offset_obstacle__000003', '00401b423993bfb58b91640f191d5ef429b23647998935a209295a0fb47b49ff', 1),
-          ('适中', 'front_offset_obstacle__000052', 'b9e88976c05a3a70cdd204fde78b6deefad46cbf386ead9bd306e753a8255c2c', 2),
-          ('密集', 'front_offset_obstacle__000050', '5b955d1a9431873c12e35966524705919c8893b84ac5448fda08f07a9596086b', 3)]:
-    ws.append(list(r))
-style(ws)
-
-ws = sheet('方法与设置', '表 1、表 2 与 3.6 节。', ['模块', '参数', '取值', '用在'], [14, 44, 36, 10])
-for r in [('示范数据', '成功回合 / 帧数 / 划分', '988 / 60151 / 9:1', '3.6'), ('观测与动作', '历史帧数 / 每帧点数 / 状态维度 / 轨迹维度', '3 / 4096 / 9 / 16×11', '表 2'),
-          ('深度相机', '分辨率 / 水平视场角 / 探测距离', '320×240 / 60° / 0.05—10 m', '3.6'), ('策略网络', '几何特征 / 状态特征 / 条件向量', '128 / 64 / 576', '表 2'),
-          ('策略网络', 'U-Net 通道 / 卷积核 / 时间步嵌入', '256、512、1024 / 5 / 128', '表 2'), ('扩散模型', '训练扩散步 / DDIM 采样步', '50 / 10', '表 2'),
-          ('预训练', '几何辅助损失权重', '0.5', '表 2'), ('执行', '执行段时长 / 规划窗口 / 执行前缀 / 最大决策次数', '0.3 s / 8 段 / 4 段 / 60', '表 2'),
-          ('训练', '到达奖励半径 / 碰撞体半径', '0.5 m / 0.1 m', '表 2'), ('LoRA', '秩 / 缩放 / 可训练参数占比', '8 / 8 / 1.43%', '表 2'),
-          ('价值网络', '隐藏层 / 激活', '256、256 / SiLU', '表 2'), ('优化', '策略学习率 / 价值学习率', '2e-5 线性降至 1e-5 / 1e-3', '表 2'),
-          ('优化', '折扣 / GAE λ / 去噪折扣', '0.99 / 0.95 / 0.8', '表 2'), ('优化', 'PPO 截断宽度 ε0 / εmax', '1e-3 / 0.1', '表 2'),
-          ('优化', '每轮决策转移数 / 样本复用遍数 / 每轮参数更新次数', '1024 / 5 / 20', '表 2'), ('训练', '第一阶段 / 第二阶段轮数', '128 / 128', '表 2'),
-          ('行为克隆正则', '成功轨迹库任务数 / 样本数 / 每次抽样数', '47 / 549 / 32', '表 2'), ('行为克隆正则', '正则系数 λ / 标定目标梯度比', '0.0106 / 0.1', '表 2'),
-          ('回报', '到达 / 碰撞或触地 / 时间惩罚', '+100 / −50 / −0.05 每周期', '表 1'), ('后训练', '采集环境数 / GPU / 第二阶段用时', '1 / RTX 4060 Laptop / 45376 s ≈ 12.6 h（Codex 读出，P6_wallclock.json）', '表 2、3.6'), ('评价', '采样 / 去噪截断 / 成功范围', '确定性 / ±2.0 / 目标 1 m', '表 2、4.1')]:
-    ws.append(list(r))
-style(ws)
-
-ws = sheet('S2 0.5m', '原 0.5 m 到达标准下的结局（补充材料 S2）。', ['方法', '难度', '回合', '到达', '碰撞', '超时', '到达率', '用在'], [30, 7, 7, 7, 7, 7, 9, 10])
-MAIN = {(r[2], r[1]): r for r in rd(f'{OP}/main.csv') if r[0] == 'O′'}
+# ---- 表4 主要结果
+PE = {(r['策略'], r['难度']): float(r['路径效率中位数']) for r in rd(f'{A}/path_eff_1m/path_eff_1m.csv')}
+ws = sheet('表4 主要结果', '表4（4.2节总体性能、消融分析）；摘要、贡献3、结论', '后训练提高成功率且三类难度都提高；第一阶段贡献主体，加正则的第二阶段继续提高，不加正则的继续训练不提高；碰撞率不增加，超时显著减少',
+           ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时',
+            '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率', '路径效率（成功回合中位数）'], [24] + [7] * 10 + [9] * 6 + [12])
 for p in ['P0', 'P2', 'P3', 'P4', 'P6']:
-    for d in DIFF:
-        m = MAIN[(p, d)]; i = ws.max_row + 1
-        ws.append([NAME[p], d, int(m[3]), int(m[5]), int(m[6]), int(m[7]), f'=D{i}/C{i}', '补充 S2']); blue(ws, i, 'CDEF'); ws[f'G{i}'].number_format = '0.0%'
+    a = sel(p, '总体'); c = collections.Counter(map(out1m, a)); i = ws.max_row + 1
+    row = [NAME[p], len(a), c['成功']]
+    for d in ['稀疏', '适中', '密集']:
+        s_ = sel(p, d); row += [len(s_), sum(ok(r) for r in s_)]
+    row += [c['碰撞'], c['超时'], f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}', PE[(p, '总体')]]
+    ws.append(row); blue(ws, i, 'BCDEFGHIJKR')
+    for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
-ws = sheet('S3 第二次运行', '1 m 标准；第二次运行的单阶段与本文方法（补充材料 S3；正文局限一句）。', ['方法', '难度', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [30, 7, 7, 7, 7, 7, 9, 9, 9, 10])
-outcome_rows(ws, ['P14', 'P15'], '补充 S3'); style(ws)
+# ---- 图5 训练过程
+RUN = {'P2_P3': None, 'P6': '本文方法（第二阶段）', 'P4': 'Reg-DPPO w/o BC reg.'}
+ws = sheet('图5 训练过程', '图5（4.2节两阶段训练的作用）', '加正则时第二阶段采集成功率与 KL 平稳；不加正则时成功率下降、KL 突增',
+           ['曲线', '轮次', '采集成功率（训练到达奖励口径）', '近似 KL 中位数'], [30, 12, 16, 14])
+for r in rd(f'{A}/oprime/curve_blocks.csv'):
+    k = r['策略']
+    if k not in RUN: continue
+    u = int(r['轮'].split('-')[0][1:])
+    name = RUN[k] or ('第一阶段' if u <= 128 else 'Single-stage DPPO')
+    i = ws.max_row + 1; ws.append([name, r['轮'], float(r['采集到达率%']) / 100, float(r['KL中位数'])]); blue(ws, i, 'CD')
+    ws[f'C{i}'].number_format = '0.0%'; ws[f'D{i}'].number_format = '0.00E+00'
+style(ws)
 
-ws = sheet('表5 Gazebo', 'Gazebo + PX4 SITL，48 个任务（稀疏 12 / 适中 18 / 密集 18，31 个世界）× 2 次；成功 = 碰撞前进入目标 1 m（gazebo_analysis.py 重新判定，执行端汇总为碰撞优先，差 9 回合）。越界 1 回合计入碰撞。', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [7, 14, 7, 7, 7, 7, 9, 9, 9, 10])
-for r in rd(f'{GZ}/table5_1m.csv'):
-    i = ws.max_row + 1; ws.append([r[0], r[1], int(r[2]), int(r[3]), int(r[4]), int(r[5]), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}', '表 5、4.3、摘要'])
-    blue(ws, i, 'CDEF')
+# ---- 图6 典型轨迹
+ws = sheet('图6 典型轨迹', '图6（4.2节避障行为）', '三类难度各一例：UAV-iDP3 失败、本文方法成功（选取规则：同一任务同一次重复，按世界名、任务编号、重复序号取最小者；fig10_select_1m.py）',
+           ['难度', '世界', '任务编号', '重复', 'UAV-iDP3 结局', '本文方法结局'], [7, 34, 30, 6, 12, 12])
+for d, w, t, rp in [('稀疏', 'front_offset_obstacle__000003', '00401b423993', 1), ('适中', 'front_offset_obstacle__000052', 'b9e88976c05a', 2), ('密集', 'front_offset_obstacle__000050', '5b955d1a9431', 3)]:
+    a = [r for r in R if r['task'].startswith(t) and r['rep'] == rp]
+    ws.append([d, w, t, rp] + [out1m(next(r for r in a if r['policy'] == p)) for p in ('P0', 'P6')])
+style(ws)
+
+# ---- 表5 Gazebo
+ws = sheet('表5 Gazebo', '表5（4.3节）；摘要、贡献3、结论', 'Gazebo 中提升方向与运动学一致（超时大幅减少、稀疏类成功率提高），适中与密集类碰撞率较高；EGO-Planner 总体更高，密集类与本文方法相当',
+           ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率'], [7, 14, 7, 7, 7, 7, 9, 9, 9])
+for r in rd(f'{A}/gazebo/table5_1m.csv'):
+    i = ws.max_row + 1; ws.append([r['难度'], r['方法'], int(r['回合']), int(r['成功']), int(r['碰撞']), int(r['超时']), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}']); blue(ws, i, 'CDEF')
     for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
-for r in rd(f'{GZ}/pairs.csv'):
-    if r[2] == 'out1m' and r[3] == '总体' and r[0] == 'P6':
-        ws.append([]); ws.append(['本文方法 − UAV-iDP3（配对，世界聚类 95% 区间）', '', int(r[4]), '', '', '', float(r[6]) / 100, f'[{r[7]}, {r[8]}]', '', '4.3'])
 style(ws)
 
-ws = sheet('S2 Gazebo 0.5m', 'Gazebo，成功 = 碰撞前进入目标 0.5 m 球形范围（补充材料表 S3）。', ['难度', '方法', '回合', '成功', '碰撞', '超时', '成功率', '碰撞率', '超时率', '用在'], [7, 14, 7, 7, 7, 7, 9, 9, 9, 10])
-for r in rd(f'{GZ}/s2_gazebo_05m.csv'):
-    i = ws.max_row + 1; ws.append([r[0], r[1], int(r[2]), int(r[3]), int(r[4]), int(r[5]), f'=D{i}/C{i}', f'=E{i}/C{i}', f'=F{i}/C{i}', '补充 表S3'])
-    blue(ws, i, 'CDEF')
-    for col in 'GHI': ws[f'{col}{i}'].number_format = '0.0%'
+# ---- 正文数字（不在任何图表中的实验数字）
+ws = sheet('正文数字', '4.2、4.3节正文', '只列正文中出现、但不在任何图表里的实验数字', ['位置', '内容', '值', '来源'], [12, 60, 22, 30])
+it = [(r['world'], ok(r) - ok(idx[('P0', r['task'], r['rep'])])) for r in sel('P6', '总体')]
+ws.append(['4.2 总体性能', '本文方法 − UAV-iDP3 配对成功率差（百分点）与 95% 区间', f"{100*sum(x for _, x in it)/len(it):.1f} {boot(it)}", 'rows.json，同任务同重复配对'])
+for p in ['P0', 'P6']:
+    for d in ['稀疏', '适中', '密集']:
+        c = collections.Counter(map(out1m, sel(p, d))); n = len(sel(p, d))
+        ws.append(['4.2 总体性能', f'{NAME[p]} {d}类碰撞率 / 超时率（%）', f"{100*c['碰撞']/n:.1f} / {100*c['超时']/n:.1f}", 'rows.json'])
+gp = {(r['方法'], r['判据'], r['难度']): r for r in rd(f'{A}/gazebo/pairs.csv')}
+g = gp[('P6', 'out1m', '总体')]; ws.append(['4.3', 'Gazebo 本文方法 − UAV-iDP3 配对成功率差（百分点）与 95% 区间', f"{g['差%']} [{g['区间下%']}, {g['区间上%']}]", 'gazebo/pairs.csv'])
+ck = json.load(open(f'{A}/gazebo/checks.json')); ws.append(['4.3', 'Gazebo 中 UAV-iDP3 的超时回合在本文方法下成功的个数 / UAV-iDP3 超时回合数', f"{ck['p0_to_p6_1m']['超时->成功']} / 21", 'gazebo/checks.json'])
 style(ws)
 
-ws = sheet('S3 训练过程', '第二次运行的训练采集到达率（训练到达奖励口径）与近似 KL 中位数，每 16 轮（oprime/curve_blocks.csv；图 S1）。', ['方法', '轮', '采集到达率%', 'KL 中位数', '用在'], [30, 12, 12, 12, 10])
-for r in rd(f'{OP}/curve_blocks.csv'):
-    if r[0] in ('P14', 'P15'): i = ws.max_row + 1; ws.append([NAME[r[0]], r[1], float(r[2]), float(r[3]), '图 S1']); blue(ws, i, 'CD')
+# ---- 表S1 0.5 m
+ws = sheet('表S1 0.5m', '补充材料 S2 表S1', '0.5 m 标准下本文方法仍为最高', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [24] + [7] * 10 + [9] * 6)
+M = {(r['策略'], r['类别']): r for r in rd(f'{A}/oprime/main.csv') if r['评价集'] == 'O′'}
+for p in ['P0', 'P2', 'P3', 'P4', 'P6']:
+    a = M[(p, '总体')]; i = ws.max_row + 1; row = [NAME[p], int(a['回合']), int(a['到达'])]
+    for d in ['稀疏', '适中', '密集']: row += [int(M[(p, d)]['回合']), int(M[(p, d)]['到达'])]
+    row += [int(a['碰撞']), int(a['超时']), f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}']
+    ws.append(row); blue(ws, i, 'BCDEFGHIJK')
+    for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
-ws = sheet('路径效率', '1 m 标准成功回合的路径效率 D0/(L+d_entry)，按方法与难度取中位数（path_eff_1m.py；表 3、表 4）。', ['方法', '难度', '成功回合', '中位数', '四分位下', '四分位上', '用在'], [30, 7, 9, 9, 9, 9, 10])
-for r in rd(f'{OP}/../path_eff_1m/path_eff_1m.csv'):
-    i = ws.max_row + 1; ws.append([NAME[r[0]], r[1], int(r[2]), float(r[3]), float(r[4]), float(r[5]), '表 3、表 4']); blue(ws, i, 'CDEF')
+# ---- 表S2 第二次运行
+ws = sheet('表S2 第二次运行', '补充材料 S3 表S2；第5章局限一句', '后训练结果对训练随机性敏感（预先登记 R4、R2 判为本预算下不符合采纳标准，判定在 0.5 m 下作出）', ['方法', '回合', '成功', '稀疏回合', '稀疏成功', '适中回合', '适中成功', '密集回合', '密集成功', '碰撞', '超时', '成功率 总体', '稀疏', '适中', '密集', '碰撞率', '超时率'], [30] + [7] * 10 + [9] * 6)
+for p in ['P14', 'P15']:
+    a = sel(p, '总体'); c = collections.Counter(map(out1m, a)); i = ws.max_row + 1; row = [NAME[p], len(a), c['成功']]
+    for d in ['稀疏', '适中', '密集']: s_ = sel(p, d); row += [len(s_), sum(ok(r) for r in s_)]
+    row += [c['碰撞'], c['超时'], f'=C{i}/B{i}', f'=E{i}/D{i}', f'=G{i}/F{i}', f'=I{i}/H{i}', f'=J{i}/B{i}', f'=K{i}/B{i}']
+    ws.append(row); blue(ws, i, 'BCDEFGHIJK')
+    for col in 'LMNOPQ': ws[f'{col}{i}'].number_format = '0.0%'
 style(ws)
 
-import statistics as stt
-ws = sheet('环境规模', '4.1 节一句。来源：Codex 论文数据索取回复 details/worlds_63.csv、tasks_199.csv（障碍分布区域 obstacle_region 均为 [-10,-10,10,10]，世界真实边界未找到）。', ['项', '最小', '中位数', '最大', '用在'], [36, 10, 10, 10, 8])
-W = [r for r in csv.DictReader(open(f'{DET}/worlds_63.csv', encoding='utf-8-sig')) if r['split'] == 'O_prime']
-T = list(csv.DictReader(open(f'{DET}/tasks_199.csv', encoding='utf-8-sig')))
-for name, v in [('训练外世界障碍数（42 个世界）', [int(r['total_obstacles']) for r in W]), ('起终点直线距离 m（199 个任务）', [float(r['straight_distance_3d_m']) for r in T]), ('目标高度 m', [float(r['goal_z']) for r in T])]:
-    ws.append([name, round(min(v), 2), round(stt.median(v), 2), round(max(v), 2), '4.1'])
+# ---- 图S1
+ws = sheet('图S1 第二次运行训练', '补充材料 S3 图S1', '第二次运行的训练过程', ['曲线', '轮次', '采集成功率（训练到达奖励口径）', '近似 KL 中位数'], [30, 12, 16, 14])
+for r in rd(f'{A}/oprime/curve_blocks.csv'):
+    if r['策略'] in ('P14', 'P15'):
+        i = ws.max_row + 1; ws.append([NAME[r['策略']], r['轮'], float(r['采集到达率%']) / 100, float(r['KL中位数'])]); blue(ws, i, 'CD')
+        ws[f'C{i}'].number_format = '0.0%'; ws[f'D{i}'].number_format = '0.00E+00'
 style(ws)
+
+# ---- 说明
+ws = wb.active; ws.title = '说明'; ws.column_dimensions['A'].width = 22; ws.column_dimensions['B'].width = 46; ws.column_dimensions['C'].width = 90
+for t in ['论文数据表（2026-11-08）：论文正文与补充材料中全部图表及正文实验数字的数据，一页一个图表，按论文顺序。',
+          '成功 = 碰撞前进入目标 1 m；结局分成功、碰撞、超时。训练外评价：42 个世界、199 个任务，每种方法 995 回合；Gazebo：48 个任务 × 2 次，每种方法 96 回合。',
+          '图1—图4 为方法示意图，不含实验数据。蓝字为原始计数或原始值，黑字为公式。', '']:
+    ws.append([t]); ws.cell(ws.max_row, 1).font = Font(name=F, bold=(ws.max_row == 1))
+ws.append(['页', '用在论文哪里', '支撑什么结论'])
+for c in ws[ws.max_row]: c.font = Font(name=F, bold=True); c.fill = H
+for t in INDEX: ws.append(list(t))
+for row in ws.iter_rows(min_row=5):
+    for c in row: c.font = Font(name=F, bold=c.font.bold); c.alignment = Alignment(wrap_text=True, vertical='top')
 wb.save(OUT); print('saved')
