@@ -109,7 +109,6 @@ style(ws)
 ws = sheet('正文数字', '4.2节正文', '只列正文中出现、但不在任何图表里的实验数字', ['位置', '内容', '值', '来源'], [12, 60, 22, 30])
 pr = rd(f'{A}/oprime_task/pairs.csv')[0]
 ws.append(['4.2 总体性能', '本文方法 − UAV-iDP3 任务成功率配对差（百分点）与 95% 区间', f"{pr['差%']} [{pr['区间下%']}, {pr['区间上%']}]", 'oprime_task/pairs.csv'])
-for k, v in json.load(open(f'{A}/oprime_task/text_numbers.json')).items(): ws.append(['4.2 总体性能', k, v, 'oprime_task/text_numbers.json'])
 style(ws)
 
 # ---- 表S1 0.5 m
