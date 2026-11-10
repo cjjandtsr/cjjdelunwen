@@ -59,7 +59,7 @@ for t, where, claim in [('表1　回报组成', '表1（3.4节）', '回报各�
     style(ws)
 
 # ---- 表3 评价任务
-ws = sheet('表3 评价任务', '表3（4.1节）', '三类难度的任务规模；直线飞行成功比例随难度下降（去除 oprime/exclusions.json 中 9 个任务后）',
+ws = sheet('表3 评价任务', '表3、图5（4.1.1节）', '三类难度的任务规模；直线飞行成功比例随难度下降（去除 oprime/exclusions.json 中 9 个任务后）',
            ['难度', '任务数', '世界数', '直线距离中位数 m', '最小 m', '最大 m', '直线飞行成功任务数', '直线飞行成功比例', 'Gazebo 任务数'], [7, 8, 8, 12, 8, 8, 12, 12, 10])
 for r in rd(f'{A}/oprime_task/table3.csv'):
     i = ws.max_row + 1
@@ -78,7 +78,7 @@ style(ws)
 
 # ---- 图5 训练过程
 RUN = {'P2_P3': None, 'P6': '本文方法（第二阶段）', 'P4': 'Reg-DPPO w/o BC reg.'}
-ws = sheet('图5 训练过程', '图5（4.2节两阶段训练的作用）', '加正则时第二阶段采集成功率与 KL 平稳；不加正则时成功率下降、KL 突增',
+ws = sheet('图7 训练过程', '图7（4.3节）', '加正则时第二阶段采集成功率与 KL 平稳；不加正则时成功率下降、KL 突增',
            ['曲线', '轮次', '采集成功率（训练到达奖励口径）', '近似 KL 中位数'], [30, 12, 16, 14])
 for r in rd(f'{A}/oprime/curve_blocks.csv'):
     k = r['策略']
@@ -90,7 +90,7 @@ for r in rd(f'{A}/oprime/curve_blocks.csv'):
 style(ws)
 
 # ---- 图6 典型轨迹
-ws = sheet('图6 典型轨迹', '图6（4.2节避障行为）', '三类难度各一例：UAV-iDP3 失败、本文方法成功（1.5 m；同一任务同一次重复，按世界名、任务编号、重复序号取最小者；fig10_select_1m.py）',
+ws = sheet('图6 典型轨迹', '图6（4.2节）', '三类难度各一例：UAV-iDP3 失败、本文方法成功（1.5 m；同一任务同一次重复，按世界名、任务编号、重复序号取最小者；fig10_select_1m.py）',
            ['难度', '世界', '任务编号', '重复', 'UAV-iDP3 结局', '本文方法结局'], [7, 34, 30, 6, 12, 12])
 for d, w, t, rp in [('稀疏', 'front_offset_obstacle__000003', '00401b423993', 1), ('适中', 'front_offset_obstacle__000053', '056f74e9a874', 1), ('密集', 'front_offset_obstacle__000050', '5b955d1a9431', 3)]:
     a = [r for r in R if r['task'].startswith(t) and r['rep'] == rp]
