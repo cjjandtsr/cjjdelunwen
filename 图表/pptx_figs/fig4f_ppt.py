@@ -1,4 +1,5 @@
-"""Figure 4 v-f (2026-11-10): v-e with text reduced to the level of comparable papers (DPPO Fig. 3 etc.):
+"""Figure 4 v-f (2026-11-10): denoising-chain notation follows Eq. (6) (samples Z̄^(j), j = 0 … K; transition j: Z̄^(j) → Z̄^(j+1));
+the Stage-II box is dropped because Fig. 1 already shows the stages. v-e with text reduced to the level of comparable papers (DPPO Fig. 3 etc.):
 no hyper-parameter values, iteration ranges or secondary formulas in the figure; these stay in the text,
 Table 2 and Algorithm 1.
 Figure 4 v-e (2026-11-09): skeleton of v-c (slide 3) with the key content of v-d (slide 7) filled in:
@@ -16,6 +17,9 @@ EXE = ("#95A9CE", "#899DBE"); EVA = ("#DBE3EF", "#95A9CE"); OUT = ("#FAFAFB", "#
 COND = ("#FBE3D2", "#D9925E"); TR = ("#FEF1CB", "#AC9A6A"); TR2 = ("#F7E3A8", "#817153")
 DARK = "#2F3E5C"; GREY = "#5C6B85"; AMB = "#817153"; NOTE = "#5A6270"; TXT = "#5E5236"
 i = lambda s: f"<i>{s}</i>"
+
+
+ZB = lambda k: "<i>Z̄</i><sup>(" + k + ")</sup>"
 
 
 def build(slide, obs_img, oy=0):
@@ -81,15 +85,15 @@ def build(slide, obs_img, oy=0):
     # ============ layer 2: denoising (inside decision t) ============
     f.rect(2, 152, 714, 226, *PANEL, radius=6)
     side(156, 218, "(b)", "Denoising<br>layer", "inside decision " + i("t") + ";<br>no flight time", ("#EEF2F8", None))
-    note(84, 156, 360, i("K") + " = 10 denoising steps, each " + i("π") + "<sub>" + i("θ") + "</sub>(" + i("Z") + "<sup>" + i("k") + "−1</sup> | " + i("Z") + "<sup>" + i("k") + "</sup>, " + i("c") + "<sub>" + i("t") + "</sub>)", align="center", color=DARK)
+    note(84, 156, 360, i("K") + " = 10 denoising steps; step " + i("j") + ": " + i("π") + "<sub>" + i("θ") + "</sub>(" + ZB(i("j") + "+1") + " | " + ZB(i("j")) + ", " + i("c") + "<sub>" + i("t") + "</sub>)", align="center", color=DARK)
     NY = 192; R = 10
-    nodes = [(150, "10"), (205, "9"), (295, "2"), (350, "1"), (405, "0")]
-    f.label(130, 170, 40, "high noise", fs=S, italic=True, color=NOTE)
+    nodes = [(150, "0"), (205, "1"), (295, "8"), (350, "9"), (405, "10")]
+    f.label(126, 170, 48, "noise 𝒩(0, " + i("I") + ")", fs=S, italic=True, color=NOTE)
     f.label(385, 170, 40, "output", fs=S, italic=True, color=DARK)
     for x, k in nodes:
-        last = k == "0"
+        last = k == "10"
         f.oval(x, NY, R, fill="#DBE3EF" if last else "#FFFFFF", line=DARK if last else "#95A9CE", lw=1.2 if last else 0.9,
-               html=i("Z") + "<sup>" + k + "</sup>", fs=F, color=DARK)
+               html=ZB(k), fs=S, color=DARK)
     f.label(238, NY - 7, 24, "…", fs=F, color=DARK)
     mids = []
     for (xa, _), (xb, _) in zip(nodes[:-1], nodes[1:]):
@@ -108,7 +112,7 @@ def build(slide, obs_img, oy=0):
         seg(m - 4, 235, m - 4, NY + 3, color="#D9925E", sw=0.9)
     # output sequence
     seg(415, NY, 440, NY, color=DARK, sw=1.2)
-    f.label(440, 168, 256, "action sequence (16 × 11)", fs=S, color=DARK, bold=True)
+    f.label(440, 168, 256, "trajectory " + i("Z") + "<sub>" + i("t") + "</sub> = " + ZB(i("K")) + " (16 × 11)", fs=S, color=DARK, bold=True)
     for k in range(16):
         pal = ALI if k < 2 else EXE if k < 6 else EVA if k < 10 else OUT
         f.card(440 + k * 16, NY - 8, 16, 16, str(k + 1), pal[0], pal[1], fs=S, radius=0, lw=0.8)
@@ -140,8 +144,6 @@ def build(slide, obs_img, oy=0):
     pseg(539, BY + 15, 551, BY + 15)
     box(552, 152, "<b>update LoRA only</b>", y=BY, h=30)
     f.lock(694, BY + 3)
-    box(463, 150, "Stage II: + behavior-cloning regularization<br>on a fixed success trajectory library", y=322, h=30)
-    pseg(501, 322, 501, BY + 31)
     # credit trunk from Ã box up into the denoising layer, fanning out (thin -> thick)
     TX, TY = 400, 248
     seg(TX, BY - 1, TX, TY, color=AMB, sw=1.6, head=False)
