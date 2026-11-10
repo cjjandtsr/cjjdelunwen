@@ -3,7 +3,7 @@
 任务级结果（用户 11-09 决定为正文表 5 口径）：每个任务飞行 2 次，至少一次成功记该任务成功；两次都失败时，任一次碰撞记碰撞，否则记超时。输出 table5_task.csv（去除后）与 full48_task.csv（全部任务）；table5_episode.csv 为按每次飞行统计（补充材料 S5）。
 给出 exclusions.json 时，table5_episode.csv、s2_gazebo_05m.csv、pairs.csv、checks.json 按去除后的任务统计，另写 full48_table_episode.csv（全部 48 个任务）；gazebo_rows.json 始终为全部 288 回合。
 判定：轨迹（odom 系，goal_odom = goal_world − (start_x, start_y, 0)）任一帧到目标 3D 距离 ≤ r 即成功；
-碰撞或越界即结束轨迹记录，故"任一帧 ≤ r"等价于"碰撞前进入"。其余：monitor 为 collision/lost 记碰撞（越界单列计数），否则记超时。
+碰撞或越界即结束轨迹记录，故"任一帧 ≤ r"等价于"碰撞前进入"。其余：monitor 为 collision 记碰撞，否则记超时（11-10 改：越界 lost 原记碰撞，现按超时计，与运动学评价中越界不计碰撞一致）。
 难度：tasks.json 的 zero/low/high 即稀疏/适中/密集。区间：按世界聚类自助法，20000 次，seed 2026102601（工程阈值，非显著性检验）。
 执行端汇总 summary_1m.json 采用"碰撞优先"，与 D10 不同：9 个回合（UAV-iDP3 4、本文方法 5）先进入 1 m 后碰撞，本脚本记为成功。"""
 import csv, json, math, sys, collections, random, os
@@ -17,7 +17,7 @@ for r in csv.DictReader(open(f'{G}/regrade_1m.csv')):
     s, g = c['start_pos'], c['goal_pos']; go = (g[0] - s[0], g[1] - s[1], g[2])
     m = min(math.dist((float(x['px']), float(x['py']), float(x['pz'])), go) for x in csv.DictReader(open(d + '/result_state.csv')))
     assert abs(m - float(r['min3d_m'])) < 1e-3
-    fail = '碰撞' if r['monitor_status'] in ('collision', 'lost') else '超时'
+    fail = '碰撞' if r['monitor_status'] == 'collision' else '超时'  # 11-10：越界（lost）不是碰撞，按超时计，与运动学评价一致（Codex 核对）
     rows.append(dict(method=r['method'], task=r['task_id'], rep=r['repeat'], world=r['world'], cat=CAT[r['category']],
                      monitor=r['monitor_status'], min3d=round(m, 4),
                      out_main='成功' if m <= 1.5 else fail, out1m='成功' if m <= 1.0 else fail, out05='成功' if m <= 0.5 else fail))
