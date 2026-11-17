@@ -3,11 +3,14 @@
 输出 subgoals_dev420_blocked.json：每个任务的中间点列表（世界坐标，按经过顺序；1 个中间点时取总路程最短者，2 个时取总路程最短的一对）。
 直线可通过 = 该段直线上最小净空 ≥ 0.3 m（0.3 m 粗栅格近似）。中间点取自净空 ≥ 0.3 m 的测地最短路线上的点。"""
 import ast, glob, json, os, sys, numpy as np
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
+import gzip as _gz
+_topen = lambda f: _gz.open(f, 'rt') if f.endswith('.gz') else open(f)
 repo, blkf, gdir = sys.argv[1:4]; sys.path.insert(0, gdir)
 from geo_field import World, line_clear
 BLK = set(json.load(open(blkf))); tasks = {}
-for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl'):
-    s = json.loads(open(f).readline())
+for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*'):
+    s = json.loads(_topen(f).readline())
     if s['task_id'] in BLK: tasks.setdefault(s['task_id'], (s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task']), s['geometry']))
 res = []
 for tid, (task, geom) in sorted(tasks.items()):

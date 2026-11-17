@@ -1,11 +1,12 @@
 """补充检验：8 步规划能"看"多远，相对于到碰撞点的距离（dev420 #E2 原迹，直线被挡的 33 个任务，P6、P18、P19 的碰撞回合；只作诊断）。
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
 用法：python3 -I pre5_plan_reach.py <项目仓库根目录> <blocked_tasks_dev420.json>
 规划长度 = planned_policy_path 的折线长度；到碰撞点的剩余路程 = 从该决策起点沿实际执行路径到回合终点的长度。
 "规划够得着" = 规划长度 ≥ 到碰撞点的剩余路程。"""
 import ast, glob, gzip, json, math, sys, numpy as np
 repo, blk = sys.argv[1], set(json.load(open(sys.argv[2])))
 plen = lambda P: sum(math.dist(a, b) for a, b in zip(P[:-1], P[1:]))
-SRC = glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl') + glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P18/traces/*.jsonl.gz') + glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P19/traces/*.jsonl.gz')
+SRC = glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*') + glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P18/traces/*.jsonl.gz') + glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P19/traces/*.jsonl.gz')
 R = {b: [] for b in range(1, 9)}; n = 0
 for f in SRC:
     L = [json.loads(l) for l in (gzip.open if f.endswith('.gz') else open)(f, 'rt')]

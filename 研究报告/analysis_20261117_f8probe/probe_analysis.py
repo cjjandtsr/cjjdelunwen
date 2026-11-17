@@ -4,6 +4,9 @@
 1 m 结局取 flights 的 outcome 字段（Codex 已按 outcome_1m 复算）；本脚本另从执行路径独立复算一次并比对。
 "偏移" = 该状态是原回合碰撞前第几个决策（genuine_backs）。"""
 import ast, glob, gzip, json, math, os, sys, collections
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
+import gzip as _gz
+_topen = lambda f: _gz.open(f, 'rt') if f.endswith('.gz') else open(f)
 import numpy as np
 repo = sys.argv[1]; D = f'{repo}/jindu/f8_probe_run02_20261117'
 sys.path.insert(0, os.path.join(repo, 'Improved-3D-Diffusion-Policy'))
@@ -12,8 +15,8 @@ def rd(f):
     with gzip.open(f, 'rt') as h:
         for l in h: yield json.loads(l)
 orig = {}
-for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl'):
-    L = [json.loads(l) for l in open(f)]; s = L[0]; task = s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task'])
+for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*'):
+    L = [json.loads(l) for l in _topen(f)]; s = L[0]; task = s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task'])
     orig[(s['task_id'], s['repeat'])] = dict(goal=np.array(task['goal_pos']), start=np.array(task['start_pos']), geom=s['geometry'], T=[t for t in L if t.get('type') == 'transition'])
 def seg_dist(p, a, b):
     a, b, p = map(np.asarray, (a, b, p)); d = b - a; L = d @ d

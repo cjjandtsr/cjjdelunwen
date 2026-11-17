@@ -6,14 +6,17 @@
   绕行比 = 在 c ≥ 0.3 m 的自由空间中，0.25 m 栅格 26 邻接 Dijkstra 最短路长 / 起终点直线距离（不连通记 None）。
   直线净空 = 起终点直线上逐 0.05 m 采样的最小 c。"""
 import ast, glob, json, math, os, sys
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
+import gzip as _gz
+_topen = lambda f: _gz.open(f, 'rt') if f.endswith('.gz') else open(f)
 import numpy as np
 from scipy import ndimage
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import dijkstra
 repo, out = sys.argv[1], sys.argv[2]
 tasks = {}
-for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl'):
-    s = json.loads(open(f).readline())
+for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*'):
+    s = json.loads(_topen(f).readline())
     task = s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task'])
     tasks.setdefault(s['task_id'], (task, s['geometry'], s['role'], s['world_id']))
 def raster(geom, lo, res, shape):

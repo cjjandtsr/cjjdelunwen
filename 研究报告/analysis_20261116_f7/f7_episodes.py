@@ -1,4 +1,5 @@
 """只读：F7 run01 与 P6@u256 的 dev420 / val80 #E2 原迹逐回合特征（1 m 主终点）。
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
 用法：python3 -I f7_episodes.py <项目仓库根目录> <输出 episodes.json>
 数据：jindu/routea_f7_run01/eval_{dev,val}/<P16..P19>/traces/*.jsonl.gz；
       P6 dev420：jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl；P6 val：jindu/routea_p6_u256_e2_val20_run01/full/**/traces/*.jsonl
@@ -13,8 +14,8 @@ from diffusion_policy_3d.env.collision_geom import ObstacleSpec, compute_obstacl
 F7 = os.path.join(repo, 'jindu/routea_f7_run01')
 SRC = {('dev', p): glob.glob(f'{F7}/eval_dev/{p}/traces/*.jsonl.gz') for p in ('P16', 'P17', 'P18', 'P19')}
 SRC.update({('val', p): glob.glob(f'{F7}/eval_val/{p}/traces/*.jsonl.gz') for p in ('P16', 'P17', 'P18', 'P19')})
-SRC[('dev', 'P6')] = glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl')
-SRC[('val', 'P6')] = glob.glob(f'{repo}/jindu/routea_p6_u256_e2_val20_run01/full/**/traces/*.jsonl', recursive=True)
+SRC[('dev', 'P6')] = glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*')
+SRC[('val', 'P6')] = glob.glob(f'{repo}/jindu/routea_p6_u256_e2_val20_run01/full/**/traces/*.jsonl', recursive=True) or glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_val/full/P6/traces/*.jsonl*')
 COLL = {'collision', 'ground_collision', 'ground', 'crash'}
 def seg_dist(p, a, b):
     a, b, p = map(np.asarray, (a, b, p)); d = b - a; L = d @ d

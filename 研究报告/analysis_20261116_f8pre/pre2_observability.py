@@ -1,4 +1,5 @@
 """前置研究 ②：直线被挡任务中，绕行路线的类型与可观测性（dev420 #E2 原迹，P6、P18、P19；只作诊断，不用于调参）。
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
 用法：python3 -I pre2_observability.py <项目仓库根目录> <blocked_tasks_dev420.json>
 (A) 每个被挡任务的测地最短路线（从起点）：是从障碍上方越过还是侧向绕行；路线最高点；开始偏离直线方向的位置。
 (B) 碰撞回合，在碰撞前第 1—4 个决策的起点：测地路线前方 3 m 处的点相对机头朝向的水平方位角、俯仰角；
@@ -11,7 +12,7 @@ repo, blkf = sys.argv[1], sys.argv[2]; BLK = set(json.load(open(blkf)))
 def load(f):
     op = gzip.open if f.endswith('.gz') else open; L = [json.loads(l) for l in op(f, 'rt')]
     s = L[0]; task = s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task']); return s, task, [t for t in L if t.get('type') == 'transition'], L[-1]
-SRC = {'P6': glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl'),
+SRC = {'P6': glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/P6/traces/*.jsonl*'),
        'P18': glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P18/traces/*.jsonl.gz'), 'P19': glob.glob(f'{repo}/jindu/routea_f7_run01/eval_dev/P19/traces/*.jsonl.gz')}
 EP = collections.defaultdict(list)
 for pol, fs in SRC.items():

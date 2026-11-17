@@ -1,6 +1,9 @@
 """只读：任务几何（f7_task_feasibility.py 输出）与五个策略（P6、P16—P19）及 BC 的 dev420 1 m 结局的关系。
 用法：python3 -I f7_feas_vs_outcome.py <task_feas.json> <episodes.json> <项目仓库根目录>"""
 import json, sys, collections, glob, ast
+# 2026-11-17：项目仓库整理后，这些原迹改为精简的 *.jsonl.gz（所用字段均保留）；本脚本同时接受 *.jsonl 与 *.jsonl.gz。
+import gzip as _gz
+_topen = lambda f: _gz.open(f, 'rt') if f.endswith('.gz') else open(f)
 import numpy as np
 F = json.load(open(sys.argv[1])); E = json.load(open(sys.argv[2])); repo = sys.argv[3]
 pols = ['P6', 'P16', 'P17', 'P18', 'P19']
@@ -29,8 +32,8 @@ def seg_dist(p, a, b):
     a, b, p = map(np.asarray, (a, b, p)); d = b - a; L = d @ d
     t = 0. if L == 0 else float(np.clip((p - a) @ d / L, 0, 1)); return float(np.linalg.norm(a + t * d - p))
 bcB = collections.defaultdict(collections.Counter)
-for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/bc/traces/*.jsonl'):
-    L = [json.loads(l) for l in open(f)]; s, e = L[0], L[-1]; T = [t for t in L if t.get('type') == 'transition']
+for f in glob.glob(f'{repo}/jindu/routea_f5_run01/results/eval_dev/full/bc/traces/*.jsonl*'):
+    L = [json.loads(l) for l in _topen(f)]; s, e = L[0], L[-1]; T = [t for t in L if t.get('type') == 'transition']
     task = s['task'] if isinstance(s['task'], dict) else ast.literal_eval(s['task']); g = task['goal_pos']
     mind = min((seg_dist(g, P[k], P[k + 1]) for t in T for P in [t['executed_path']] for k in range(len(P) - 1)), default=1e9)
     o = 'S' if (e['done_reason'] == 'reached' or mind < 1) else ('C' if e['done_reason'] in ('collision', 'ground_collision') else 'T')
