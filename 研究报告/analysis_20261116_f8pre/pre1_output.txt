@@ -1,0 +1,55 @@
+完整回合 3639 {'S': 1542, 'T': 1175, 'C': 922}
+不同 (世界, 目标) 数： 3639 ；世界数 21
+ry__rl_train__double_gate_progressive__000001 {('S', True): 32, ('T', False): 158, ('S', False): 191, ('T', True): 26, ('C', True): 16, ('C', False): 27}
+tory__rl_train__front_offset_obstacle__000000 {('S', True): 48, ('T', False): 250, ('S', False): 250, ('T', True): 39, ('C', True): 30, ('C', False): 44}
+covery__rl_train__bottleneck_corridor__000016 {('S', True): 51, ('T', False): 250, ('S', False): 250, ('T', True): 40, ('C', True): 47, ('C', False): 46}
+covery__rl_train__bottleneck_corridor__000025 {('S', True): 51, ('T', False): 250, ('S', False): 250, ('T', True): 41, ('C', True): 68, ('C', False): 49}
+covery__rl_train__bottleneck_corridor__000026 {('S', True): 52, ('T', False): 250, ('S', False): 250, ('T', True): 43, ('C', True): 88, ('C', False): 52}
+covery__rl_train__bottleneck_corridor__000027 {('S', True): 53, ('T', False): 250, ('S', False): 250, ('T', True): 45, ('C', True): 111, ('C', False): 57}
+covery__rl_train__bottleneck_corridor__000028 {('S', True): 57, ('T', False): 250, ('S', False): 250, ('T', True): 50, ('C', True): 130, ('C', False): 59}
+e_recovery__rl_train__cul_de_sac_trap__000019 {('S', True): 63, ('T', False): 250, ('S', False): 250, ('T', True): 54, ('C', True): 159, ('C', False): 67}
+e_recovery__rl_train__cul_de_sac_trap__000033 {('S', True): 66, ('T', False): 250, ('S', False): 250, ('T', True): 58, ('C', True): 174, ('C', False): 70}
+e_recovery__rl_train__cul_de_sac_trap__000034 {('S', True): 73, ('T', False): 250, ('S', False): 250, ('T', True): 60, ('C', True): 194, ('C', False): 76}
+e_recovery__rl_train__cul_de_sac_trap__000035 {('S', True): 75, ('T', False): 250, ('S', False): 250, ('T', True): 60, ('C', True): 213, ('C', False): 83}
+e_recovery__rl_train__cul_de_sac_trap__000036 {('S', True): 78, ('T', False): 250, ('S', False): 250, ('T', True): 65, ('C', True): 235, ('C', False): 92}
+very__rl_train__s_turn_multi_obstacle__000022 {('S', True): 82, ('T', False): 250, ('S', False): 250, ('T', True): 68, ('C', True): 250, ('C', False): 95}
+very__rl_train__s_turn_multi_obstacle__000041 {('S', True): 86, ('T', False): 250, ('S', False): 250, ('T', True): 69, ('C', True): 250, ('C', False): 98}
+very__rl_train__s_turn_multi_obstacle__000042 {('S', True): 87, ('T', False): 250, ('S', False): 250, ('T', True): 74, ('C', True): 250, ('C', False): 105}
+very__rl_train__s_turn_multi_obstacle__000043 {('S', True): 92, ('T', False): 250, ('S', False): 250, ('T', True): 76, ('C', True): 250, ('C', False): 113}
+very__rl_train__s_turn_multi_obstacle__000044 {('S', True): 93, ('T', False): 250, ('S', False): 250, ('T', True): 77, ('C', True): 250, ('C', False): 116}
+_rl_train__mixed_3d_low_density_route__000008 {('S', True): 136, ('T', False): 250, ('S', False): 250, ('T', True): 103, ('C', True): 250, ('C', False): 144}
+nsion__rl_train__xy_z_combined_bypass__000009 {('S', True): 160, ('T', False): 250, ('S', False): 250, ('T', True): 125, ('C', True): 250, ('C', False): 172}
+rl_train__initial_yaw_offset_corridor__000012 {('S', True): 176, ('T', False): 250, ('S', False): 250, ('T', True): 137, ('C', True): 250, ('C', False): 199}
+overy__rl_train__mid_impulse_recovery__000013 {('S', True): 212, ('T', False): 250, ('S', False): 250, ('T', True): 167, ('C', True): 250, ('C', False): 230}
+
+== (a) 每回合进度合计的中位数（直线被挡的回合）
+  结局 S（212 回合）：E 9.75，Gn 9.74，Gs 9.74
+  结局 C（250 回合）：E 3.85，Gn 3.37，Gs 3.30
+  结局 T（167 回合）：E 9.58，Gn 9.58，Gs 8.48
+== (b) 碰撞回合最后 4 个决策（不含碰撞决策本身）每决策均值，直线被挡回合
+  n=924：E 0.330，Gn 0.251，Gs 0.235；E>0 而 Gs≤0 的比例 11%；Gs<0 的比例 14%
+== (c) 区分能力：在"直线仍被挡"的决策上，用单个决策的进度信号区分"最终到达的回合"与"最终碰撞的回合"（AUC，0.5 = 无区分）
+  决策数：到达回合 2308，碰撞回合 2781
+  E：AUC 0.588；到达回合均值 0.371，碰撞回合均值 0.327
+  Gn：AUC 0.642；到达回合均值 0.374，碰撞回合均值 0.287
+  Gs：AUC 0.642；到达回合均值 0.373，碰撞回合均值 0.281
+  每飞 1 m 的测地进度（m/m）：到达回合中位 0.43，碰撞回合中位 0.37；欧氏 newbest/步长：0.43 对 0.40
+== (d) 对照：直线可通过的回合，三种信号每回合合计中位数
+  结局 S（250 回合）：E 9.64，Gn 9.65，Gs 9.65
+  结局 C（230 回合）：E 7.78，Gn 7.72，Gs 4.17
+  结局 T（250 回合）：E 9.43，Gn 9.41，Gs 7.79
+== (e) 到达回合是否只是几何更容易：直线被挡回合的绕行比（起点测地距离 / 直线距离）与起点距离
+  结局 S（212 回合）：绕行比中位 1.083，75% 分位 1.097；起点直线距离中位 19.8 m；回合决策数中位 30
+  结局 C（250 回合）：绕行比中位 1.084，75% 分位 1.106；起点直线距离中位 20.4 m；回合决策数中位 12
+  结局 T（167 回合）：绕行比中位 1.079，75% 分位 1.093；起点直线距离中位 20.7 m；回合决策数中位 60
+== (f) 评论家能否提前看出碰撞：直线被挡回合中，按"距回合结束的决策数"比较最终碰撞与最终到达回合的 value（AUC：到达回合 value 更高的概率）
+  碰撞前第 1—1 个决策（n=247）：碰撞回合 value 中位 -29.2；到达回合仍被挡决策 value 中位 15.8；AUC 0.817
+  碰撞前第 2—2 个决策（n=236）：碰撞回合 value 中位 -22.1；到达回合仍被挡决策 value 中位 15.8；AUC 0.772
+  碰撞前第 3—4 个决策（n=441）：碰撞回合 value 中位 -19.8；到达回合仍被挡决策 value 中位 15.8；AUC 0.766
+  碰撞前第 5—8 个决策（n=753）：碰撞回合 value 中位 -16.8；到达回合仍被挡决策 value 中位 15.8；AUC 0.756
+  碰撞前第 9—16 个决策（n=951）：碰撞回合 value 中位 -4.4；到达回合仍被挡决策 value 中位 15.8；AUC 0.681
+  碰撞回合，距结束 0—0 个决策：原始优势中位 -19.57，均值 -24.00（n=250）
+  碰撞回合，距结束 1—1 个决策：原始优势中位 -19.71，均值 -27.13（n=247）
+  碰撞回合，距结束 2—2 个决策：原始优势中位 -25.11，均值 -30.53（n=236）
+  碰撞回合，距结束 3—4 个决策：原始优势中位 -24.11，均值 -29.08（n=441）
+  碰撞回合，距结束 5—8 个决策：原始优势中位 -22.53，均值 -25.84（n=753）
