@@ -111,3 +111,23 @@ ax.scatter([],[],s=42,color='#eb6834',label='Gazebo/PX4 (2 flights/task)')
 ax.legend(loc='lower center',bbox_to_anchor=(0.45,1.0),ncol=2,frameon=False,fontsize=7.5)
 fig.tight_layout(); fig.savefig(os.path.join(FIG,'fig07.png'),dpi=600); plt.close(fig)
 print(json.dumps({k_:R[k_] for k_ in ['表6','图7','训练曲线_第二阶段','UAV-iDP3_运动学到Gazebo_共有任务','Gazebo转移_UAV-iDP3_本文方法','运动学飞行结局_UAV-iDP3','运动学飞行结局_本文方法']},ensure_ascii=False,indent=0))
+
+# ---------- v14 图4：按 UAV-iDP3 任务结局分组的本文方法成功率 ----------
+FIG14=os.path.join(ROOT,'图表','v14'); os.makedirs(FIG14,exist_ok=True)
+groups=[('Overall',None),('Sparse','稀疏'),('Moderate','适中'),('Dense','密集')]
+cats=[('成功','Previously successful','#2a78d6'),('超时','Previously timed out','#6250d6'),('碰撞','Previously collided','#eb6834')]
+fig,ax=plt.subplots(figsize=(6.0,2.6)); w=0.26; vals={}
+for gi,(gl,d) in enumerate(groups):
+    t=R['转移_UAV-iDP3_本文方法'][d]
+    for ci,(src,lab,col) in enumerate(cats):
+        n=sum(t[f'{src}->{x}'] for x in ['成功','碰撞','超时']); v=100*t[f'{src}->成功']/n
+        vals[f'{gl}_{src}']=round(v,1)
+        x=gi+(ci-1)*w
+        ax.bar(x,v,width=w*0.92,color=col,label=lab if gi==0 else None)
+        ax.text(x,v+1.5,f'{v:.0f}',ha='center',va='bottom',fontsize=7.5,color='#0b0b0b')
+ax.set_xticks(range(4)); ax.set_xticklabels([g for g,_ in groups]); ax.set_ylim(0,112); ax.set_yticks([0,25,50,75,100])
+ax.set_ylabel('Success rate of Proposed (%)'); ax.grid(axis='y',color='#e6e5e0',linewidth=0.6); ax.set_axisbelow(True)
+ax.legend(loc='lower center',bbox_to_anchor=(0.5,1.0),ncol=3,frameon=False,fontsize=7.5,title='Task outcome of UAV-iDP3',title_fontsize=7.5)
+fig.tight_layout(); fig.savefig(os.path.join(FIG14,'fig04.png'),dpi=600); plt.close(fig)
+R['图4_v14']=vals; json.dump(R,open(os.path.join(OUT,'ch4_numbers.json'),'w',encoding='utf-8'),ensure_ascii=False,indent=1,default=str)
+print(vals)
