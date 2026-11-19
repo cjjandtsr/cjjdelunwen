@@ -131,3 +131,9 @@ ax.legend(loc='lower center',bbox_to_anchor=(0.5,1.0),ncol=3,frameon=False,fonts
 fig.tight_layout(); fig.savefig(os.path.join(FIG14,'fig04.png'),dpi=600); plt.close(fig)
 R['图4_v14']=vals; json.dump(R,open(os.path.join(OUT,'ch4_numbers.json'),'w',encoding='utf-8'),ensure_ascii=False,indent=1,default=str)
 print(vals)
+
+# ---------- v14 4.3：各变体对 UAV-iDP3 原有成功任务的保持率 ----------
+S=kp[kp['UAV-iDP3']=='成功']
+R['UAV-iDP3原有能力保持率']={m:round(100*(S[m]=='成功').mean(),1) for m in ['Reg-DPPO w/o Stage II','Single-stage DPPO','Reg-DPPO w/o BC reg.','本文方法']}
+json.dump(R,open(os.path.join(OUT,'ch4_numbers.json'),'w',encoding='utf-8'),ensure_ascii=False,indent=1,default=str)
+print(R['UAV-iDP3原有能力保持率'])
