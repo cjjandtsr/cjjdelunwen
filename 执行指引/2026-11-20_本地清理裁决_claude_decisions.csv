@@ -1,0 +1,10 @@
+﻿id,scope,decision,retain_path,basis,lost_reproducibility,preconditions
+C01,rebuildable_bytecode.csv 列出的全部 7514 个 .pyc（以该 CSV 的 path 列为准）,删除列明文件,无需保留；源 .py 均在,可再生缓存：每份 .pyc 的源文件存在，且已排除原迹、源码备份、native_versions、权重根目录,无（首次运行自动重建，只多一次编译时间）,删除前再确认：列表中没有位于 wsl_snapshot/、program/code_backups/、native_versions/ 下的成员，且没有被任何 MANIFEST/SHA 清单列入
+C02,verified_test_duplicates.csv 列出的 37 个文件（program/f8_diag_run02_review/reuse_smoke/ 下）,删除列明文件,保留 wsl_snapshot/routea_f8_diag_run02/ 原件；保留 program/f8_diag_run02_review/reuse_smoke.json 与子目录 d2_reuse.json,与保留的 run02 原件逐字节 SHA256 相同,该测试输出目录不再完整；需要时可从 run02 原件按清单复制回来,删除前按 CSV 的 sha256 再核一次 retained_original 存在且一致
+C03,duplicate_artifacts.csv e270b852 组（ext_bank.json 两份）,保留,两份都保留,节省 1.4 MB，可能破坏两个审计目录各自的重跑路径,—,—
+C04,duplicate_artifacts.csv 72c336e9 组（test_bank.json / test12.json 三份）,保留,三份都保留,节省 2.3 MB；test12 是留出集任务库，保持各审计目录自洽更重要,—,—
+C05,duplicate_artifacts.csv b35bbd6c 与 9238b6d9 组（F7 测试目录各四份）,保留,全部保留,节省 7 MB；四个目录是 F7 不同阶段的测试证据,—,—
+L01,f7_repo_tmp/（含 .git 3.2 GB）,需补证,—,可能是项目仓库的旧克隆；若无独有内容则是可删的副本，并且在项目仓库历史重写前它保存了旧历史,若有未推送提交或未提交文件，删除会丢失,在该目录只读执行并回报：git status --porcelain | head；git log --branches --not --remotes --oneline | head；git stash list；git remote -v；git rev-parse HEAD。全部为空（无未推送、无未提交、无 stash）且项目仓库归档 bundle 已建好并核验后，才可删除整个目录
+L02,program/paper_wsl_20261109/,保留,整目录保留,论文线仍在进行（11-18 恢复），其中是论文运行与交付材料,—,论文定稿后再评估
+L03,outputs/、output/、tmp/、.vector_tmp/,保留（其中的 .pyc 按 C01 处理）,整目录保留,合计约 0.5 GB，可能含稿件加工的唯一产物；节省量小，不值得逐文件核依赖,—,论文定稿后再评估
+L04,wsl_snapshot/ 下以下整 run：routea_xk_run01、routea_f7_run01、routea_common_b2560_seed202609203_v1、routea_common_b1280_seed202609203_v1,归档验证后删除展开副本（仅限所列 4 个 run）,WSL 原件 program/results/<run>/ 保留；Windows 保留 <run>.tar 归档及其清单,项目线已结题的运行，分析结论与脚本已入仓库，论文不引用（Codex 需按数字台账核对确认）,需要时须先解压归档才能逐文件读取,① WSL 原件可访问，且其 MANIFEST SHA256 与 Windows 副本一致；② 用 tar 整 run 打包（可压缩），解包到临时目录后逐文件 SHA256 与 MANIFEST 全部一致；③ Codex 确认数字台账与论文脚本不引用这 4 个 run 的 Windows 路径。三项都满足才删除展开副本。其余 run（含 routea_paired_evaluation、paper_186_v1_0_run01、routea_a2_selective_keep_run01、routea_f5_run01、F8 全部）本轮保留展开，论文定稿后再议

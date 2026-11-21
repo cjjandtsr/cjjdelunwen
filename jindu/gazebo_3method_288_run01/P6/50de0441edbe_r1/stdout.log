@@ -1,0 +1,1462 @@
+GAZEBO_PLUGIN_PATH :/root/autodl-tmp/AUV/PX4-Autopilot/build/px4_sitl_default/build_gazebo
+GAZEBO_MODEL_PATH :/root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/models
+LD_LIBRARY_PATH /root/autodl-tmp/AUV/catkin_ws0/devel/lib:/opt/ros/noetic/lib:/root/autodl-tmp/AUV/PX4-Autopilot/build/px4_sitl_default/build_gazebo
+════════════════════════════════════════════════════════════
+  BC TRIAL  tier=P6 world_id=routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040 trial=1
+  world : /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040.world
+  spawn : (-7.5436754227, -2.2634763718, z=0 地面) yaw=0.7616207542   → odom 原点 = 起点
+  takeoff target: odom (0, 0, 2.4359090328)   [offboard_node_goto]
+  goal  : world (0.7773200274, 11.5631875992, 1.6849571466)  → odom (8.3209954501, 13.8266639710, 1.6849571466)   frame=world
+  obs   : /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040.world.obstacles.json
+  timeout=240s rviz=0  ckpt=/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/2026.08.16/08.53.26_e5_lambda0p5/checkpoints/latest.ckpt
+  engine=bc  policy_type=p6_lora  lora_enabled=true  lora_ckpt=/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/dppo_uav_rebuild/routea_a2_selective_keep_run01/T/checkpoint_update_000256
+  out   : /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/P6/50de0441edbe_r1/result.json
+  python3: /root/autodl-tmp/conda_envs/idp3/bin/python3 Python 3.8.20
+════════════════════════════════════════════════════════════
+[run_task_flight] 清理所有进程...
+[run_task_flight] 启动 SITL: /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040.world  spawn=(-7.5436754227,-2.2634763718,0) yaw=0.7616207542
+[start_sitl] DISPLAY=:1  (空则深度点云不会发布)
+[start_sitl] 清理旧进程...
+[start_sitl] 启动 SITL (系统 python 优先, world=/root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040.world)...
+[start_sitl] gui=false
+[start_sitl] spawn=(-7.5436754227, -2.2634763718, 0) yaw=0.7616207542
+[start_sitl] 日志: /root/autodl-tmp/logs/sitl.log
+[start_sitl] 已后台启动。看进度: tail -f /root/autodl-tmp/logs/sitl.log
+[run_task_flight] 启动 MAVProxy 地面站 (udpout:127.0.0.1:18570)...
+[run_task_flight] 等待 MAVROS connected (上限 120s)...
+[run_task_flight] ✓ MAVROS connected
+[run_task_flight] 设置 COM_RCL_EXCEPT=4, 上限 120s...
+[run_task_flight] ✓ COM_RCL_EXCEPT = 4 (写 1 次)
+[run_task_flight] offboard 起飞 (target odom 0,0,2.4359090328), 飞行 30s, 等 40s...
+[run_task_flight]   ⚠ offboard_node_goto 仍存活, 兜底 pkill
+[run_task_flight]   ✓ 当前模式: AUTO.LOITER
+[run_task_flight]   起飞后 odom 位置: (0.014224945567548275 0.046637244522571564 2.6059658527374268 )  期望 (0, 0, 2.4359090328)
+[run_task_flight] 启动 px4ctrl...
+[run_task_flight]   px4ctrl PID: 925486, 等 12s...
+... logging to /root/.ros/log/a752bed6-daa2-11f1-96b1-0242ac11000a/roslaunch-autodl-container-b97c4a8ab8-708d1592-925486.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[31mWARNING: disk usage in log directory [/root/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/px4ctrl/launch/run_node.launch
+[1mstarted roslaunch server http://autodl-container-b97c4a8ab8-708d1592:36259/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /px4ctrl/auto_takeoff_land/enable: True
+ * /px4ctrl/auto_takeoff_land/enable_auto_arm: True
+ * /px4ctrl/auto_takeoff_land/no_RC: True
+ * /px4ctrl/auto_takeoff_land/takeoff_height: 1.0
+ * /px4ctrl/auto_takeoff_land/takeoff_land_speed: 0.3
+ * /px4ctrl/ctrl_freq_max: 100.0
+ * /px4ctrl/debug: True
+ * /px4ctrl/full_thrust: 13.6
+ * /px4ctrl/gain/normal/KAngP: 10.0
+ * /px4ctrl/gain/normal/KAngR: 10.0
+ * /px4ctrl/gain/normal/KAngY: 5.0
+ * /px4ctrl/gain/normal/Kp0: 3.5
+ * /px4ctrl/gain/normal/Kp1: 3.5
+ * /px4ctrl/gain/normal/Kp2: 3.5
+ * /px4ctrl/gain/normal/Kv0: 3.5
+ * /px4ctrl/gain/normal/Kv1: 3.5
+ * /px4ctrl/gain/normal/Kv2: 3.5
+ * /px4ctrl/gain/normal/Kvd0: 0.0
+ * /px4ctrl/gain/normal/Kvd1: 0.0
+ * /px4ctrl/gain/normal/Kvd2: 0.0
+ * /px4ctrl/gain/normal/Kvi0: 0.0
+ * /px4ctrl/gain/normal/Kvi1: 0.0
+ * /px4ctrl/gain/normal/Kvi2: 0.0
+ * /px4ctrl/gain/track/Ka0: 1.0
+ * /px4ctrl/gain/track/Ka1: 1.0
+ * /px4ctrl/gain/track/Ka2: 1.0
+ * /px4ctrl/gain/track/Kp0: 1.5
+ * /px4ctrl/gain/track/Kp1: 1.5
+ * /px4ctrl/gain/track/Kp2: 1.5
+ * /px4ctrl/gain/track/Krp: 30.0
+ * /px4ctrl/gain/track/Kv0: 1.5
+ * /px4ctrl/gain/track/Kv1: 1.5
+ * /px4ctrl/gain/track/Kv2: 1.5
+ * /px4ctrl/gain/track/Kvi0: 0.2
+ * /px4ctrl/gain/track/Kvi1: 0.2
+ * /px4ctrl/gain/track/Kvi2: 0.2
+ * /px4ctrl/gain/track/Kyaw: 10.0
+ * /px4ctrl/gra: 9.81
+ * /px4ctrl/hov_percent: 0.72
+ * /px4ctrl/leader: True
+ * /px4ctrl/low_voltage: 13.2
+ * /px4ctrl/mass: 1.0
+ * /px4ctrl/max_angle: 30
+ * /px4ctrl/max_manual_vel: 1.0
+ * /px4ctrl/msg_timeout/bat: 0.5
+ * /px4ctrl/msg_timeout/cmd: 0.5
+ * /px4ctrl/msg_timeout/imu: 0.5
+ * /px4ctrl/msg_timeout/odom: 0.5
+ * /px4ctrl/msg_timeout/rc: 0.5
+ * /px4ctrl/perform_aerodynamics_compensation: False
+ * /px4ctrl/pose_solver: 1
+ * /px4ctrl/rc_reverse/pitch: False
+ * /px4ctrl/rc_reverse/roll: False
+ * /px4ctrl/rc_reverse/throttle: True
+ * /px4ctrl/rc_reverse/yaw: False
+ * /px4ctrl/rotor_drag/k_thrust_horz: 0.0
+ * /px4ctrl/rotor_drag/x: 0.0
+ * /px4ctrl/rotor_drag/y: 0.0
+ * /px4ctrl/rotor_drag/z: 0.0
+ * /px4ctrl/thrust_model/K1: 0.7583
+ * /px4ctrl/thrust_model/K2: 1.6942
+ * /px4ctrl/thrust_model/K3: 0.6786
+ * /px4ctrl/thrust_model/accurate_thrust_model: False
+ * /px4ctrl/thrust_model/hover_percentage: 0.72
+ * /px4ctrl/thrust_model/print_value: False
+ * /px4ctrl/use_bodyrate_ctrl: False
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    px4ctrl (px4ctrl/px4ctrl_node)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/px4ctrl/launch/run_node.launch http://localhost:11311
+[1mprocess[px4ctrl-1]: started with pid [925503][0m
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+[33m[WARN] [1794084293.261988590, 65.980000000]: PX4CTRL] Remote controller disabled, be careful![0m
+[33m[WARN] [1794084293.263699886, 65.980000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794084294.273566142, 66.992000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084294.273651205, 66.992000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084295.282130511, 68.000000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084296.302243168, 69.020000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084296.314205214, 69.032000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084297.323388543, 70.040000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084297.343319073, 70.060000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084298.344045581, 71.060000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084298.384064894, 71.100000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084299.364580313, 72.080000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084299.416440375, 72.132000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084300.385093240, 73.100000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084300.456978661, 73.172000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084301.407918729, 74.120000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084301.485519366, 74.200000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084302.426305423, 75.140000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084302.518804870, 75.232000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] 配置 px4ctrl...
+[33m[WARN] [1794084303.474056534, 76.160000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084303.568614660, 76.260000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084304.469781284, 77.180000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084304.589424603, 77.300000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084305.489109901, 78.200000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084305.621007520, 78.332000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084306.508932882, 79.220000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084306.688583180, 79.360000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084307.533900796, 80.240000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084307.692616373, 80.400000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084308.555263879, 81.264000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084308.723191804, 81.432000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084309.571270489, 82.280000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084309.722964054, 82.432000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794084309.751181594, 82.460000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084310.592267613, 83.300000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084310.791737177, 83.500000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084311.612483856, 84.320000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084311.824472661, 84.532000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084312.633062136, 85.340000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084312.853070733, 85.560000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084313.653088690, 86.360000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084313.864866839, 86.572000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084314.728279858, 87.380000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084314.948989762, 87.600000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084315.749364273, 88.400000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084315.981894930, 88.632000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084316.770987872, 89.420000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084317.011157475, 89.660000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084317.791666492, 90.440000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084318.051881952, 90.700000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] ✓ px4ctrl 配置完成
+[run_task_flight] 启动 ML Planner (BC/p6_lora), launch=ml_planner_gazebo_task.launch...
+[run_task_flight]   ML Planner PID: 925878, 等 10s...
+[33m[WARN] [1794084318.812296256, 91.460000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+... logging to /root/.ros/log/a752bed6-daa2-11f1-96b1-0242ac11000a/roslaunch-autodl-container-b97c4a8ab8-708d1592-925878.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[31mWARNING: disk usage in log directory [/root/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/ego-planner-swarm/src/planner/plan_manage/launch/ml_planner_gazebo_task.launch
+[33m[WARN] [1794084319.084471386, 91.732000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[1mstarted roslaunch server http://autodl-container-b97c4a8ab8-708d1592:46693/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /drone_0_ml_planner/checkpoint_path: /root/autodl-tmp/...
+ * /drone_0_ml_planner/control_freq: 50.0
+ * /drone_0_ml_planner/default_height: 1.5
+ * /drone_0_ml_planner/deployment_action_steps: 4
+ * /drone_0_ml_planner/drone_id: 0
+ * /drone_0_ml_planner/flight_mode: 0
+ * /drone_0_ml_planner/goal_tolerance: 1.0
+ * /drone_0_ml_planner/lora_ckpt: /root/autodl-tmp/...
+ * /drone_0_ml_planner/lora_enabled: True
+ * /drone_0_ml_planner/num_inference_steps: 10
+ * /drone_0_ml_planner/odom_vel_is_world: False
+ * /drone_0_ml_planner/policy_type: p6_lora
+ * /drone_0_ml_planner/pos_gain: [3.5, 3.5, 3.5]
+ * /drone_0_ml_planner/replan_ratio: 0.7
+ * /drone_0_ml_planner/traj_dt: 0.3
+ * /drone_0_ml_planner/use_fp16: True
+ * /drone_0_ml_planner/use_torch_compile: False
+ * /drone_0_ml_planner/vel_gain: [3.5, 3.5, 3.5]
+ * /drone_0_ml_planner/waypoint0_x: 8.3209954501
+ * /drone_0_ml_planner/waypoint0_y: 13.826663971
+ * /drone_0_ml_planner/waypoint0_z: 1.6849571466
+ * /drone_0_ml_planner/waypoint_num: 1
+ * /drone_0_ml_planner/z_feedforward_mode: full
+ * /drone_0_ml_planner/zarr_path: /root/AUV/avoidan...
+ * /drone_0_odom_visualization/color/a: 1.0
+ * /drone_0_odom_visualization/color/b: 1.0
+ * /drone_0_odom_visualization/color/g: 0.0
+ * /drone_0_odom_visualization/color/r: 0.0
+ * /drone_0_odom_visualization/covariance_scale: 100.0
+ * /drone_0_odom_visualization/drone_id: 0
+ * /drone_0_odom_visualization/robot_scale: 1.0
+ * /drone_0_odom_visualization/tf45: False
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    drone_0_ml_planner (ego_planner/ml_planner_gazebo.py)
+    drone_0_odom_visualization (odom_visualization/odom_visualization)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/root/autodl-tmp/AUV/catkin_ws0/src/ego-planner-swarm/src/planner/plan_manage/launch/ml_planner_gazebo_task.launch http://localhost:11311
+[1mprocess[drone_0_ml_planner-1]: started with pid [925893][0m
+[1mprocess[drone_0_odom_visualization-2]: started with pid [925894][0m
+[33m[WARN] [1794084319.844982041, 92.480000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084320.125142672, 92.760000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084320.864952527, 93.500000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084321.164974278, 93.800000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084321.886258322, 94.520000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084322.198855153, 94.832000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084322.484873, 0.000000]: [ML Planner v6.5] 初始化 (world chunk-wise delta, state 9维)
+[INFO] [1794084322.520023, 95.152000]: [Z-FF] z_feedforward_mode = full
+[INFO] [1794084322.534503, 95.164000]:   航点0: [8.3,13.8,1.7]
+[INFO] [1794084322.537853, 95.168000]: [CSV] /root/ml_planner_log/diffusion_20261108_044522.csv
+[INFO] [1794084322.540367, 95.172000]: [CSV] /root/ml_planner_log/pos_cmd_20261108_044522.csv
+[INFO] [1794084322.543424, 95.176000]: [StateLog] 闭环状态记录到 /root/ml_planner_log/state_20261108_044522.csv
+[INFO] [1794084322.546934, 95.176000]: [ML Planner v6.5] 加载扩散模型...
+[33m[WARN] [1794084322.907084127, 95.540000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084323.239817490, 95.872000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084323.443091, 96.072000]: [ML Planner] 从checkpoint读取 n_obs_steps = 3
+[INFO] [1794084323.445694, 96.076000]: [ML Planner] 从checkpoint读取 action_horizon = 8
+[INFO] [1794084323.448329, 96.080000]: [ML Planner] policy_type=p6_lora (显式指定)
+[INFO] [1794084323.449827, 96.080000]: [ML Planner] 加载 P0 backbone + P6 LoRA (A2 selective-keep)
+[INFO] [1794084323.460086, 96.092000]: [P6] lora_ckpt=/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/dppo_uav_rebuild/routea_a2_selective_keep_run01/T/checkpoint_update_000256 update_index=256 schema_version=2
+[33m[WARN] [1794084323.928034849, 96.560000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084324.260285143, 96.892000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084324.948737110, 97.580000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084325.268649734, 97.900000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084325.968772147, 98.600000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084326.300818456, 98.932000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084326.468742888, 99.100000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794084326.988806294, 99.620000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084327.329010705, 99.960000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084328.009069340, 100.640000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084328.360889432, 100.992000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] 等深度点云实际出流 (/iris_D435i/realsense/depth_camera/depth/points, 上限 60s)...
+[iDP3Encoder] point cloud shape: [4096, 6]
+[iDP3Encoder] state shape: [9]
+[DP3Encoder] output dim: 192
+[DiffusionPointcloudPolicy] use_pc_color: False
+[DiffusionPointcloudPolicy] pointnet_type: multi_stage_pointnet
+[33m[WARN] [1794084329.030446017, 101.660000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084329.402794207, 102.032000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+----------------------------------
+Class name: DiffusionPointcloudPolicy
+  Number of parameters: 71.5233M
+   _dummy_variable: 0.0000M (0.00%)
+   obs_encoder: 0.2686M (0.38%)
+   model: 71.2547M (99.62%)
+   mask_generator: 0.0000M (0.00%)
+----------------------------------
+[INFO] [1794084330.044830, 102.508000]: [P6] ✓ backbone identity = 040a337820f10745d158192c4b80737dd028adbf2dd559c037f3112c2bc8b151 (BC 来源确认)
+[33m[WARN] [1794084330.210480776, 102.680000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084330.585219648, 103.060000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight]   ✓ 深度点云已出流
+[INFO] [1794084330.918089, 103.392000]: [P6] ✓ LoRA 就绪 rank=8 alpha=8.0 adapter_params=1022568 lora_identity=4f91a995cff7da0e… gate=ON → P6
+[INFO] [1794084330.927542, 103.404000]: [Speed] conditional_sample 已 patch（10步 DDIM，预缓存 timesteps）
+[INFO] [1794084330.929340, 103.404000]: [Speed] TF32 matmul + cudnn.benchmark 已启用
+[INFO] [1794084330.932082, 103.408000]: [Speed] pinned memory 缓冲区已分配 (state_dim=9)
+[INFO] [1794084330.933250, 103.408000]: [Speed] 开始热身推理（3次）...
+[33m[WARN] [1794084331.222744792, 103.700000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084331.594596482, 104.072000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084331.790886, 104.268000]: [Speed] 热身第1次: 855ms  output=torch.Size([1, 8, 11])
+[INFO] [1794084331.912772, 104.388000]: [Speed] 热身第2次: 119ms  output=torch.Size([1, 8, 11])
+[INFO] [1794084332.033208, 104.508000]: [Speed] 热身第3次: 118ms  output=torch.Size([1, 8, 11])
+[INFO] [1794084332.035195, 104.512000]: [Speed] 热身完成，稳定延迟: 118ms
+[INFO] [1794084332.036796, 104.512000]: [ML Planner v6.5] 模型就绪 device=cuda
+[INFO] [1794084332.159605, 104.636000]: [ML Planner v6.5] OFFBOARD 模式
+[INFO] [1794084332.230314, 104.704000]: [PC] Received 50903 points
+[33m[WARN] [1794084332.242644218, 104.720000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[0m[INFO] [1794084294.261701010, 66.980000000]: PX4CTRL] Is OK![0m
+[0m[INFO] [1794084310.479424742, 83.188000000]: [32m[px4ctrl] MANUAL_CTRL(L1) --> AUTO_HOVER(L2)[32m[0m
+[0m[INFO] [1794084314.986423386, 87.636000000]: [32m[px4ctrl] TRIGGER sent, allow user command.[32m[0m
+Error in XmlRpcClient::writeRequest: write error (Connection refused).
+[run_task_flight]   ✓ 当前模式 OFFBOARD
+[run_task_flight] 等待 /planning/pos_cmd publisher (上限 90s)...
+[33m[WARN] [1794084332.615469949, 105.092000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084332.661506, 105.136000]: [ML Planner v6.5] 就绪
+[33m[WARN] [1794084333.264170472, 105.740000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[run_task_flight] ✓ pos_cmd 已发布, 开始监控
+[run_task_flight] 启动 monitor (timeout=240s, goal odom=8.3209954501,13.8266639710,1.6849571466)...
+[33m[WARN] [1794084333.721079156, 106.132000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084333.858028, 0.000000]: [Monitor] Loaded 25 obstacles from /root/autodl-tmp/AUV/PX4-Autopilot/Tools/sitl_gazebo/worlds/test/routeA_rl_v1__dense_recovery__rl_test__cul_de_sac_trap__000040.world.obstacles.json
+[INFO] [1794084333.878698, 106.288000]: [Monitor] Drone confirmed in Gazebo model_states
+[INFO] [1794084333.923848, 106.332000]: [Monitor] Subscribed to /planning/pos_cmd for trajectory recording
+[INFO] [1794084333.927766, 106.336000]: [Monitor] Starting trial. Goal=(8.3, 13.8, 1.7), timeout=240.0s, obs=25
+[INFO] [1794084333.930962, 106.340000]: [Monitor DEBUG] world=(-7.54,-2.04,2.53) local=(0.00,0.17,2.52) clearance=3.874m closest=trap_scatter_13 flyover=False n_obs=25
+[33m[WARN] [1794084334.348982437, 106.760000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084334.749039017, 107.160000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084335.369138974, 107.780000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084335.781105978, 108.192000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084336.232118, 108.640000]: [ML Planner v6.5] 任务开始
+[INFO] [1794084336.242259, 108.648000]: [ML Planner v6.5] 航点0: [ 8.32099545 13.82666397  1.68495715]
+[INFO] [1794084336.250097, 108.656000]: 积累观测: 0/3
+[33m[WARN] [1794084336.390470542, 108.800000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084336.822753643, 109.232000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084336.941340, 109.348000]: [DUMP] #1 plan=1 x=0.04
+[INFO] [1794084337.253228, 109.636000]: [CMD#50]      hold | pos[0.04,0.20,2.52] vel[0.00,0.00,0.00] yaw=0.00 | 实际[0.04,0.20,2.52] err=0.00m
+[INFO] [1794084337.354413, 109.744000]: [PC] Received 51161 points
+[33m[WARN] [1794084337.426614471, 109.820000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084337.626135, 110.024000]: [ML Planner] 推理690ms>500ms
+[INFO] [1794084337.628703, 110.024000]: =========================================================================================================
+[INFO] [1794084337.630386, 110.028000]: [DIFFUSION v6.5] 690ms | pos[0.05,0.23,2.52] goal[8.32,13.83,1.68] dist=15.98m
+[INFO] [1794084337.631705, 110.028000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084337.633387, 110.032000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084337.635804, 110.032000]:   0   0.2135   0.0106  -0.0047  -0.0250   0.0313   0.0022  0.2138
+[INFO] [1794084337.637479, 110.036000]:   1   0.2068   0.0286  -0.0039  -0.0278   0.0471   0.0053  0.2088
+[INFO] [1794084337.638975, 110.036000]:   2   0.1958   0.0429  -0.0025  -0.0325   0.0657   0.0040  0.2005
+[INFO] [1794084337.640699, 110.040000]:   3   0.1959   0.0736  -0.0005  -0.0365   0.0828   0.0040  0.2092
+[INFO] [1794084337.642187, 110.040000]:   4   0.1734   0.0913  -0.0005  -0.0429   0.0840  -0.0002  0.1960
+[INFO] [1794084337.643790, 110.040000]:   ... (8 步)
+[INFO] [1794084337.645512, 110.044000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084337.649242, 110.048000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084337.656399, 110.056000]:   0    0.260    0.243    2.513   -0.025    0.031    0.002    0.21m  15.82m
+[INFO] [1794084337.659977, 110.056000]:   1    0.467    0.272    2.509   -0.028    0.047    0.005    0.42m  15.69m
+[INFO] [1794084337.663046, 110.060000]:   2    0.663    0.315    2.506   -0.032    0.066    0.004    0.62m  15.55m
+[INFO] [1794084337.665695, 110.064000]:   3    0.859    0.389    2.506   -0.036    0.083    0.004    0.83m  15.39m
+[INFO] [1794084337.668402, 110.064000]:   4    1.032    0.480    2.505   -0.043    0.084   -0.000    1.02m  15.23m
+[INFO] [1794084337.671450, 110.068000]:   5    1.193    0.600    2.506   -0.055    0.078    0.001    1.20m  15.05m
+[INFO] [1794084337.675194, 110.072000]:   6    1.323    0.733    2.505   -0.062    0.058   -0.003    1.37m  14.87m
+[INFO] [1794084337.678637, 110.076000]:   7    1.434    0.888    2.503   -0.061    0.035   -0.003    1.53m  14.68m
+[INFO] [1794084337.681562, 110.080000]:   轨迹长1.39m | 终点距目标14.68m
+[INFO] [1794084337.684612, 110.084000]: =========================================================================================================
+[INFO] [1794084337.688391, 110.088000]: [ML Planner] 部署侧执行截断: 8 -> 4 步, 轨迹时长 0.90s, replan@70% 触发于 0.63s
+[INFO] [1794084337.694189, 110.088000]: [GOAL-DIAG] policy-only path closest step to goal: d=15.39m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084337.856754389, 110.260000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084338.231032, 110.636000]: [CMD#100]      traj | pos[0.62,0.31,2.51] vel[-0.03,0.06,0.00] yaw=0.30 | 实际[0.12,0.33,2.51] err=0.50m
+[INFO] [1794084338.329713, 110.736000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084338.349479, 110.752000]: [DUMP] #2 plan=2 x=0.15
+[33m[WARN] [1794084338.467671557, 110.840000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084338.897702265, 111.292000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084339.051667, 111.448000]: [ML Planner] 推理708ms>500ms
+[INFO] [1794084339.053821, 111.452000]: =========================================================================================================
+[INFO] [1794084339.054985, 111.452000]: [DIFFUSION v6.5] 708ms | pos[0.44,0.44,2.50] goal[8.32,13.83,1.68] dist=15.87m
+[INFO] [1794084339.055950, 111.452000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084339.057886, 111.456000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084339.059066, 111.456000]:   0   0.2439   0.0295  -0.0107   0.0085   0.0937   0.0045  0.2459
+[INFO] [1794084339.060007, 111.456000]:   1   0.2476   0.0536  -0.0087  -0.0276   0.0965   0.0112  0.2535
+[INFO] [1794084339.061216, 111.460000]:   2   0.2415   0.0728  -0.0047  -0.0554   0.0883   0.0124  0.2523
+[INFO] [1794084339.062338, 111.460000]:   3   0.2201   0.0965  -0.0009  -0.0765   0.0779   0.0130  0.2403
+[INFO] [1794084339.063520, 111.460000]:   4   0.1912   0.1142   0.0021  -0.0876   0.0588   0.0085  0.2227
+[INFO] [1794084339.065003, 111.464000]:   ... (8 步)
+[INFO] [1794084339.066101, 111.464000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084339.067171, 111.464000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084339.068339, 111.464000]:   0    0.688    0.469    2.492    0.009    0.094    0.004    0.25m  15.41m
+[INFO] [1794084339.069736, 111.468000]:   1    0.935    0.522    2.483   -0.028    0.096    0.011    0.50m  15.24m
+[INFO] [1794084339.070999, 111.468000]:   2    1.177    0.595    2.479   -0.055    0.088    0.012    0.75m  15.06m
+[INFO] [1794084339.072068, 111.468000]:   3    1.397    0.692    2.478   -0.077    0.078    0.013    0.99m  14.87m
+[INFO] [1794084339.073620, 111.472000]:   4    1.588    0.806    2.480   -0.088    0.059    0.008    1.20m  14.68m
+[INFO] [1794084339.075015, 111.472000]:   5    1.761    0.943    2.485   -0.090    0.042    0.006    1.41m  14.48m
+[INFO] [1794084339.076288, 111.472000]:   6    1.899    1.084    2.490   -0.078    0.030   -0.000    1.59m  14.29m
+[INFO] [1794084339.079882, 111.476000]:   7    2.016    1.245    2.495   -0.065    0.024   -0.002    1.77m  14.10m
+[INFO] [1794084339.081393, 111.480000]:   轨迹长1.59m | 终点距目标14.10m
+[INFO] [1794084339.082522, 111.480000]: =========================================================================================================
+[INFO] [1794084339.235120, 111.636000]: [CMD#150]      traj | pos[0.81,0.50,2.49] vel[-0.01,0.10,0.01] yaw=0.63 | 实际[0.53,0.44,2.50] err=0.28m
+[33m[WARN] [1794084339.455611836, 111.860000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084339.710618, 112.116000]: [ML Planner] 并行推理触发 progress=0.70
+[INFO] [1794084339.720989, 112.124000]: [DUMP] #3 plan=3 x=0.62
+[33m[WARN] [1794084339.988150310, 112.332000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084339.992333, 112.336000]: [Monitor DEBUG] world=(-6.80,-1.57,2.53) local=(0.69,0.62,2.50) clearance=3.099m closest=trap_scatter_13 flyover=False n_obs=25
+[INFO] [1794084340.292917, 112.636000]: [CMD#200] traj_hold | pos[1.40,0.69,2.48] vel[0.00,0.00,0.00] yaw=0.97 | 实际[0.85,0.69,2.50] err=0.54m
+[WARN] [1794084340.305762, 112.648000]: [ML Planner] 推理589ms>500ms
+[INFO] [1794084340.308587, 112.652000]: =========================================================================================================
+[INFO] [1794084340.310320, 112.652000]: [DIFFUSION v6.5] 589ms | pos[0.85,0.69,2.50] goal[8.32,13.83,1.68] dist=15.41m
+[INFO] [1794084340.312255, 112.656000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084340.314185, 112.656000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084340.315700, 112.656000]:   0   0.2617   0.0873  -0.0094   0.0323   0.0973   0.0314  0.2760
+[INFO] [1794084340.317341, 112.660000]:   1   0.2617   0.1395  -0.0011   0.0050   0.0973   0.0173  0.2965
+[INFO] [1794084340.318816, 112.660000]:   2   0.2617   0.1777   0.0006  -0.0390   0.0973   0.0004  0.3163
+[INFO] [1794084340.320288, 112.660000]:   3   0.2617   0.2110  -0.0015  -0.0695   0.0969  -0.0141  0.3362
+[INFO] [1794084340.321803, 112.664000]:   4   0.2357   0.2110  -0.0078  -0.0888   0.0809  -0.0236  0.3165
+[INFO] [1794084340.323699, 112.664000]:   ... (8 步)
+[INFO] [1794084340.325244, 112.668000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084340.326615, 112.668000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084340.328083, 112.672000]:   0    1.116    0.775    2.487    0.032    0.097    0.031    0.28m  14.93m
+[INFO] [1794084340.329694, 112.672000]:   1    1.378    0.914    2.486    0.005    0.097    0.017    0.57m  14.68m
+[INFO] [1794084340.331223, 112.672000]:   2    1.639    1.092    2.486   -0.039    0.097    0.000    0.88m  14.40m
+[INFO] [1794084340.333894, 112.676000]:   3    1.901    1.303    2.485   -0.069    0.097   -0.014    1.21m  14.10m
+[INFO] [1794084340.337236, 112.680000]:   4    2.137    1.514    2.477   -0.089    0.081   -0.024    1.53m  13.80m
+[INFO] [1794084340.338785, 112.680000]:   5    2.340    1.725    2.462   -0.097    0.064   -0.021    1.81m  13.52m
+[INFO] [1794084340.340542, 112.684000]:   6    2.502    1.936    2.442   -0.103    0.046   -0.021    2.07m  13.26m
+[INFO] [1794084340.342427, 112.684000]:   7    2.639    2.147    2.417   -0.100    0.033   -0.010    2.31m  13.01m
+[INFO] [1794084340.344406, 112.688000]:   轨迹长2.08m | 终点距目标13.01m
+[INFO] [1794084340.346207, 112.688000]: =========================================================================================================
+[33m[WARN] [1794084340.535911558, 112.880000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084340.992499, 113.336000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084341.005378, 113.348000]: [DUMP] #4 plan=4 x=1.09
+[33m[WARN] [1794084341.027864829, 113.372000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084341.293491, 113.636000]: [CMD#250] traj_hold | pos[1.90,1.30,2.48] vel[0.00,0.00,0.00] yaw=1.28 | 实际[1.23,0.99,2.49] err=0.74m
+[INFO] [1794084341.490650, 113.832000]: [ML Planner] 推理490ms ✓
+[INFO] [1794084341.494885, 113.836000]: =========================================================================================================
+[INFO] [1794084341.496920, 113.836000]: [DIFFUSION v6.5] 490ms | pos[1.33,1.08,2.49] goal[8.32,13.83,1.68] dist=14.95m
+[INFO] [1794084341.498510, 113.840000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084341.501349, 113.844000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084341.502829, 113.844000]:   0   0.2100   0.2110  -0.0188  -0.0305   0.0506  -0.0052  0.2983
+[INFO] [1794084341.504237, 113.844000]:   1   0.2009   0.2110  -0.0191  -0.0402   0.0217  -0.0023  0.2920
+[INFO] [1794084341.505706, 113.848000]:   2   0.1875   0.2110  -0.0205  -0.0398   0.0184  -0.0065  0.2830
+[INFO] [1794084341.507124, 113.848000]:   3   0.1869   0.2110  -0.0213  -0.0242   0.0321  -0.0072  0.2827
+[INFO] [1794084341.508550, 113.848000]:   4   0.1797   0.2110  -0.0247  -0.0059   0.0208  -0.0092  0.2783
+[INFO] [1794084341.511928, 113.852000]:   ... (8 步)
+[INFO] [1794084341.514131, 113.856000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084341.515649, 113.856000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084341.517250, 113.860000]:   0    1.536    1.288    2.473   -0.031    0.051   -0.005    0.30m  14.28m
+[INFO] [1794084341.518842, 113.860000]:   1    1.737    1.499    2.454   -0.040    0.022   -0.002    0.59m  14.00m
+[INFO] [1794084341.520409, 113.860000]:   2    1.925    1.710    2.434   -0.040    0.018   -0.007    0.87m  13.72m
+[INFO] [1794084341.522012, 113.864000]:   3    2.112    1.921    2.412   -0.024    0.032   -0.007    1.16m  13.45m
+[INFO] [1794084341.523648, 113.864000]:   4    2.291    2.132    2.388   -0.006    0.021   -0.009    1.43m  13.18m
+[INFO] [1794084341.525589, 113.868000]:   5    2.465    2.343    2.362   -0.002   -0.004   -0.004    1.71m  12.91m
+[INFO] [1794084341.527305, 113.868000]:   6    2.631    2.555    2.335   -0.006   -0.019   -0.004    1.98m  12.64m
+[INFO] [1794084341.529313, 113.872000]:   7    2.803    2.766    2.308   -0.002   -0.018    0.002    2.25m  12.38m
+[INFO] [1794084341.531209, 113.872000]:   轨迹长1.95m | 终点距目标12.38m
+[INFO] [1794084341.534044, 113.876000]: =========================================================================================================
+[INFO] [1794084341.537074, 113.880000]: [GOAL-DIAG] policy-only path closest step to goal: d=13.45m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084341.556619144, 113.900000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084342.056856201, 114.400000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084342.173537, 114.516000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084342.186137, 114.528000]: [DUMP] #5 plan=5 x=1.51
+[INFO] [1794084342.301669, 114.636000]: [CMD#300]      traj | pos[2.02,1.82,2.42] vel[-0.03,0.03,-0.01] yaw=1.30 | 实际[1.52,1.35,2.47] err=0.69m
+[INFO] [1794084342.439608, 114.772000]: [PC] Received 30275 points
+[33m[WARN] [1794084342.569246970, 114.904000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084342.690372, 115.024000]: [ML Planner] 推理509ms>500ms
+[INFO] [1794084342.693544, 115.028000]: =========================================================================================================
+[INFO] [1794084342.695281, 115.028000]: [DIFFUSION v6.5] 509ms | pos[1.67,1.56,2.45] goal[8.32,13.83,1.68] dist=14.31m
+[INFO] [1794084342.697123, 115.032000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084342.698626, 115.032000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084342.700090, 115.032000]:   0   0.0786   0.2110  -0.0164  -0.0096   0.0003  -0.0078  0.2258
+[INFO] [1794084342.702299, 115.036000]:   1   0.0754   0.2110  -0.0173   0.0164   0.0030  -0.0028  0.2248
+[INFO] [1794084342.703764, 115.036000]:   2   0.0748   0.2110  -0.0186   0.0287  -0.0063  -0.0024  0.2247
+[INFO] [1794084342.705471, 115.040000]:   3   0.0866   0.2110  -0.0190   0.0316  -0.0082   0.0030  0.2289
+[INFO] [1794084342.706867, 115.040000]:   4   0.0935   0.2110  -0.0185   0.0307  -0.0066   0.0008  0.2315
+[INFO] [1794084342.708202, 115.040000]:   ... (8 步)
+[INFO] [1794084342.709679, 115.040000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084342.711308, 115.044000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084342.713417, 115.044000]:   0    1.751    1.766    2.434   -0.010    0.000   -0.008    0.23m  13.75m
+[INFO] [1794084342.715174, 115.048000]:   1    1.826    1.977    2.417    0.016    0.003   -0.003    0.45m  13.53m
+[INFO] [1794084342.716771, 115.048000]:   2    1.901    2.188    2.398    0.029   -0.006   -0.002    0.68m  13.31m
+[INFO] [1794084342.718299, 115.052000]:   3    1.988    2.399    2.379    0.032   -0.008    0.003    0.90m  13.08m
+[INFO] [1794084342.719805, 115.052000]:   4    2.081    2.610    2.360    0.031   -0.007    0.001    1.14m  12.85m
+[INFO] [1794084342.724861, 115.056000]:   5    2.188    2.821    2.343    0.024   -0.003    0.003    1.37m  12.62m
+[INFO] [1794084342.726662, 115.060000]:   6    2.297    3.020    2.327    0.013   -0.004   -0.001    1.60m  12.39m
+[INFO] [1794084342.728352, 115.060000]:   7    2.412    3.220    2.311   -0.000   -0.007    0.001    1.83m  12.16m
+[INFO] [1794084342.730149, 115.064000]:   轨迹长1.61m | 终点距目标12.16m
+[INFO] [1794084342.731754, 115.064000]: =========================================================================================================
+[33m[WARN] [1794084343.097309389, 115.432000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084343.302925, 115.636000]: [CMD#350]      traj | pos[1.89,2.17,2.40] vel[0.03,-0.01,-0.00] yaw=1.17 | 实际[1.78,1.73,2.44] err=0.45m
+[INFO] [1794084343.381620, 115.716000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084343.391174, 115.724000]: [DUMP] #6 plan=6 x=1.78
+[33m[WARN] [1794084343.432839248, 115.760000000]: VEL_IN_BODY!!![0m
+[33m[WARN] [1794084343.593065054, 115.920000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084343.892406, 116.216000]: [ML Planner] 推理505ms>500ms
+[INFO] [1794084343.894964, 116.220000]: =========================================================================================================
+[INFO] [1794084343.896489, 116.220000]: [DIFFUSION v6.5] 505ms | pos[1.88,1.97,2.43] goal[8.32,13.83,1.68] dist=13.77m
+[INFO] [1794084343.897946, 116.224000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084343.899344, 116.224000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084343.900932, 116.228000]:   0   0.1285   0.2110  -0.0174   0.0487  -0.0165  -0.0012  0.2477
+[INFO] [1794084343.902367, 116.228000]:   1   0.1377   0.2110  -0.0165   0.0545  -0.0028   0.0004  0.2525
+[INFO] [1794084343.903764, 116.228000]:   2   0.1369   0.2110  -0.0172   0.0408  -0.0066  -0.0018  0.2521
+[INFO] [1794084343.905277, 116.232000]:   3   0.1505   0.2110  -0.0173   0.0291  -0.0028   0.0001  0.2598
+[INFO] [1794084343.906686, 116.232000]:   4   0.1520   0.2110  -0.0178   0.0166   0.0060  -0.0022  0.2607
+[INFO] [1794084343.908071, 116.232000]:   ... (8 步)
+[INFO] [1794084343.910320, 116.236000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084343.911756, 116.236000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084343.913320, 116.240000]:   0    2.004    2.179    2.412    0.049   -0.016   -0.001    0.25m  13.27m
+[INFO] [1794084343.914833, 116.240000]:   1    2.142    2.390    2.396    0.054   -0.003    0.000    0.50m  13.02m
+[INFO] [1794084343.917449, 116.244000]:   2    2.279    2.601    2.379    0.041   -0.007   -0.002    0.75m  12.77m
+[INFO] [1794084343.919081, 116.244000]:   3    2.429    2.812    2.361    0.029   -0.003    0.000    1.01m  12.51m
+[INFO] [1794084343.920734, 116.244000]:   4    2.581    3.023    2.344    0.017    0.006   -0.002    1.27m  12.25m
+[INFO] [1794084343.922414, 116.248000]:   5    2.737    3.234    2.327    0.000    0.007    0.001    1.53m  11.99m
+[INFO] [1794084343.924079, 116.248000]:   6    2.883    3.445    2.309   -0.011   -0.004   -0.001    1.79m  11.74m
+[INFO] [1794084343.925928, 116.252000]:   7    3.030    3.656    2.293   -0.015   -0.014    0.001    2.05m  11.48m
+[INFO] [1794084343.930282, 116.256000]:   轨迹长1.80m | 终点距目标11.48m
+[INFO] [1794084343.932106, 116.256000]: =========================================================================================================
+[33m[WARN] [1794084344.145370976, 116.472000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084344.314944, 116.640000]: [CMD#400]      traj | pos[2.18,2.44,2.39] vel[0.05,-0.00,-0.00] yaw=1.07 | 实际[1.90,2.10,2.43] err=0.44m
+[INFO] [1794084344.569886, 116.896000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084344.579996, 116.904000]: [DUMP] #7 plan=7 x=1.97
+[33m[WARN] [1794084344.627895640, 116.940000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084345.116143, 117.436000]: [ML Planner] 推理541ms>500ms
+[INFO] [1794084345.119308, 117.440000]: =========================================================================================================
+[INFO] [1794084345.121888, 117.440000]: [DIFFUSION v6.5] 541ms | pos[2.15,2.37,2.42] goal[8.32,13.83,1.68] dist=13.34m
+[INFO] [1794084345.123386, 117.444000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084345.124869, 117.444000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084345.126572, 117.448000]:   0   0.1804   0.2110  -0.0179   0.0226   0.0003  -0.0075  0.2782
+[INFO] [1794084345.128057, 117.448000]:   1   0.1843   0.2110  -0.0192   0.0226   0.0263  -0.0061  0.2809
+[INFO] [1794084345.129544, 117.448000]:   2   0.1872   0.2110  -0.0208   0.0301   0.0584  -0.0088  0.2829
+[INFO] [1794084345.130980, 117.452000]:   3   0.1958   0.2110  -0.0222   0.0089   0.0482  -0.0047  0.2888
+[INFO] [1794084345.134444, 117.452000]:   4   0.1816   0.2110  -0.0243  -0.0226   0.0053  -0.0027  0.2795
+[INFO] [1794084345.135939, 117.456000]:   ... (8 步)
+[INFO] [1794084345.137357, 117.456000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084345.138742, 117.460000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084345.140154, 117.460000]:   0    2.328    2.585    2.399    0.023    0.000   -0.007    0.28m  12.76m
+[INFO] [1794084345.141650, 117.460000]:   1    2.512    2.796    2.380    0.023    0.026   -0.006    0.56m  12.49m
+[INFO] [1794084345.143117, 117.464000]:   2    2.699    3.007    2.359    0.030    0.058   -0.009    0.84m  12.21m
+[INFO] [1794084345.144690, 117.464000]:   3    2.895    3.218    2.337    0.009    0.048   -0.005    1.13m  11.93m
+[INFO] [1794084345.146279, 117.464000]:   4    3.077    3.430    2.313   -0.023    0.005   -0.003    1.41m  11.66m
+[INFO] [1794084345.147881, 117.468000]:   5    3.246    3.641    2.289   -0.026   -0.019    0.003    1.68m  11.40m
+[INFO] [1794084345.149560, 117.468000]:   6    3.394    3.852    2.264   -0.011   -0.029    0.001    1.94m  11.14m
+[INFO] [1794084345.151144, 117.472000]:   7    3.538    4.063    2.241    0.002   -0.034    0.004    2.19m  10.89m
+[INFO] [1794084345.152969, 117.472000]:   轨迹长1.92m | 终点距目标10.89m
+[INFO] [1794084345.155602, 117.476000]: =========================================================================================================
+[INFO] [1794084345.159715, 117.480000]: [GOAL-DIAG] policy-only path closest step to goal: d=11.93m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084345.177730399, 117.500000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084345.313827, 117.636000]: [CMD#450]      traj | pos[2.42,2.70,2.39] vel[0.02,0.01,-0.01] yaw=1.05 | 实际[2.19,2.44,2.41] err=0.34m
+[33m[WARN] [1794084345.635641033, 117.960000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084345.791913, 118.116000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084345.801812, 118.124000]: [DUMP] #8 plan=8 x=2.29
+[INFO] [1794084346.011993, 118.336000]: [Monitor DEBUG] world=(-5.17,0.41,2.50) local=(2.35,2.63,2.40) clearance=2.229m closest=trap_scatter_13 flyover=False n_obs=25
+[33m[WARN] [1794084346.207215927, 118.532000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084346.312621, 118.636000]: [CMD#500] traj_hold | pos[2.90,3.22,2.34] vel[0.00,0.00,0.00] yaw=1.08 | 实际[2.49,2.81,2.40] err=0.58m
+[WARN] [1794084346.321405, 118.644000]: [ML Planner] 推理524ms>500ms
+[INFO] [1794084346.324462, 118.648000]: =========================================================================================================
+[INFO] [1794084346.326126, 118.648000]: [DIFFUSION v6.5] 524ms | pos[2.49,2.81,2.40] goal[8.32,13.83,1.68] dist=12.83m
+[INFO] [1794084346.327765, 118.652000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084346.329237, 118.652000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084346.330675, 118.652000]:   0   0.1130   0.1877  -0.0125  -0.0041   0.0037  -0.0069  0.2194
+[INFO] [1794084346.332337, 118.656000]:   1   0.1135   0.1920  -0.0137   0.0008   0.0196  -0.0058  0.2234
+[INFO] [1794084346.333780, 118.656000]:   2   0.1123   0.1894  -0.0159  -0.0002   0.0180  -0.0085  0.2207
+[INFO] [1794084346.335448, 118.660000]:   3   0.1167   0.1962  -0.0179  -0.0032   0.0135  -0.0054  0.2290
+[INFO] [1794084346.336990, 118.660000]:   4   0.1110   0.1878  -0.0205  -0.0076   0.0016  -0.0055  0.2191
+[INFO] [1794084346.338519, 118.660000]:   ... (8 步)
+[INFO] [1794084346.339975, 118.664000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084346.341442, 118.664000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084346.342934, 118.664000]:   0    2.600    2.998    2.384   -0.004    0.004   -0.007    0.22m  12.27m
+[INFO] [1794084346.344411, 118.668000]:   1    2.713    3.190    2.370    0.001    0.020   -0.006    0.44m  12.04m
+[INFO] [1794084346.346147, 118.668000]:   2    2.825    3.379    2.354   -0.000    0.018   -0.009    0.66m  11.82m
+[INFO] [1794084346.347964, 118.672000]:   3    2.942    3.575    2.336   -0.003    0.014   -0.005    0.89m  11.60m
+[INFO] [1794084346.349744, 118.672000]:   4    3.053    3.763    2.316   -0.008    0.002   -0.006    1.11m  11.38m
+[INFO] [1794084346.359107, 118.680000]:   5    3.164    3.958    2.295   -0.016   -0.012    0.001    1.34m  11.15m
+[INFO] [1794084346.362373, 118.684000]:   6    3.268    4.142    2.274   -0.016   -0.023    0.001    1.55m  10.94m
+[INFO] [1794084346.365215, 118.688000]:   7    3.371    4.331    2.254   -0.009   -0.020    0.004    1.77m  10.72m
+[INFO] [1794084346.367898, 118.688000]:   轨迹长1.55m | 终点距目标10.72m
+[INFO] [1794084346.372312, 118.692000]: =========================================================================================================
+[33m[WARN] [1794084346.655378705, 118.980000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084347.012541, 119.336000]: [ML Planner] 并行推理触发 progress=0.71
+[33m[WARN] [1794084347.258568275, 119.560000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084347.331583, 119.636000]: [CMD#550] traj_hold | pos[2.94,3.58,2.34] vel[0.00,0.00,0.00] yaw=1.09 | 实际[2.64,3.10,2.37] err=0.56m
+[INFO] [1794084347.474207, 119.784000]: [PC] Received 25917 points
+[WARN] [1794084347.531583, 119.844000]: [ML Planner] 推理513ms>500ms
+[INFO] [1794084347.533884, 119.844000]: =========================================================================================================
+[INFO] [1794084347.535415, 119.848000]: [DIFFUSION v6.5] 513ms | pos[2.69,3.18,2.37] goal[8.32,13.83,1.68] dist=12.33m
+[INFO] [1794084347.536830, 119.848000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084347.538206, 119.848000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084347.539639, 119.852000]:   0   0.1343   0.1915  -0.0146  -0.0168  -0.0031  -0.0040  0.2343
+[INFO] [1794084347.541059, 119.852000]:   1   0.1301   0.1988  -0.0152  -0.0073   0.0130  -0.0030  0.2381
+[INFO] [1794084347.542427, 119.852000]:   2   0.1234   0.1949  -0.0166  -0.0031   0.0190  -0.0062  0.2313
+[INFO] [1794084347.544377, 119.856000]:   3   0.1275   0.2079  -0.0179   0.0010   0.0223  -0.0037  0.2445
+[INFO] [1794084347.546713, 119.860000]:   4   0.1221   0.2025  -0.0200   0.0049   0.0160  -0.0049  0.2373
+[INFO] [1794084347.548081, 119.860000]:   ... (8 步)
+[INFO] [1794084347.549977, 119.860000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084347.551418, 119.864000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084347.554118, 119.864000]:   0    2.823    3.371    2.357   -0.017   -0.003   -0.004    0.23m  11.83m
+[INFO] [1794084347.555668, 119.868000]:   1    2.953    3.570    2.342   -0.007    0.013   -0.003    0.47m  11.60m
+[INFO] [1794084347.557426, 119.868000]:   2    3.077    3.765    2.325   -0.003    0.019   -0.006    0.70m  11.36m
+[INFO] [1794084347.558976, 119.872000]:   3    3.204    3.973    2.307    0.001    0.022   -0.004    0.95m  11.12m
+[INFO] [1794084347.560487, 119.872000]:   4    3.326    4.175    2.287    0.005    0.016   -0.005    1.19m  10.88m
+[INFO] [1794084347.562979, 119.876000]:   5    3.448    4.385    2.267    0.002    0.002    0.000    1.43m  10.64m
+[INFO] [1794084347.564689, 119.876000]:   6    3.563    4.584    2.246   -0.002   -0.011   -0.000    1.66m  10.41m
+[INFO] [1794084347.566668, 119.880000]:   7    3.679    4.791    2.226   -0.004   -0.014    0.003    1.90m  10.17m
+[INFO] [1794084347.568396, 119.880000]:   轨迹长1.66m | 终点距目标10.17m
+[INFO] [1794084347.570034, 119.880000]: =========================================================================================================
+[33m[WARN] [1794084347.683317435, 120.000000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084348.198247, 120.516000]: [ML Planner] 并行推理触发 progress=0.70
+[33m[WARN] [1794084348.250704967, 120.572000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084348.324550, 120.636000]: [CMD#600]      traj | pos[3.14,3.87,2.32] vel[-0.00,0.02,-0.00] yaw=1.10 | 实际[2.77,3.37,2.36] err=0.62m
+[INFO] [1794084348.701392, 121.020000]: [ML Planner] 推理493ms ✓
+[33m[WARN] [1794084348.703366552, 121.024000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084348.705377, 121.024000]: =========================================================================================================
+[INFO] [1794084348.707019, 121.024000]: [DIFFUSION v6.5] 493ms | pos[2.86,3.54,2.35] goal[8.32,13.83,1.68] dist=11.92m
+[INFO] [1794084348.708423, 121.028000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084348.709854, 121.028000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084348.711500, 121.032000]:   0   0.1131   0.1886  -0.0143  -0.0069  -0.0054  -0.0034  0.2204
+[INFO] [1794084348.713006, 121.032000]:   1   0.1124   0.1957  -0.0147   0.0006   0.0076  -0.0018  0.2262
+[INFO] [1794084348.714504, 121.032000]:   2   0.1107   0.1934  -0.0157   0.0029   0.0071  -0.0047  0.2234
+[INFO] [1794084348.717799, 121.036000]:   3   0.1141   0.2032  -0.0166   0.0014   0.0075  -0.0021  0.2336
+[INFO] [1794084348.720322, 121.040000]:   4   0.1101   0.1965  -0.0184   0.0005   0.0032  -0.0037  0.2260
+[INFO] [1794084348.721839, 121.040000]:   ... (8 步)
+[INFO] [1794084348.723173, 121.040000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084348.724535, 121.044000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084348.725983, 121.044000]:   0    2.977    3.732    2.331   -0.007   -0.005   -0.003    0.22m  11.44m
+[INFO] [1794084348.727399, 121.044000]:   1    3.090    3.927    2.317    0.001    0.008   -0.002    0.45m  11.21m
+[INFO] [1794084348.728825, 121.048000]:   2    3.200    4.121    2.301    0.003    0.007   -0.005    0.67m  10.99m
+[INFO] [1794084348.730293, 121.048000]:   3    3.315    4.324    2.284    0.001    0.007   -0.002    0.90m  10.76m
+[INFO] [1794084348.731900, 121.052000]:   4    3.425    4.521    2.266    0.000    0.003   -0.004    1.13m  10.53m
+[INFO] [1794084348.733484, 121.052000]:   5    3.533    4.722    2.248   -0.003   -0.002    0.001    1.36m  10.30m
+[INFO] [1794084348.735023, 121.052000]:   6    3.633    4.908    2.229   -0.004   -0.009   -0.001    1.57m  10.09m
+[INFO] [1794084348.737450, 121.056000]:   7    3.735    5.100    2.210   -0.005   -0.008    0.003    1.79m   9.87m
+[INFO] [1794084348.739077, 121.056000]:   轨迹长1.57m | 终点距目标9.87m
+[INFO] [1794084348.740863, 121.060000]: =========================================================================================================
+[INFO] [1794084348.743832, 121.064000]: [GOAL-DIAG] policy-only path closest step to goal: d=10.76m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084349.269436676, 121.592000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084349.314917, 121.636000]: [CMD#650]      traj | pos[3.19,4.10,2.30] vel[0.00,0.01,-0.00] yaw=1.09 | 实际[2.94,3.68,2.33] err=0.49m
+[INFO] [1794084349.373754, 121.696000]: [ML Planner] 并行推理触发 progress=0.70
+[33m[WARN] [1794084349.772461444, 122.040000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084349.962637, 122.232000]: [ML Planner] 推理581ms>500ms
+[INFO] [1794084349.966423, 122.236000]: =========================================================================================================
+[INFO] [1794084349.968059, 122.236000]: [DIFFUSION v6.5] 581ms | pos[3.06,3.90,2.31] goal[8.32,13.83,1.68] dist=11.50m
+[INFO] [1794084349.969556, 122.240000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084349.970966, 122.240000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084349.972385, 122.240000]:   0   0.1070   0.1857  -0.0125  -0.0068  -0.0048  -0.0039  0.2147
+[INFO] [1794084349.973828, 122.244000]:   1   0.1040   0.1891  -0.0132   0.0044   0.0090  -0.0024  0.2163
+[INFO] [1794084349.975790, 122.244000]:   2   0.1027   0.1835  -0.0143   0.0091   0.0074  -0.0048  0.2108
+[INFO] [1794084349.978685, 122.248000]:   3   0.1086   0.1936  -0.0151   0.0082   0.0069  -0.0015  0.2225
+[INFO] [1794084349.980220, 122.248000]:   4   0.1075   0.1874  -0.0167   0.0061   0.0032  -0.0034  0.2167
+[INFO] [1794084349.981697, 122.252000]:   ... (8 步)
+[INFO] [1794084349.983122, 122.252000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084349.984534, 122.252000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084349.986824, 122.256000]:   0    3.167    4.084    2.301   -0.007   -0.005   -0.004    0.21m  11.04m
+[INFO] [1794084349.990480, 122.260000]:   1    3.272    4.273    2.288    0.004    0.009   -0.002    0.43m  10.82m
+[INFO] [1794084349.992119, 122.260000]:   2    3.374    4.457    2.274    0.009    0.007   -0.005    0.64m  10.61m
+[INFO] [1794084349.993833, 122.264000]:   3    3.483    4.650    2.259    0.008    0.007   -0.002    0.86m  10.39m
+[INFO] [1794084349.995508, 122.264000]:   4    3.590    4.838    2.242    0.006    0.003   -0.003    1.08m  10.17m
+[INFO] [1794084349.997314, 122.268000]:   5    3.700    5.032    2.225    0.002   -0.000    0.001    1.30m   9.95m
+[INFO] [1794084349.999016, 122.268000]:   6    3.803    5.213    2.209   -0.001   -0.006   -0.001    1.51m   9.74m
+[INFO] [1794084350.000703, 122.268000]:   7    3.910    5.402    2.192   -0.003   -0.008    0.002    1.73m   9.52m
+[INFO] [1794084350.002450, 122.272000]:   轨迹长1.52m | 终点距目标9.52m
+[INFO] [1794084350.004170, 122.272000]: =========================================================================================================
+[33m[WARN] [1794084350.357974956, 122.632000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084350.363129, 122.636000]: [CMD#700]      traj | pos[3.29,4.31,2.29] vel[0.01,0.01,-0.00] yaw=1.07 | 实际[3.11,4.00,2.31] err=0.36m
+[INFO] [1794084350.641714, 122.916000]: [ML Planner] 并行推理触发 progress=0.71
+[33m[WARN] [1794084350.869982740, 123.060000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084351.329669, 123.548000]: [ML Planner] 推理682ms>500ms
+[INFO] [1794084351.332981, 123.552000]: =========================================================================================================
+[INFO] [1794084351.334665, 123.552000]: [DIFFUSION v6.5] 682ms | pos[3.25,4.26,2.28] goal[8.32,13.83,1.68] dist=11.12m
+[INFO] [1794084351.337117, 123.556000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084351.338681, 123.556000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084351.340388, 123.560000]:   0   0.1064   0.1884  -0.0137  -0.0046  -0.0071  -0.0036  0.2168
+[INFO] [1794084351.341979, 123.560000]:   1   0.1069   0.1932  -0.0143   0.0053   0.0062  -0.0019  0.2213
+[INFO] [1794084351.343989, 123.560000]:   2   0.1076   0.1898  -0.0153   0.0092   0.0028  -0.0043  0.2187
+[INFO] [1794084351.346852, 123.564000]:   3   0.1132   0.1962  -0.0159   0.0082   0.0018  -0.0011  0.2271
+[INFO] [1794084351.348360, 123.568000]:   4   0.1129   0.1895  -0.0175   0.0060   0.0000  -0.0025  0.2213
+[INFO] [1794084351.349746, 123.568000]:   ... (8 步)
+[INFO] [1794084351.351084, 123.568000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084351.352503, 123.572000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084351.354280, 123.572000]:   0    3.353    4.447    2.263   -0.005   -0.007   -0.004    0.22m  10.63m
+[INFO] [1794084351.356868, 123.576000]:   1    3.460    4.640    2.249    0.005    0.006   -0.002    0.44m  10.41m
+[INFO] [1794084351.358569, 123.576000]:   2    3.568    4.830    2.234    0.009    0.003   -0.004    0.66m  10.19m
+[INFO] [1794084351.360143, 123.580000]:   3    3.681    5.026    2.218    0.008    0.002   -0.001    0.88m   9.96m
+[INFO] [1794084351.361692, 123.580000]:   4    3.794    5.215    2.200    0.006    0.000   -0.002    1.11m   9.74m
+[INFO] [1794084351.363672, 123.584000]:   5    3.910    5.411    2.183    0.002   -0.003    0.002    1.33m   9.52m
+[INFO] [1794084351.365435, 123.584000]:   6    4.020    5.594    2.166   -0.000   -0.007   -0.000    1.55m   9.30m
+[INFO] [1794084351.367168, 123.584000]:   7    4.134    5.784    2.149   -0.002   -0.008    0.003    1.77m   9.08m
+[INFO] [1794084351.369350, 123.588000]:   轨迹长1.55m | 终点距目标9.08m
+[INFO] [1794084351.371999, 123.588000]: =========================================================================================================
+[INFO] [1794084351.415123, 123.636000]: [CMD#750]      traj | pos[3.37,4.47,2.26] vel[-0.00,-0.01,-0.00] yaw=1.05 | 实际[3.27,4.30,2.27] err=0.20m
+[33m[WARN] [1794084351.437210873, 123.660000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084351.850836532, 124.080000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084352.006799, 124.236000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084352.106315, 124.336000]: [Monitor DEBUG] world=(-4.22,2.16,2.32) local=(3.33,4.41,2.26) clearance=1.729m closest=trap_funnel_r flyover=False n_obs=25
+[INFO] [1794084352.411936, 124.640000]: [CMD#800] traj_hold | pos[3.68,5.03,2.22] vel[0.00,0.00,0.00] yaw=1.02 | 实际[3.41,4.54,2.25] err=0.56m
+[33m[WARN] [1794084352.460993348, 124.692000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084352.558740, 124.788000]: [ML Planner] 推理546ms>500ms
+[INFO] [1794084352.561725, 124.792000]: =========================================================================================================
+[INFO] [1794084352.563746, 124.792000]: [DIFFUSION v6.5] 546ms | pos[3.44,4.58,2.25] goal[8.32,13.83,1.68] dist=10.72m
+[INFO] [1794084352.565780, 124.796000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084352.567365, 124.796000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084352.569962, 124.800000]:   0   0.0991   0.1653  -0.0107  -0.0152  -0.0078  -0.0029  0.1930
+[INFO] [1794084352.571571, 124.800000]:   1   0.0979   0.1666  -0.0108  -0.0034   0.0046  -0.0008  0.1936
+[INFO] [1794084352.573729, 124.804000]:   2   0.0988   0.1623  -0.0119   0.0053   0.0076  -0.0036  0.1904
+[INFO] [1794084352.575212, 124.804000]:   3   0.1040   0.1697  -0.0123   0.0069   0.0123  -0.0009  0.1995
+[INFO] [1794084352.576684, 124.804000]:   4   0.1016   0.1655  -0.0134   0.0038   0.0128  -0.0032  0.1946
+[INFO] [1794084352.578152, 124.808000]:   ... (8 步)
+[INFO] [1794084352.578872, 124.808000]: [PC] Received 31505 points
+[INFO] [1794084352.579612, 124.808000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084352.585733, 124.816000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084352.587683, 124.816000]:   0    3.536    4.746    2.238   -0.015   -0.008   -0.003    0.19m  10.28m
+[INFO] [1794084352.589598, 124.820000]:   1    3.633    4.913    2.227   -0.003    0.005   -0.001    0.39m  10.09m
+[INFO] [1794084352.591220, 124.820000]:   2    3.732    5.075    2.215    0.005    0.008   -0.004    0.58m   9.90m
+[INFO] [1794084352.593312, 124.824000]:   3    3.836    5.245    2.203    0.007    0.012   -0.001    0.78m   9.70m
+[INFO] [1794084352.595124, 124.824000]:   4    3.938    5.410    2.189    0.004    0.013   -0.003    0.97m   9.50m
+[INFO] [1794084352.597175, 124.828000]:   5    4.043    5.586    2.176   -0.000    0.010    0.001    1.18m   9.30m
+[INFO] [1794084352.599034, 124.828000]:   6    4.145    5.753    2.162   -0.001    0.001   -0.001    1.37m   9.10m
+[INFO] [1794084352.600873, 124.828000]:   7    4.253    5.930    2.149   -0.000   -0.002    0.002    1.58m   8.90m
+[INFO] [1794084352.602878, 124.832000]:   轨迹长1.39m | 终点距目标8.90m
+[INFO] [1794084352.604793, 124.832000]: =========================================================================================================
+[INFO] [1794084352.607718, 124.836000]: [GOAL-DIAG] policy-only path closest step to goal: d=9.70m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084352.868792991, 125.100000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084353.245625, 125.476000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084353.440555, 125.636000]: [CMD#850]      traj | pos[3.80,5.19,2.21] vel[0.01,0.01,-0.00] yaw=1.02 | 实际[3.53,4.77,2.22] err=0.50m
+[33m[WARN] [1794084353.527999739, 125.732000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084353.899800460, 126.120000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084353.909982, 126.128000]: [ML Planner] 推理659ms>500ms
+[INFO] [1794084353.912626, 126.132000]: =========================================================================================================
+[INFO] [1794084353.914453, 126.132000]: [DIFFUSION v6.5] 659ms | pos[3.63,4.93,2.20] goal[8.32,13.83,1.68] dist=10.32m
+[INFO] [1794084353.916316, 126.136000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084353.918550, 126.136000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084353.920382, 126.140000]:   0   0.1004   0.1559  -0.0108  -0.0238  -0.0105  -0.0039  0.1857
+[INFO] [1794084353.922006, 126.140000]:   1   0.0967   0.1591  -0.0117  -0.0096   0.0057  -0.0012  0.1866
+[INFO] [1794084353.923597, 126.144000]:   2   0.0946   0.1534  -0.0128   0.0030   0.0088  -0.0042  0.1807
+[INFO] [1794084353.926023, 126.144000]:   3   0.0995   0.1607  -0.0133   0.0074   0.0142  -0.0014  0.1895
+[INFO] [1794084353.927588, 126.148000]:   4   0.0989   0.1575  -0.0143   0.0063   0.0169  -0.0038  0.1865
+[INFO] [1794084353.929104, 126.148000]:   ... (8 步)
+[INFO] [1794084353.930575, 126.148000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084353.932031, 126.152000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084353.933570, 126.152000]:   0    3.726    5.084    2.189   -0.024   -0.010   -0.004    0.19m   9.89m
+[INFO] [1794084353.936433, 126.156000]:   1    3.823    5.243    2.177   -0.010    0.006   -0.001    0.37m   9.70m
+[INFO] [1794084353.941619, 126.160000]:   2    3.917    5.397    2.164    0.003    0.009   -0.004    0.55m   9.52m
+[INFO] [1794084353.943764, 126.164000]:   3    4.017    5.557    2.151    0.007    0.014   -0.001    0.74m   9.33m
+[INFO] [1794084353.945574, 126.164000]:   4    4.116    5.715    2.137    0.006    0.017   -0.004    0.93m   9.15m
+[INFO] [1794084353.947530, 126.168000]:   5    4.220    5.881    2.122    0.003    0.017   -0.000    1.13m   8.95m
+[INFO] [1794084353.949355, 126.168000]:   6    4.323    6.041    2.107    0.002    0.006   -0.002    1.32m   8.76m
+[INFO] [1794084353.951234, 126.172000]:   7    4.432    6.212    2.093    0.002    0.000    0.002    1.52m   8.56m
+[INFO] [1794084353.953057, 126.172000]:   轨迹长1.33m | 终点距目标8.56m
+[INFO] [1794084353.956511, 126.176000]: =========================================================================================================
+[INFO] [1794084354.409491, 126.636000]: [CMD#900]      traj | pos[3.87,5.32,2.17] vel[-0.00,0.01,-0.00] yaw=1.04 | 实际[3.67,5.02,2.18] err=0.36m
+[33m[WARN] [1794084354.531973376, 126.760000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084354.587992, 126.816000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084354.601159, 126.828000]: [DUMP] #9 plan=15 x=3.68
+[33m[WARN] [1794084354.911102204, 127.140000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084355.136642, 127.364000]: [ML Planner] 推理540ms>500ms
+[INFO] [1794084355.139550, 127.368000]: =========================================================================================================
+[INFO] [1794084355.141570, 127.368000]: [DIFFUSION v6.5] 540ms | pos[3.77,5.21,2.14] goal[8.32,13.83,1.68] dist=9.96m
+[INFO] [1794084355.143237, 127.372000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084355.144866, 127.372000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084355.146494, 127.372000]:   0   0.1032   0.1616  -0.0133  -0.0175  -0.0038  -0.0029  0.1921
+[INFO] [1794084355.148060, 127.376000]:   1   0.0996   0.1628  -0.0134  -0.0090   0.0036   0.0002  0.1914
+[INFO] [1794084355.149673, 127.376000]:   2   0.0956   0.1559  -0.0138  -0.0013   0.0026  -0.0013  0.1833
+[INFO] [1794084355.151149, 127.380000]:   3   0.0968   0.1598  -0.0136   0.0012   0.0052   0.0017  0.1873
+[INFO] [1794084355.152693, 127.380000]:   4   0.0918   0.1532  -0.0140  -0.0002   0.0059  -0.0004  0.1792
+[INFO] [1794084355.154119, 127.380000]:   ... (8 步)
+[INFO] [1794084355.155546, 127.384000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084355.157032, 127.384000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084355.158562, 127.384000]:   0    3.878    5.371    2.124   -0.017   -0.004   -0.003    0.19m   9.56m
+[INFO] [1794084355.160080, 127.388000]:   1    3.977    5.533    2.110   -0.009    0.004    0.000    0.38m   9.37m
+[INFO] [1794084355.161744, 127.388000]:   2    4.073    5.689    2.097   -0.001    0.003   -0.001    0.57m   9.19m
+[INFO] [1794084355.163308, 127.392000]:   3    4.170    5.849    2.083    0.001    0.005    0.002    0.75m   9.00m
+[INFO] [1794084355.165997, 127.392000]:   4    4.262    6.002    2.069   -0.000    0.006   -0.000    0.93m   8.82m
+[INFO] [1794084355.167909, 127.396000]:   5    4.356    6.164    2.056   -0.003    0.007    0.003    1.12m   8.64m
+[INFO] [1794084355.172619, 127.400000]:   6    4.446    6.321    2.043   -0.002    0.004   -0.000    1.30m   8.45m
+[INFO] [1794084355.174728, 127.404000]:   7    4.542    6.490    2.031   -0.000    0.004    0.002    1.50m   8.26m
+[INFO] [1794084355.176766, 127.404000]:   轨迹长1.30m | 终点距目标8.26m
+[INFO] [1794084355.179478, 127.404000]: =========================================================================================================
+[INFO] [1794084355.408562, 127.636000]: [CMD#950]      traj | pos[3.95,5.49,2.11] vel[-0.01,0.00,-0.00] yaw=1.05 | 实际[3.82,5.28,2.13] err=0.25m
+[33m[WARN] [1794084355.542843061, 127.772000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084355.827445, 128.056000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084355.840250, 128.068000]: [DUMP] #10 plan=16 x=3.84
+[33m[WARN] [1794084355.976501084, 128.160000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084356.402849, 128.584000]: [ML Planner] 推理569ms>500ms
+[INFO] [1794084356.406253, 128.588000]: =========================================================================================================
+[INFO] [1794084356.410913, 128.592000]: [DIFFUSION v6.5] 569ms | pos[3.95,5.51,2.08] goal[8.32,13.83,1.68] dist=9.63m
+[INFO] [1794084356.412407, 128.592000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084356.414285, 128.596000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084356.415723, 128.596000]:   0   0.1015   0.1728  -0.0113  -0.0187  -0.0070  -0.0033  0.2007
+[INFO] [1794084356.417500, 128.600000]:   1   0.0971   0.1733  -0.0115  -0.0081   0.0006   0.0002  0.1990
+[INFO] [1794084356.418891, 128.600000]:   2   0.0918   0.1625  -0.0119  -0.0012  -0.0017  -0.0014  0.1870
+[INFO] [1794084356.420280, 128.600000]:   3   0.0938   0.1678  -0.0117   0.0008   0.0016   0.0013  0.1926
+[INFO] [1794084356.421799, 128.604000]:   4   0.0900   0.1622  -0.0124   0.0001   0.0034  -0.0011  0.1859
+[INFO] [1794084356.423239, 128.604000]:   ... (8 步)
+[INFO] [1794084356.424701, 128.604000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084356.426165, 128.608000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084356.427648, 128.608000]:   0    4.048    5.685    2.067   -0.019   -0.007   -0.003    0.20m   9.20m
+[INFO] [1794084356.429559, 128.612000]:   1    4.145    5.859    2.056   -0.008    0.001    0.000    0.40m   9.00m
+[INFO] [1794084356.431030, 128.612000]:   2    4.237    6.021    2.044   -0.001   -0.002   -0.001    0.59m   8.82m
+[INFO] [1794084356.432792, 128.612000]:   3    4.331    6.189    2.032    0.001    0.002    0.001    0.78m   8.62m
+[INFO] [1794084356.435177, 128.616000]:   4    4.421    6.351    2.020    0.000    0.003   -0.001    0.97m   8.44m
+[INFO] [1794084356.437922, 128.620000]:   5    4.514    6.521    2.008   -0.003    0.005    0.002    1.16m   8.24m
+[INFO] [1794084356.439633, 128.620000]:   6    4.602    6.683    1.996   -0.002    0.001   -0.001    1.34m   8.06m
+[INFO] [1794084356.441524, 128.624000]:   7    4.695    6.858    1.984    0.000    0.000    0.002    1.54m   7.86m
+[INFO] [1794084356.443447, 128.624000]:   轨迹长1.34m | 终点距目标7.86m
+[INFO] [1794084356.445657, 128.628000]: =========================================================================================================
+[INFO] [1794084356.448563, 128.628000]: [GOAL-DIAG] policy-only path closest step to goal: d=8.62m (no trunc, Phase ① honest baseline)
+[INFO] [1794084356.456080, 128.636000]: [CMD#1000]      traj | pos[4.05,5.69,2.07] vel[-0.02,-0.01,-0.00] yaw=1.05 | 实际[3.96,5.53,2.07] err=0.18m
+[33m[WARN] [1794084356.616983641, 128.800000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084356.997397382, 129.180000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084357.094445, 129.276000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084357.104702, 129.284000]: [DUMP] #11 plan=17 x=4.01
+[INFO] [1794084357.454857, 129.636000]: [CMD#1050] traj_hold | pos[4.33,6.19,2.03] vel[0.00,0.00,0.00] yaw=1.04 | 实际[4.07,5.75,2.02] err=0.51m
+[WARN] [1794084357.607967, 129.788000]: [ML Planner] 推理508ms>500ms
+[INFO] [1794084357.610639, 129.792000]: =========================================================================================================
+[INFO] [1794084357.612239, 129.792000]: [DIFFUSION v6.5] 508ms | pos[4.09,5.79,2.01] goal[8.32,13.83,1.68] dist=9.29m
+[INFO] [1794084357.614020, 129.796000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084357.616224, 129.796000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084357.617704, 129.796000]:   0   0.1003   0.1691  -0.0117  -0.0177  -0.0103  -0.0026  0.1970
+[INFO] [1794084357.619161, 129.800000]:   1   0.0974   0.1684  -0.0113  -0.0071  -0.0002   0.0008  0.1949
+[INFO] [1794084357.620558, 129.800000]:   2   0.0936   0.1570  -0.0117  -0.0003   0.0010  -0.0009  0.1832
+[INFO] [1794084357.622259, 129.804000]:   3   0.0991   0.1628  -0.0113   0.0015   0.0047   0.0020  0.1909
+[INFO] [1794084357.623664, 129.804000]:   4   0.0983   0.1577  -0.0116   0.0003   0.0059  -0.0002  0.1862
+[INFO] [1794084357.625031, 129.804000]:   ... (8 步)
+[INFO] [1794084357.626395, 129.808000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084357.627740, 129.808000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084357.629145, 129.808000]:   0    4.194    5.964    1.994   -0.018   -0.010   -0.003    0.20m   8.89m
+[INFO] [1794084357.630666, 129.812000]:   1    4.292    6.132    1.983   -0.007   -0.000    0.001    0.39m   8.69m
+[INFO] [1794084357.632281, 129.812000]:   2    4.385    6.289    1.971   -0.000    0.001   -0.001    0.57m   8.51m
+[INFO] [1794084357.634985, 129.812000]:   3    4.484    6.452    1.960    0.002    0.005    0.002    0.77m   8.32m
+[INFO] [1794084357.637211, 129.816000]:   4    4.583    6.610    1.949    0.000    0.006   -0.000    0.95m   8.13m
+[INFO] [1794084357.638802, 129.820000]:   5    4.686    6.777    1.938   -0.002    0.007    0.003    1.15m   7.94m
+[INFO] [1794084357.640517, 129.820000]:   6    4.787    6.940    1.927   -0.002    0.002    0.000    1.34m   7.74m
+[INFO] [1794084357.642622, 129.824000]:   7    4.895    7.116    1.917   -0.001    0.000    0.003    1.55m   7.54m
+[INFO] [1794084357.644483, 129.824000]:   轨迹长1.35m | 终点距目标7.54m
+[INFO] [1794084357.646997, 129.828000]: [PC] Received 33244 points
+[INFO] [1794084357.647594, 129.828000]: =========================================================================================================
+[33m[WARN] [1794084357.649885383, 129.832000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084358.018053099, 130.200000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084358.155435, 130.336000]: [Monitor DEBUG] world=(-3.42,3.66,1.96) local=(4.14,5.91,1.98) clearance=1.900m closest=trap_funnel_r flyover=False n_obs=25
+[INFO] [1794084358.295919, 130.476000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084358.304519, 130.484000]: [DUMP] #12 plan=18 x=4.15
+[INFO] [1794084358.455801, 130.636000]: [CMD#1100]      traj | pos[4.45,6.40,1.96] vel[0.00,0.00,0.00] yaw=1.04 | 实际[4.16,5.97,1.96] err=0.52m
+[33m[WARN] [1794084358.691334336, 130.872000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084358.787519, 130.968000]: [ML Planner] 推理487ms ✓
+[INFO] [1794084358.789986, 130.968000]: =========================================================================================================
+[INFO] [1794084358.791621, 130.972000]: [DIFFUSION v6.5] 487ms | pos[4.23,6.09,1.95] goal[8.32,13.83,1.68] dist=8.96m
+[INFO] [1794084358.793092, 130.972000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084358.795455, 130.976000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084358.796947, 130.976000]:   0   0.1003   0.1650  -0.0103  -0.0196  -0.0148  -0.0015  0.1934
+[INFO] [1794084358.798573, 130.980000]:   1   0.0972   0.1630  -0.0096  -0.0074  -0.0007   0.0017  0.1901
+[INFO] [1794084358.800019, 130.980000]:   2   0.0927   0.1511  -0.0099  -0.0006   0.0023  -0.0007  0.1775
+[INFO] [1794084358.801463, 130.980000]:   3   0.1002   0.1589  -0.0093  -0.0001   0.0064   0.0020  0.1881
+[INFO] [1794084358.802951, 130.984000]:   4   0.0998   0.1561  -0.0097  -0.0015   0.0078  -0.0006  0.1855
+[INFO] [1794084358.804369, 130.984000]:   ... (8 步)
+[INFO] [1794084358.805866, 130.984000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084358.807289, 130.988000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084358.809932, 130.988000]:   0    4.331    6.255    1.936   -0.020   -0.015   -0.002    0.19m   8.56m
+[INFO] [1794084358.811387, 130.992000]:   1    4.429    6.418    1.927   -0.007   -0.001    0.002    0.38m   8.37m
+[INFO] [1794084358.813459, 130.992000]:   2    4.521    6.569    1.917   -0.001    0.002   -0.001    0.56m   8.20m
+[INFO] [1794084358.815748, 130.996000]:   3    4.621    6.728    1.907   -0.000    0.006    0.002    0.75m   8.01m
+[INFO] [1794084358.817354, 130.996000]:   4    4.721    6.884    1.898   -0.002    0.008   -0.001    0.93m   7.82m
+[INFO] [1794084358.819119, 131.000000]:   5    4.827    7.050    1.889   -0.004    0.008    0.002    1.13m   7.63m
+[INFO] [1794084358.823189, 131.004000]:   6    4.932    7.214    1.880   -0.005    0.003   -0.001    1.33m   7.43m
+[INFO] [1794084358.825031, 131.004000]:   7    5.043    7.390    1.872   -0.004   -0.002    0.002    1.53m   7.23m
+[INFO] [1794084358.827147, 131.008000]:   轨迹长1.34m | 终点距目标7.23m
+[INFO] [1794084358.828950, 131.008000]: =========================================================================================================
+[33m[WARN] [1794084359.038695900, 131.220000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084359.456367, 131.636000]: [CMD#1150]      traj | pos[4.53,6.58,1.92] vel[-0.00,0.00,-0.00] yaw=1.04 | 实际[4.28,6.21,1.92] err=0.44m
+[INFO] [1794084359.475605, 131.656000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084359.485328, 131.664000]: [DUMP] #13 plan=19 x=4.28
+[33m[WARN] [1794084359.776869980, 131.892000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084360.125123249, 132.240000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084360.181256, 132.292000]: [ML Planner] 推理700ms>500ms
+[INFO] [1794084360.184544, 132.296000]: =========================================================================================================
+[INFO] [1794084360.186156, 132.300000]: [DIFFUSION v6.5] 700ms | pos[4.39,6.42,1.88] goal[8.32,13.83,1.68] dist=8.63m
+[INFO] [1794084360.187353, 132.300000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084360.188580, 132.300000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084360.190062, 132.304000]:   0   0.1019   0.1747  -0.0111  -0.0147  -0.0063  -0.0023  0.2026
+[INFO] [1794084360.191342, 132.304000]:   1   0.1022   0.1751  -0.0106  -0.0018   0.0072   0.0008  0.2030
+[INFO] [1794084360.192554, 132.304000]:   2   0.1008   0.1651  -0.0109  -0.0002   0.0028  -0.0010  0.1938
+[INFO] [1794084360.194193, 132.308000]:   3   0.1092   0.1731  -0.0106  -0.0026   0.0015   0.0020  0.2049
+[INFO] [1794084360.195518, 132.308000]:   4   0.1088   0.1679  -0.0111  -0.0053   0.0001  -0.0001  0.2003
+[INFO] [1794084360.198213, 132.312000]:   ... (8 步)
+[INFO] [1794084360.199763, 132.312000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084360.201425, 132.312000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084360.203526, 132.316000]:   0    4.489    6.597    1.873   -0.015   -0.006   -0.002    0.20m   8.18m
+[INFO] [1794084360.204910, 132.316000]:   1    4.591    6.772    1.862   -0.002    0.007    0.001    0.41m   7.98m
+[INFO] [1794084360.206339, 132.320000]:   2    4.692    6.937    1.851   -0.000    0.003   -0.001    0.60m   7.79m
+[INFO] [1794084360.207892, 132.320000]:   3    4.801    7.110    1.841   -0.003    0.002    0.002    0.80m   7.58m
+[INFO] [1794084360.209882, 132.324000]:   4    4.910    7.278    1.830   -0.005    0.000   -0.000    1.00m   7.38m
+[INFO] [1794084360.214521, 132.328000]:   5    5.024    7.451    1.819   -0.009    0.000    0.003    1.21m   7.18m
+[INFO] [1794084360.216168, 132.328000]:   6    5.134    7.617    1.810   -0.008   -0.002    0.000    1.41m   6.98m
+[INFO] [1794084360.217815, 132.332000]:   7    5.252    7.794    1.801   -0.005   -0.003    0.002    1.62m   6.77m
+[INFO] [1794084360.219167, 132.332000]:   轨迹长1.42m | 终点距目标6.77m
+[INFO] [1794084360.220375, 132.332000]: =========================================================================================================
+[INFO] [1794084360.224073, 132.336000]: [GOAL-DIAG] policy-only path closest step to goal: d=7.58m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084360.317806855, 132.432000000]: VEL_IN_BODY!!![0m
+[INFO] [1794084360.524199, 132.636000]: [CMD#1200]      traj | pos[4.59,6.77,1.86] vel[-0.00,0.01,0.00] yaw=1.04 | 实际[4.43,6.51,1.88] err=0.31m
+[33m[WARN] [1794084360.820313171, 132.932000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084360.864968, 132.976000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084360.881529, 132.992000]: [DUMP] #14 plan=20 x=4.45
+[33m[WARN] [1794084361.160950266, 133.260000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084361.470300, 133.568000]: [ML Planner] 推理593ms>500ms
+[INFO] [1794084361.474387, 133.572000]: =========================================================================================================
+[INFO] [1794084361.476192, 133.572000]: [DIFFUSION v6.5] 593ms | pos[4.55,6.77,1.84] goal[8.32,13.83,1.68] dist=8.27m
+[INFO] [1794084361.478475, 133.576000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084361.480079, 133.576000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084361.481700, 133.580000]:   0   0.0955   0.1663  -0.0064  -0.0121  -0.0111  -0.0018  0.1919
+[INFO] [1794084361.483222, 133.580000]:   1   0.1003   0.1620  -0.0057  -0.0067  -0.0067   0.0007  0.1906
+[INFO] [1794084361.484688, 133.580000]:   2   0.0998   0.1469  -0.0065  -0.0033  -0.0050  -0.0021  0.1777
+[INFO] [1794084361.486288, 133.584000]:   3   0.1047   0.1500  -0.0062  -0.0041   0.0027   0.0007  0.1830
+[INFO] [1794084361.487754, 133.584000]:   4   0.1029   0.1458  -0.0069  -0.0034   0.0065  -0.0017  0.1786
+[INFO] [1794084361.489288, 133.588000]:   ... (8 步)
+[INFO] [1794084361.490735, 133.588000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084361.493096, 133.588000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084361.494660, 133.592000]:   0    4.645    6.932    1.829   -0.012   -0.011   -0.002    0.19m   7.81m
+[INFO] [1794084361.496169, 133.592000]:   1    4.745    7.094    1.824   -0.007   -0.007    0.001    0.38m   7.62m
+[INFO] [1794084361.498449, 133.596000]:   2    4.845    7.241    1.817   -0.003   -0.005   -0.002    0.56m   7.45m
+[INFO] [1794084361.500002, 133.596000]:   3    4.950    7.391    1.811   -0.004    0.003    0.001    0.74m   7.27m
+[INFO] [1794084361.501565, 133.600000]:   4    5.053    7.536    1.804   -0.003    0.007   -0.002    0.92m   7.09m
+[INFO] [1794084361.504458, 133.600000]:   5    5.162    7.695    1.798   -0.004    0.009    0.001    1.11m   6.90m
+[INFO] [1794084361.506813, 133.604000]:   6    5.271    7.851    1.792   -0.003    0.006   -0.002    1.30m   6.71m
+[INFO] [1794084361.508634, 133.604000]:   7    5.382    8.018    1.786   -0.004    0.007    0.001    1.50m   6.51m
+[INFO] [1794084361.510704, 133.608000]:   轨迹长1.31m | 终点距目标6.51m
+[INFO] [1794084361.512592, 133.608000]: =========================================================================================================
+[INFO] [1794084361.539036, 133.636000]: [CMD#1250]      traj | pos[4.65,6.94,1.83] vel[-0.01,-0.01,-0.00] yaw=1.03 | 实际[4.56,6.79,1.83] err=0.18m
+[33m[WARN] [1794084361.872981430, 133.972000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084362.157671, 134.256000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084362.172215, 134.268000]: [DUMP] #15 plan=21 x=4.61
+[33m[WARN] [1794084362.181064106, 134.280000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084362.549306, 134.636000]: [CMD#1300] traj_hold | pos[4.95,7.39,1.81] vel[0.00,0.00,0.00] yaw=1.04 | 实际[4.67,7.03,1.78] err=0.45m
+[INFO] [1794084362.759510, 134.848000]: [PC] Received 31970 points
+[WARN] [1794084362.829888, 134.920000]: [ML Planner] 推理663ms>500ms
+[INFO] [1794084362.835246, 134.928000]: =========================================================================================================
+[INFO] [1794084362.837359, 134.928000]: [DIFFUSION v6.5] 663ms | pos[4.74,7.14,1.78] goal[8.32,13.83,1.68] dist=7.86m
+[INFO] [1794084362.839044, 134.932000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084362.841044, 134.932000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084362.843152, 134.936000]:   0   0.1218   0.1953  -0.0104  -0.0125  -0.0052  -0.0026  0.2304
+[INFO] [1794084362.845195, 134.936000]:   1   0.1304   0.1992  -0.0098  -0.0018  -0.0048  -0.0003  0.2383
+[INFO] [1794084362.847035, 134.940000]:   2   0.1304   0.1886  -0.0108  -0.0032  -0.0093  -0.0033  0.2296
+[INFO] [1794084362.848788, 134.940000]:   3   0.1346   0.1916  -0.0108  -0.0082  -0.0059  -0.0003  0.2344
+[INFO] [1794084362.850866, 134.944000]:   4   0.1314   0.1826  -0.0119  -0.0111  -0.0052  -0.0019  0.2253
+[INFO] [1794084362.853560, 134.944000]:   ... (8 步)
+[INFO] [1794084362.855637, 134.948000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084362.857740, 134.948000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084362.859835, 134.952000]:   0    4.862    7.332    1.770   -0.013   -0.005   -0.003    0.23m   7.36m
+[INFO] [1794084362.862456, 134.956000]:   1    4.992    7.532    1.760   -0.002   -0.005   -0.000    0.47m   7.12m
+[INFO] [1794084362.867792, 134.960000]:   2    5.122    7.720    1.749   -0.003   -0.009   -0.003    0.70m   6.89m
+[INFO] [1794084362.871161, 134.964000]:   3    5.257    7.912    1.739   -0.008   -0.006   -0.000    0.93m   6.66m
+[INFO] [1794084362.873975, 134.964000]:   4    5.388    8.095    1.727   -0.011   -0.005   -0.002    1.16m   6.44m
+[INFO] [1794084362.876683, 134.968000]:   5    5.524    8.283    1.716   -0.011   -0.003    0.002    1.39m   6.21m
+[INFO] [1794084362.879390, 134.972000]:   6    5.657    8.463    1.705   -0.007   -0.005   -0.001    1.61m   5.99m
+[INFO] [1794084362.882193, 134.972000]:   7    5.798    8.653    1.696   -0.001    0.002    0.002    1.85m   5.76m
+[INFO] [1794084362.885776, 134.976000]:   轨迹长1.62m | 终点距目标5.76m
+[INFO] [1794084362.889699, 134.980000]: =========================================================================================================
+[33m[WARN] [1794084362.905141015, 135.000000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084363.204065622, 135.300000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084363.541377, 135.636000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084363.546472, 135.640000]: [CMD#1350]      traj | pos[5.14,7.75,1.75] vel[-0.00,-0.01,-0.00] yaw=1.03 | 实际[4.82,7.31,1.76] err=0.55m
+[INFO] [1794084363.554654, 135.648000]: [DUMP] #16 plan=22 x=4.82
+[33m[WARN] [1794084363.984892351, 136.032000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084364.194383, 136.240000]: [ML Planner] 推理646ms>500ms
+[INFO] [1794084364.197808, 136.244000]: =========================================================================================================
+[INFO] [1794084364.199612, 136.244000]: [DIFFUSION v6.5] 646ms | pos[4.97,7.54,1.73] goal[8.32,13.83,1.68] dist=7.47m
+[INFO] [1794084364.201301, 136.244000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084364.205566, 136.252000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084364.207135, 136.252000]:   0   0.1244   0.1656  -0.0063  -0.0099  -0.0001  -0.0020  0.2073
+[INFO] [1794084364.208659, 136.252000]:   1   0.1258   0.1640  -0.0055  -0.0069   0.0006   0.0010  0.2067
+[INFO] [1794084364.212954, 136.256000]:   2   0.1234   0.1540  -0.0060  -0.0055  -0.0010  -0.0013  0.1974
+[INFO] [1794084364.214770, 136.260000]:   3   0.1247   0.1578  -0.0056  -0.0063   0.0014   0.0018  0.2012
+[INFO] [1794084364.216533, 136.260000]:   4   0.1205   0.1510  -0.0057  -0.0072   0.0008  -0.0007  0.1932
+[INFO] [1794084364.218258, 136.264000]:   ... (8 步)
+[INFO] [1794084364.219958, 136.264000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084364.221745, 136.268000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084364.224259, 136.268000]:   0    5.094    7.708    1.724   -0.010   -0.000   -0.002    0.21m   6.92m
+[INFO] [1794084364.226114, 136.272000]:   1    5.220    7.872    1.719   -0.007    0.001    0.001    0.41m   6.71m
+[INFO] [1794084364.228050, 136.272000]:   2    5.343    8.026    1.713   -0.006   -0.001   -0.001    0.61m   6.52m
+[INFO] [1794084364.230733, 136.276000]:   3    5.468    8.184    1.707   -0.006    0.001    0.002    0.81m   6.32m
+[INFO] [1794084364.232660, 136.276000]:   4    5.589    8.335    1.702   -0.007    0.001   -0.001    1.01m   6.13m
+[INFO] [1794084364.234638, 136.280000]:   5    5.710    8.494    1.697   -0.007    0.003    0.001    1.21m   5.94m
+[INFO] [1794084364.238821, 136.284000]:   6    5.824    8.649    1.692   -0.004    0.001   -0.002    1.40m   5.75m
+[INFO] [1794084364.241180, 136.284000]:   7    5.939    8.813    1.689   -0.002    0.005    0.001    1.60m   5.55m
+[INFO] [1794084364.243702, 136.288000]:   轨迹长1.39m | 终点距目标5.55m
+[INFO] [1794084364.245883, 136.288000]: =========================================================================================================
+[INFO] [1794084364.250424, 136.296000]: [GOAL-DIAG] policy-only path closest step to goal: d=6.32m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084364.273105186, 136.320000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084364.290668, 136.336000]: [Monitor DEBUG] world=(-2.56,5.36,1.76) local=(5.00,7.59,1.73) clearance=2.274m closest=trap_scatter_1 flyover=False n_obs=25
+[INFO] [1794084364.590479, 136.636000]: [CMD#1400]      traj | pos[5.24,7.89,1.72] vel[-0.01,0.00,0.00] yaw=1.03 | 实际[5.06,7.68,1.73] err=0.28m
+[INFO] [1794084364.890957, 136.936000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084364.906011, 136.952000]: [DUMP] #17 plan=23 x=5.07
+[33m[WARN] [1794084364.988949448, 137.036000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084365.295153486, 137.340000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084365.503694, 137.548000]: [ML Planner] 推理603ms>500ms
+[INFO] [1794084365.507095, 137.552000]: =========================================================================================================
+[INFO] [1794084365.508978, 137.552000]: [DIFFUSION v6.5] 603ms | pos[5.21,7.92,1.71] goal[8.32,13.83,1.68] dist=6.92m
+[INFO] [1794084365.512707, 137.556000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084365.515024, 137.560000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084365.516649, 137.560000]:   0   0.1471   0.1994  -0.0071  -0.0179  -0.0120  -0.0049  0.2479
+[INFO] [1794084365.518258, 137.560000]:   1   0.1528   0.2004  -0.0068  -0.0027   0.0016  -0.0016  0.2521
+[INFO] [1794084365.519764, 137.564000]:   2   0.1504   0.1914  -0.0078  -0.0008   0.0041  -0.0032  0.2435
+[INFO] [1794084365.521307, 137.564000]:   3   0.1558   0.2006  -0.0075  -0.0023   0.0071   0.0007  0.2541
+[INFO] [1794084365.524962, 137.568000]:   4   0.1493   0.1953  -0.0082  -0.0042   0.0052  -0.0002  0.2460
+[INFO] [1794084365.527089, 137.572000]:   ... (8 步)
+[INFO] [1794084365.528665, 137.572000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084365.530116, 137.572000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084365.532024, 137.576000]:   0    5.352    8.118    1.702   -0.018   -0.012   -0.005    0.25m   6.43m
+[INFO] [1794084365.533646, 137.576000]:   1    5.505    8.318    1.695   -0.003    0.002   -0.002    0.50m   6.19m
+[INFO] [1794084365.535358, 137.580000]:   2    5.655    8.509    1.688   -0.001    0.004   -0.003    0.74m   5.95m
+[INFO] [1794084365.536977, 137.580000]:   3    5.811    8.710    1.680   -0.002    0.007    0.001    1.00m   5.70m
+[INFO] [1794084365.538708, 137.584000]:   4    5.960    8.905    1.672   -0.004    0.005   -0.000    1.24m   5.46m
+[INFO] [1794084365.540261, 137.584000]:   5    6.109    9.104    1.665   -0.003    0.004    0.003    1.49m   5.21m
+[INFO] [1794084365.542187, 137.588000]:   6    6.251    9.293    1.659   -0.002   -0.003    0.000    1.73m   4.98m
+[INFO] [1794084365.543876, 137.588000]:   7    6.399    9.493    1.654    0.000   -0.003    0.002    1.98m   4.74m
+[INFO] [1794084365.545872, 137.588000]:   轨迹长1.73m | 终点距目标4.74m
+[INFO] [1794084365.547599, 137.592000]: =========================================================================================================
+[INFO] [1794084365.591340, 137.636000]: [CMD#1450]      traj | pos[5.37,8.14,1.70] vel[-0.02,-0.01,-0.00] yaw=1.03 | 实际[5.22,7.93,1.71] err=0.26m
+[33m[WARN] [1794084366.013289834, 138.060000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084366.189364, 138.236000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084366.198367, 138.244000]: [DUMP] #18 plan=24 x=5.31
+[33m[WARN] [1794084366.313038030, 138.360000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084366.590508, 138.636000]: [CMD#1500] traj_hold | pos[5.81,8.71,1.68] vel[0.00,0.00,0.00] yaw=1.04 | 实际[5.43,8.25,1.69] err=0.60m
+[WARN] [1794084366.734578, 138.780000]: [ML Planner] 推理541ms>500ms
+[INFO] [1794084366.737386, 138.784000]: =========================================================================================================
+[INFO] [1794084366.739295, 138.784000]: [DIFFUSION v6.5] 541ms | pos[5.48,8.30,1.69] goal[8.32,13.83,1.68] dist=6.53m
+[INFO] [1794084366.741162, 138.788000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084366.743083, 138.788000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084366.745003, 138.792000]:   0   0.1370   0.1922  -0.0089  -0.0104   0.0004  -0.0047  0.2362
+[INFO] [1794084366.746597, 138.792000]:   1   0.1429   0.1956  -0.0084   0.0015   0.0100  -0.0003  0.2424
+[INFO] [1794084366.748092, 138.792000]:   2   0.1428   0.1894  -0.0088   0.0024   0.0079  -0.0008  0.2373
+[INFO] [1794084366.750147, 138.796000]:   3   0.1500   0.1998  -0.0082  -0.0002   0.0072   0.0030  0.2500
+[INFO] [1794084366.752046, 138.796000]:   4   0.1453   0.1931  -0.0079  -0.0060   0.0015   0.0013  0.2418
+[INFO] [1794084366.755053, 138.800000]:   ... (8 步)
+[INFO] [1794084366.756515, 138.800000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084366.757997, 138.804000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084366.759847, 138.804000]:   0    5.612    8.496    1.677   -0.010    0.000   -0.005    0.24m   5.98m
+[INFO] [1794084366.761576, 138.808000]:   1    5.755    8.692    1.669    0.002    0.010   -0.000    0.48m   5.74m
+[INFO] [1794084366.763292, 138.808000]:   2    5.898    8.881    1.660    0.002    0.008   -0.001    0.72m   5.51m
+[INFO] [1794084366.765069, 138.812000]:   3    6.048    9.081    1.652   -0.000    0.007    0.003    0.97m   5.26m
+[INFO] [1794084366.766751, 138.812000]:   4    6.193    9.274    1.644   -0.006    0.001    0.001    1.21m   5.03m
+[INFO] [1794084366.768411, 138.812000]:   5    6.336    9.468    1.637   -0.011   -0.003    0.003    1.45m   4.79m
+[INFO] [1794084366.770809, 138.816000]:   6    6.471    9.650    1.631   -0.013   -0.009    0.000    1.68m   4.57m
+[INFO] [1794084366.773710, 138.820000]:   7    6.607    9.841    1.626   -0.009   -0.004    0.002    1.91m   4.34m
+[INFO] [1794084366.775701, 138.820000]:   轨迹长1.67m | 终点距目标4.34m
+[INFO] [1794084366.777767, 138.824000]: =========================================================================================================
+[33m[WARN] [1794084367.053102609, 139.100000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084367.333188138, 139.380000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084367.409244, 139.456000]: [ML Planner] 并行推理触发 progress=0.70
+[INFO] [1794084367.418993, 139.464000]: [DUMP] #19 plan=25 x=5.59
+[INFO] [1794084367.663660, 139.636000]: [CMD#1550]      traj | pos[6.00,9.02,1.65] vel[0.00,0.01,0.00] yaw=1.04 | 实际[5.63,8.54,1.69] err=0.61m
+[INFO] [1794084367.880385, 139.852000]: [PC] Received 20713 points
+[WARN] [1794084368.114314, 140.088000]: [ML Planner] 推理701ms>500ms
+[INFO] [1794084368.118162, 140.092000]: =========================================================================================================
+[INFO] [1794084368.120728, 140.092000]: [DIFFUSION v6.5] 701ms | pos[5.76,8.73,1.67] goal[8.32,13.83,1.68] dist=6.02m
+[INFO] [1794084368.123143, 140.096000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084368.125474, 140.100000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084368.127751, 140.100000]:   0   0.1234   0.1794  -0.0064  -0.0160  -0.0043  -0.0020  0.2178
+[INFO] [1794084368.131649, 140.104000]:   1   0.1196   0.1785  -0.0055   0.0022   0.0150   0.0009  0.2150
+[INFO] [1794084368.134258, 140.108000]:   2   0.1165   0.1710  -0.0056   0.0054   0.0145  -0.0007  0.2070
+[INFO] [1794084368.136644, 140.108000]:   3   0.1267   0.1857  -0.0049   0.0005   0.0066   0.0024  0.2248
+[INFO] [1794084368.139101, 140.112000]:   4   0.1261   0.1815  -0.0052  -0.0082  -0.0046   0.0000  0.2211
+[INFO] [1794084368.144391, 140.116000]:   ... (8 步)
+[INFO] [1794084368.147040, 140.120000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084368.149653, 140.124000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084368.152312, 140.124000]:   0    5.883    8.909    1.668   -0.016   -0.004   -0.002    0.22m   5.49m
+[INFO] [1794084368.155064, 140.128000]:   1    6.002    9.088    1.662    0.002    0.015    0.001    0.43m   5.28m
+[33m[WARN] [1794084368.156654251, 140.132000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084368.159155, 140.132000]:   2    6.119    9.259    1.657    0.005    0.014   -0.001    0.64m   5.07m
+[INFO] [1794084368.162755, 140.136000]:   3    6.245    9.444    1.652    0.001    0.007    0.002    0.86m   4.85m
+[INFO] [1794084368.165797, 140.140000]:   4    6.372    9.626    1.646   -0.008   -0.005    0.000    1.09m   4.63m
+[INFO] [1794084368.169934, 140.140000]:   5    6.496    9.805    1.642   -0.016   -0.011    0.002    1.30m   4.42m
+[INFO] [1794084368.172500, 140.144000]:   6    6.615    9.970    1.638   -0.018   -0.016   -0.000    1.51m   4.22m
+[INFO] [1794084368.175129, 140.148000]:   7    6.738   10.143    1.636   -0.016   -0.014    0.002    1.72m   4.01m
+[INFO] [1794084368.178028, 140.152000]:   轨迹长1.50m | 终点距目标4.01m
+[INFO] [1794084368.180581, 140.152000]: =========================================================================================================
+[INFO] [1794084368.185571, 140.160000]: [GOAL-DIAG] policy-only path closest step to goal: d=4.85m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084368.424921971, 140.400000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084368.661752, 140.636000]: [CMD#1600]      traj | pos[6.07,9.19,1.66] vel[0.00,0.01,-0.00] yaw=1.04 | 实际[5.86,8.87,1.68] err=0.38m
+[INFO] [1794084368.821548, 140.796000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084368.833137, 140.808000]: [DUMP] #20 plan=26 x=5.87
+[33m[WARN] [1794084369.229445510, 141.172000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084369.462143566, 141.420000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084369.576754, 141.536000]: [ML Planner] 推理748ms>500ms
+[INFO] [1794084369.582540, 141.544000]: =========================================================================================================
+[INFO] [1794084369.587473, 141.548000]: [DIFFUSION v6.5] 748ms | pos[6.04,9.16,1.68] goal[8.32,13.83,1.68] dist=5.54m
+[INFO] [1794084369.590671, 141.552000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084369.593976, 141.556000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084369.596834, 141.556000]:   0   0.1208   0.1898  -0.0031  -0.0229  -0.0162  -0.0025  0.2250
+[INFO] [1794084369.599778, 141.560000]:   1   0.1181   0.1863  -0.0026  -0.0059   0.0141   0.0001  0.2206
+[INFO] [1794084369.602672, 141.564000]:   2   0.1110   0.1790  -0.0030  -0.0031   0.0237  -0.0019  0.2106
+[INFO] [1794084369.606169, 141.568000]:   3   0.1177   0.1914  -0.0028  -0.0041   0.0226   0.0017  0.2247
+[INFO] [1794084369.609687, 141.572000]:   4   0.1148   0.1889  -0.0031  -0.0043   0.0120  -0.0003  0.2210
+[INFO] [1794084369.612371, 141.572000]:   ... (8 步)
+[INFO] [1794084369.616786, 141.580000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084369.619322, 141.580000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084369.622052, 141.584000]:   0    6.161    9.351    1.676   -0.023   -0.016   -0.003    0.22m   4.97m
+[INFO] [1794084369.624847, 141.588000]:   1    6.279    9.538    1.673   -0.006    0.014    0.000    0.45m   4.75m
+[INFO] [1794084369.627798, 141.588000]:   2    6.390    9.717    1.670   -0.003    0.024   -0.002    0.66m   4.54m
+[INFO] [1794084369.630572, 141.592000]:   3    6.508    9.908    1.668   -0.004    0.023    0.002    0.88m   4.32m
+[INFO] [1794084369.635017, 141.596000]:   4    6.623   10.097    1.665   -0.004    0.012   -0.000    1.10m   4.10m
+[INFO] [1794084369.638119, 141.600000]:   5    6.736   10.293    1.663   -0.009   -0.001    0.003    1.33m   3.87m
+[INFO] [1794084369.641047, 141.604000]:   6    6.843   10.479    1.661   -0.015   -0.017    0.000    1.54m   3.66m
+[INFO] [1794084369.643945, 141.608000]:   7    6.948   10.670    1.660   -0.025   -0.031    0.003    1.76m   3.44m
+[INFO] [1794084369.647712, 141.608000]:   轨迹长1.54m | 终点距目标3.44m
+[INFO] [1794084369.650530, 141.612000]: =========================================================================================================
+[INFO] [1794084369.672012, 141.636000]: [CMD#1650]      traj | pos[6.17,9.36,1.68] vel[-0.02,-0.01,-0.00] yaw=1.06 | 实际[6.06,9.19,1.68] err=0.21m
+[33m[WARN] [1794084370.227923844, 142.200000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084370.284115, 142.256000]: [ML Planner] 并行推理触发 progress=0.71
+[INFO] [1794084370.296009, 142.268000]: [DUMP] #21 plan=27 x=6.12
+[INFO] [1794084370.364029, 142.336000]: [Monitor DEBUG] world=(-1.40,7.10,1.81) local=(6.14,9.35,1.69) clearance=1.254m closest=trap_scatter_8 flyover=False n_obs=25
+[33m[WARN] [1794084370.480920773, 142.440000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084370.677042, 142.636000]: [CMD#1700] traj_hold | pos[6.51,9.91,1.67] vel[0.00,0.00,0.00] yaw=1.09 | 实际[6.20,9.46,1.70] err=0.55m
+[WARN] [1794084370.884176, 142.844000]: [ML Planner] 推理594ms>500ms
+[INFO] [1794084370.886826, 142.844000]: =========================================================================================================
+[INFO] [1794084370.888594, 142.848000]: [DIFFUSION v6.5] 594ms | pos[6.27,9.55,1.70] goal[8.32,13.83,1.68] dist=5.07m
+[INFO] [1794084370.890336, 142.848000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084370.893596, 142.852000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084370.896733, 142.856000]:   0   0.1143   0.1687  -0.0043  -0.0196  -0.0047  -0.0022  0.2038
+[INFO] [1794084370.898384, 142.856000]:   1   0.1108   0.1670  -0.0035  -0.0149   0.0048   0.0008  0.2005
+[INFO] [1794084370.899877, 142.860000]:   2   0.1016   0.1556  -0.0041  -0.0138   0.0069  -0.0014  0.1859
+[INFO] [1794084370.901399, 142.860000]:   3   0.1035   0.1635  -0.0038  -0.0125   0.0075   0.0016  0.1935
+[INFO] [1794084370.902977, 142.860000]:   4   0.0973   0.1569  -0.0041  -0.0101   0.0033  -0.0009  0.1846
+[INFO] [1794084370.904434, 142.864000]:   ... (8 步)
+[INFO] [1794084370.905876, 142.864000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084370.907292, 142.864000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084370.908769, 142.868000]:   0    6.381    9.715    1.698   -0.020   -0.005   -0.002    0.20m   4.55m
+[INFO] [1794084370.910344, 142.868000]:   1    6.491    9.882    1.695   -0.015    0.005    0.001    0.40m   4.35m
+[INFO] [1794084370.911944, 142.872000]:   2    6.593   10.037    1.691   -0.014    0.007   -0.001    0.59m   4.16m
+[INFO] [1794084370.913831, 142.872000]:   3    6.696   10.201    1.687   -0.012    0.007    0.002    0.78m   3.97m
+[INFO] [1794084370.915411, 142.872000]:   4    6.794   10.358    1.683   -0.010    0.003   -0.001    0.97m   3.79m
+[INFO] [1794084370.917574, 142.876000]:   5    6.890   10.523    1.680   -0.011   -0.001    0.002    1.16m   3.60m
+[INFO] [1794084370.919192, 142.876000]:   6    6.983   10.680    1.676   -0.011   -0.009   -0.001    1.34m   3.42m
+[INFO] [1794084370.920991, 142.880000]:   7    7.075   10.847    1.674   -0.011   -0.012    0.002    1.53m   3.23m
+[INFO] [1794084370.923075, 142.880000]:   轨迹长1.33m | 终点距目标3.23m
+[INFO] [1794084370.925489, 142.884000]: =========================================================================================================
+[33m[WARN] [1794084371.271044774, 143.232000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084371.499281812, 143.460000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084371.576427, 143.536000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084371.588604, 143.548000]: [DUMP] #22 plan=28 x=6.37
+[INFO] [1794084371.676505, 143.636000]: [CMD#1750]      traj | pos[6.64,10.12,1.69] vel[-0.01,0.01,0.00] yaw=1.13 | 实际[6.38,9.73,1.74] err=0.47m
+[WARN] [1794084372.258523, 144.216000]: [ML Planner] 推理676ms>500ms
+[INFO] [1794084372.261639, 144.220000]: =========================================================================================================
+[INFO] [1794084372.264222, 144.224000]: [DIFFUSION v6.5] 676ms | pos[6.52,9.95,1.75] goal[8.32,13.83,1.68] dist=4.56m
+[INFO] [1794084372.266185, 144.224000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084372.268521, 144.228000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084372.271185, 144.228000]:   0   0.2063   0.2110  -0.0014   0.0193   0.0498  -0.0049  0.2951
+[INFO] [1794084372.273043, 144.232000]:   1   0.2186   0.2110  -0.0025   0.0762   0.0973  -0.0055  0.3039
+[INFO] [1794084372.274851, 144.232000]:   2   0.2294   0.2110  -0.0042   0.0515   0.0866  -0.0064  0.3117
+[INFO] [1794084372.277307, 144.236000]:   3   0.2319   0.2110  -0.0041  -0.0183  -0.0286   0.0004  0.3136
+[INFO] [1794084372.280140, 144.236000]:   4   0.2331   0.2110  -0.0049  -0.0924  -0.0974   0.0025  0.3144
+[INFO] [1794084372.282247, 144.240000]:   ... (8 步)
+[INFO] [1794084372.284179, 144.244000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084372.286161, 144.244000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084372.288453, 144.248000]:   0    6.729   10.166    1.753    0.019    0.050   -0.005    0.30m   3.99m
+[INFO] [1794084372.290313, 144.248000]:   1    6.947   10.377    1.750    0.076    0.097   -0.005    0.60m   3.71m
+[INFO] [1794084372.292231, 144.252000]:   2    7.177   10.588    1.746    0.052    0.087   -0.006    0.91m   3.44m
+[INFO] [1794084372.294098, 144.252000]:   3    7.409   10.799    1.742   -0.018   -0.029    0.000    1.22m   3.16m
+[INFO] [1794084372.295914, 144.252000]:   4    7.642   11.010    1.737   -0.092   -0.097    0.003    1.54m   2.90m
+[INFO] [1794084372.298193, 144.256000]:   5    7.844   11.221    1.734   -0.103   -0.097    0.007    1.83m   2.65m
+[INFO] [1794084372.301475, 144.260000]:   6    8.003   11.432    1.732   -0.103   -0.097    0.004    2.09m   2.42m
+[INFO] [1794084372.303350, 144.260000]:   7    8.137   11.643    1.732   -0.103   -0.097    0.004    2.34m   2.19m
+[INFO] [1794084372.305327, 144.264000]:   轨迹长2.05m | 终点距目标2.19m
+[INFO] [1794084372.307002, 144.264000]: =========================================================================================================
+[INFO] [1794084372.309469, 144.268000]: [GOAL-DIAG] policy-only path closest step to goal: d=3.16m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084372.311831560, 144.272000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084372.520135897, 144.480000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084372.679473, 144.636000]: [CMD#1800]      traj | pos[7.00,10.42,1.75] vel[0.07,0.10,-0.01] yaw=1.14 | 实际[6.60,10.04,1.77] err=0.55m
+[INFO] [1794084372.922336, 144.880000]: [PC] Received 33410 points
+[INFO] [1794084372.956724, 144.916000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084372.969525, 144.928000]: [DUMP] #23 plan=29 x=6.72
+[33m[WARN] [1794084373.342997809, 145.292000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084373.546633091, 145.500000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084373.561992, 145.512000]: [ML Planner] 推理599ms>500ms
+[INFO] [1794084373.566716, 145.520000]: =========================================================================================================
+[INFO] [1794084373.568722, 145.520000]: [DIFFUSION v6.5] 599ms | pos[7.01,10.44,1.78] goal[8.32,13.83,1.68] dist=4.12m
+[INFO] [1794084373.570781, 145.524000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084373.572386, 145.524000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084373.574296, 145.528000]:   0   0.2323   0.2110  -0.0053   0.0720   0.0973  -0.0065  0.3139
+[INFO] [1794084373.575814, 145.528000]:   1   0.2554   0.2110  -0.0059   0.0597   0.0973  -0.0029  0.3313
+[INFO] [1794084373.577394, 145.528000]:   2   0.2605   0.2110  -0.0069  -0.0018   0.0185  -0.0024  0.3353
+[INFO] [1794084373.579129, 145.532000]:   3   0.2491   0.2110  -0.0065  -0.0826  -0.0961   0.0025  0.3265
+[INFO] [1794084373.580590, 145.532000]:   4   0.2172   0.2110  -0.0062  -0.1033  -0.0974   0.0004  0.3029
+[INFO] [1794084373.582626, 145.536000]:   ... (8 步)
+[INFO] [1794084373.585852, 145.540000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084373.587731, 145.540000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084373.590248, 145.544000]:   0    7.245   10.648    1.774    0.072    0.097   -0.007    0.31m   3.36m
+[INFO] [1794084373.591951, 145.544000]:   1    7.501   10.859    1.769    0.060    0.097   -0.003    0.65m   3.08m
+[INFO] [1794084373.593929, 145.548000]:   2    7.761   11.070    1.762   -0.002    0.018   -0.002    0.98m   2.81m
+[INFO] [1794084373.595846, 145.548000]:   3    8.010   11.281    1.755   -0.083   -0.096    0.003    1.31m   2.57m
+[INFO] [1794084373.597934, 145.552000]:   4    8.227   11.492    1.749   -0.103   -0.097    0.000    1.61m   2.34m
+[INFO] [1794084373.599637, 145.552000]:   5    8.404   11.703    1.745   -0.103   -0.097    0.004    1.88m   2.13m
+[INFO] [1794084373.601590, 145.556000]:   6    8.537   11.914    1.740   -0.103   -0.097    0.001    2.12m   1.93m
+[INFO] [1794084373.603666, 145.556000]:   7    8.643   12.111    1.737   -0.103   -0.097    0.003    2.34m   1.75m
+[INFO] [1794084373.605998, 145.560000]:   轨迹长2.05m | 终点距目标1.75m
+[INFO] [1794084373.607548, 145.560000]: =========================================================================================================
+[INFO] [1794084373.682514, 145.636000]: [CMD#1850]      traj | pos[7.31,10.70,1.77] vel[0.07,0.10,-0.01] yaw=1.15 | 实际[7.04,10.46,1.78] err=0.36m
+[INFO] [1794084374.238084, 146.196000]: [ML Planner] 并行推理触发 progress=0.70
+[INFO] [1794084374.249075, 146.204000]: [DUMP] #24 plan=30 x=7.26
+[33m[WARN] [1794084374.444479411, 146.332000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084374.630271569, 146.520000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084374.746386, 146.636000]: [CMD#1900] traj_hold | pos[8.01,11.28,1.76] vel[0.00,0.00,0.00] yaw=1.19 | 实际[7.47,10.85,1.80] err=0.70m
+[WARN] [1794084374.891599, 146.780000]: [ML Planner] 推理647ms>500ms
+[INFO] [1794084374.894392, 146.784000]: =========================================================================================================
+[INFO] [1794084374.896071, 146.784000]: [DIFFUSION v6.5] 647ms | pos[7.53,10.90,1.80] goal[8.32,13.83,1.68] dist=3.45m
+[INFO] [1794084374.897638, 146.788000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084374.899102, 146.788000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084374.902428, 146.792000]:   0   0.0976   0.2089  -0.0085  -0.0164   0.0241  -0.0046  0.2307
+[INFO] [1794084374.903924, 146.792000]:   1   0.0913   0.2099  -0.0080  -0.0170   0.0256  -0.0007  0.2290
+[INFO] [1794084374.905776, 146.796000]:   2   0.0785   0.1955  -0.0082  -0.0243  -0.0001  -0.0009  0.2108
+[INFO] [1794084374.907228, 146.796000]:   3   0.0751   0.1966  -0.0075  -0.0310  -0.0377   0.0043  0.2106
+[INFO] [1794084374.908922, 146.800000]:   4   0.0674   0.1766  -0.0080  -0.0326  -0.0578   0.0021  0.1892
+[INFO] [1794084374.910357, 146.800000]:   ... (8 步)
+[INFO] [1794084374.911759, 146.800000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084374.913364, 146.804000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084374.914961, 146.804000]:   0    7.633   11.104    1.788   -0.016    0.024   -0.005    0.23m   2.81m
+[INFO] [1794084374.916611, 146.804000]:   1    7.724   11.314    1.780   -0.017    0.026   -0.001    0.46m   2.58m
+[INFO] [1794084374.919344, 146.808000]:   2    7.802   11.510    1.771   -0.024   -0.000   -0.001    0.67m   2.38m
+[INFO] [1794084374.921221, 146.812000]:   3    7.877   11.706    1.764   -0.031   -0.038    0.004    0.88m   2.17m
+[INFO] [1794084374.922950, 146.812000]:   4    7.945   11.883    1.756   -0.033   -0.058    0.002    1.07m   1.98m
+[INFO] [1794084374.925041, 146.816000]:   5    8.007   12.043    1.750   -0.028   -0.054    0.004    1.24m   1.81m
+[INFO] [1794084374.927608, 146.816000]:   6    8.061   12.176    1.744   -0.020   -0.038   -0.000    1.39m   1.67m
+[INFO] [1794084374.929449, 146.820000]:   7    8.117   12.312    1.738   -0.012   -0.021    0.002    1.53m   1.53m
+[INFO] [1794084374.933293, 146.824000]:   轨迹长1.30m | 终点距目标1.53m
+[INFO] [1794084374.935374, 146.824000]: =========================================================================================================
+[33m[WARN] [1794084375.467669893, 147.360000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084375.583978, 147.476000]: [ML Planner] 并行推理触发 progress=0.72
+[33m[WARN] [1794084375.665971811, 147.540000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084375.762654, 147.636000]: [CMD#1950]      traj | pos[7.85,11.65,1.77] vel[-0.03,-0.03,0.00] yaw=1.23 | 实际[7.67,11.14,1.81] err=0.54m
+[WARN] [1794084376.237169, 148.112000]: [ML Planner] 推理649ms>500ms
+[INFO] [1794084376.239513, 148.112000]: =========================================================================================================
+[INFO] [1794084376.240780, 148.112000]: [DIFFUSION v6.5] 649ms | pos[7.76,11.35,1.81] goal[8.32,13.83,1.68] dist=2.82m
+[INFO] [1794084376.242515, 148.116000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084376.243506, 148.116000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084376.244622, 148.116000]:   0   0.0836   0.2110  -0.0052  -0.0471   0.0082  -0.0049  0.2271
+[INFO] [1794084376.246119, 148.120000]:   1   0.0692   0.2110  -0.0059  -0.0426  -0.0160  -0.0018  0.2222
+[INFO] [1794084376.248003, 148.120000]:   2   0.0539   0.2110  -0.0061  -0.0389  -0.0573  -0.0039  0.2179
+[INFO] [1794084376.249186, 148.124000]:   3   0.0468   0.2009  -0.0065  -0.0298  -0.0776   0.0000  0.2064
+[INFO] [1794084376.250103, 148.124000]:   4   0.0375   0.1727  -0.0078  -0.0236  -0.0665  -0.0022  0.1769
+[INFO] [1794084376.251059, 148.124000]:   ... (8 步)
+[INFO] [1794084376.252039, 148.124000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084376.253250, 148.128000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084376.254751, 148.128000]:   0    7.845   11.558    1.801   -0.047    0.008   -0.005    0.23m   2.32m
+[INFO] [1794084376.255790, 148.128000]:   1    7.914   11.769    1.795   -0.043   -0.016   -0.002    0.45m   2.10m
+[INFO] [1794084376.256891, 148.132000]:   2    7.968   11.980    1.789   -0.039   -0.057   -0.004    0.67m   1.88m
+[INFO] [1794084376.257835, 148.132000]:   3    8.015   12.180    1.782   -0.030   -0.078    0.000    0.87m   1.68m
+[INFO] [1794084376.258803, 148.132000]:   4    8.053   12.353    1.775   -0.024   -0.066   -0.002    1.05m   1.50m
+[INFO] [1794084376.259740, 148.132000]:   5    8.090   12.511    1.768   -0.019   -0.045    0.001    1.21m   1.34m
+[INFO] [1794084376.260666, 148.132000]:   6    8.122   12.646    1.760   -0.023   -0.037   -0.002    1.35m   1.20m
+[INFO] [1794084376.261794, 148.136000]:   7    8.153   12.788    1.753   -0.026   -0.046    0.002    1.50m   1.05m
+[INFO] [1794084376.263044, 148.136000]:   轨迹长1.27m | 终点距目标1.05m
+[INFO] [1794084376.263912, 148.136000]: =========================================================================================================
+[INFO] [1794084376.265448, 148.140000]: [GOAL-DIAG] policy-only path closest step to goal: d=1.68m (no trunc, Phase ① honest baseline)
+[INFO] [1794084376.461782, 148.336000]: [Monitor DEBUG] world=(0.25,9.20,1.90) local=(7.78,11.42,1.80) clearance=1.740m closest=trap_scatter_8 flyover=False n_obs=25
+[33m[WARN] [1794084376.517615317, 148.392000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084376.684766794, 148.560000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084376.762816, 148.636000]: [CMD#2000]      traj | pos[7.95,11.91,1.79] vel[-0.04,-0.04,-0.00] yaw=1.26 | 实际[7.80,11.50,1.79] err=0.43m
+[INFO] [1794084376.903017, 148.776000]: [ML Planner] 并行推理触发 progress=0.71
+[33m[WARN] [1794084377.218368533, 149.092000000]: VEL_IN_BODY!!![0m
+[WARN] [1794084377.441774, 149.312000]: [ML Planner] 推理533ms>500ms
+[INFO] [1794084377.445052, 149.316000]: =========================================================================================================
+[INFO] [1794084377.447693, 149.320000]: [DIFFUSION v6.5] 533ms | pos[7.86,11.71,1.78] goal[8.32,13.83,1.68] dist=2.39m
+[INFO] [1794084377.450487, 149.324000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084377.452658, 149.324000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084377.454534, 149.328000]:   0   0.0919   0.2110  -0.0109  -0.0331   0.0037  -0.0057  0.2304
+[INFO] [1794084377.456252, 149.328000]:   1   0.0801   0.2110  -0.0109  -0.0221   0.0245  -0.0016  0.2260
+[INFO] [1794084377.458242, 149.332000]:   2   0.0623   0.1927  -0.0104  -0.0312  -0.0241  -0.0003  0.2028
+[INFO] [1794084377.460059, 149.332000]:   3   0.0594   0.1826  -0.0098  -0.0410  -0.0861   0.0072  0.1923
+[INFO] [1794084377.464226, 149.336000]:   4   0.0461   0.1470  -0.0090  -0.0410  -0.0974   0.0054  0.1544
+[INFO] [1794084377.466436, 149.340000]:   ... (8 步)
+[INFO] [1794084377.467815, 149.340000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084377.469152, 149.340000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084377.470680, 149.344000]:   0    7.947   11.924    1.771   -0.033    0.004   -0.006    0.23m   1.94m
+[INFO] [1794084377.472007, 149.344000]:   1    8.027   12.135    1.760   -0.022    0.025   -0.002    0.46m   1.72m
+[INFO] [1794084377.473394, 149.344000]:   2    8.089   12.328    1.750   -0.031   -0.024   -0.000    0.66m   1.52m
+[INFO] [1794084377.474911, 149.348000]:   3    8.149   12.510    1.740   -0.041   -0.086    0.007    0.85m   1.33m
+[INFO] [1794084377.476734, 149.348000]:   4    8.195   12.657    1.731   -0.041   -0.097    0.005    1.01m   1.18m
+[INFO] [1794084377.478801, 149.352000]:   5    8.234   12.782    1.725   -0.030   -0.075    0.007    1.14m   1.05m
+[INFO] [1794084377.480564, 149.352000]:   6    8.262   12.874    1.720   -0.022   -0.053    0.002    1.23m   0.96m
+[INFO] [1794084377.483782, 149.356000]:   7    8.292   12.969    1.716   -0.019   -0.052    0.004    1.33m   0.86m
+[INFO] [1794084377.487259, 149.360000]:   轨迹长1.10m | 终点距目标0.86m
+[INFO] [1794084377.491180, 149.364000]: =========================================================================================================
+[33m[WARN] [1794084377.558162372, 149.432000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084377.706158049, 149.580000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084377.763200, 149.636000]: [CMD#2050]      traj | pos[8.02,12.11,1.76] vel[-0.02,0.02,-0.00] yaw=1.30 | 实际[7.90,11.83,1.78] err=0.31m
+[INFO] [1794084378.046397, 149.916000]: [PC] Received 25981 points
+[INFO] [1794084378.144748, 150.016000]: [ML Planner] 并行推理触发 progress=0.72
+[33m[WARN] [1794084378.603275099, 150.460000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084378.738737666, 150.600000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084378.764661, 150.624000]: [ML Planner] 推理613ms>500ms
+[INFO] [1794084378.767205, 150.628000]: =========================================================================================================
+[INFO] [1794084378.769843, 150.632000]: [DIFFUSION v6.5] 613ms | pos[7.98,12.13,1.77] goal[8.32,13.83,1.68] dist=1.99m
+[INFO] [1794084378.770938, 150.632000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084378.771864, 150.632000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084378.772852, 150.632000]:   0   0.0743   0.1877  -0.0092  -0.0408  -0.0597  -0.0019  0.2020
+[INFO] [1794084378.773836, 150.632000]:   1   0.0565   0.1650  -0.0086  -0.0314  -0.0354   0.0007  0.1746
+[INFO] [1794084378.775368, 150.636000]:   2   0.0422   0.1384  -0.0085  -0.0222  -0.0132  -0.0027  0.1449
+[INFO] [1794084378.775867, 150.636000]: [CMD#2100] traj_hold | pos[8.15,12.51,1.74] vel[0.00,0.00,0.00] yaw=1.31 | 实际[7.98,12.13,1.77] err=0.42m
+[INFO] [1794084378.777035, 150.636000]:   3   0.0380   0.1426  -0.0082  -0.0142  -0.0017   0.0008  0.1478
+[INFO] [1794084378.781010, 150.640000]:   4   0.0305   0.1316  -0.0089  -0.0126  -0.0155  -0.0018  0.1354
+[INFO] [1794084378.782071, 150.644000]:   ... (8 步)
+[INFO] [1794084378.783004, 150.644000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084378.783891, 150.644000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084378.786248, 150.648000]:   0    8.056   12.315    1.757   -0.041   -0.060   -0.002    0.20m   1.54m
+[INFO] [1794084378.787292, 150.648000]:   1    8.112   12.480    1.748   -0.031   -0.035    0.001    0.38m   1.36m
+[INFO] [1794084378.788220, 150.648000]:   2    8.155   12.618    1.739   -0.022   -0.013   -0.003    0.52m   1.22m
+[INFO] [1794084378.789196, 150.648000]:   3    8.193   12.761    1.731   -0.014   -0.002    0.001    0.67m   1.07m
+[INFO] [1794084378.790143, 150.652000]:   4    8.223   12.892    1.722   -0.013   -0.016   -0.002    0.80m   0.94m
+[INFO] [1794084378.791139, 150.652000]:   5    8.253   13.022    1.715   -0.019   -0.038    0.003    0.94m   0.81m
+[INFO] [1794084378.792145, 150.652000]:   6    8.276   13.130    1.707   -0.029   -0.054    0.001    1.05m   0.70m
+[INFO] [1794084378.793477, 150.656000]:   7    8.298   13.238    1.700   -0.030   -0.055    0.004    1.16m   0.59m
+[INFO] [1794084378.797767, 150.656000]:   轨迹长0.96m | 终点距目标0.59m
+[INFO] [1794084378.798891, 150.660000]: =========================================================================================================
+[INFO] [1794084379.426216, 151.296000]: [ML Planner] 并行推理触发 progress=0.71
+[33m[WARN] [1794084379.698293236, 151.492000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[33m[WARN] [1794084379.814377656, 151.620000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084379.830935, 151.636000]: [CMD#2150] traj_hold | pos[8.19,12.76,1.73] vel[0.00,0.00,0.00] yaw=1.35 | 实际[8.05,12.34,1.73] err=0.45m
+[WARN] [1794084380.141860, 151.964000]: [ML Planner] 推理707ms>500ms
+[INFO] [1794084380.147723, 151.968000]: =========================================================================================================
+[INFO] [1794084380.150780, 151.972000]: [DIFFUSION v6.5] 707ms | pos[8.09,12.45,1.71] goal[8.32,13.83,1.68] dist=1.62m
+[INFO] [1794084380.154499, 151.976000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084380.157420, 151.980000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084380.160503, 151.980000]:   0   0.0633   0.2110  -0.0074  -0.0569  -0.0940  -0.0016  0.2205
+[INFO] [1794084380.163346, 151.984000]:   1   0.0490   0.1849  -0.0065  -0.0449  -0.0787   0.0019  0.1914
+[INFO] [1794084380.165992, 151.988000]:   2   0.0311   0.1446  -0.0060  -0.0386  -0.0709  -0.0006  0.1481
+[INFO] [1794084380.169143, 151.988000]:   3   0.0276   0.1320  -0.0054  -0.0317  -0.0751   0.0035  0.1350
+[INFO] [1794084380.173227, 151.996000]:   4   0.0183   0.1053  -0.0059  -0.0325  -0.0802   0.0001  0.1070
+[INFO] [1794084380.176732, 152.000000]:   ... (8 步)
+[INFO] [1794084380.179788, 152.004000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084380.182587, 152.004000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084380.185360, 152.008000]:   0    8.154   12.663    1.707   -0.057   -0.094   -0.002    0.22m   1.18m
+[INFO] [1794084380.189088, 152.012000]:   1    8.203   12.848    1.700   -0.045   -0.079    0.002    0.41m   0.99m
+[INFO] [1794084380.192157, 152.016000]:   2    8.234   12.993    1.694   -0.039   -0.071   -0.001    0.56m   0.84m
+[INFO] [1794084380.196627, 152.020000]:   3    8.262   13.125    1.689   -0.032   -0.075    0.003    0.69m   0.70m
+[INFO] [1794084380.200526, 152.024000]:   4    8.280   13.230    1.683   -0.032   -0.080    0.000    0.80m   0.60m
+[INFO] [1794084380.203555, 152.028000]:   5    8.296   13.325    1.679   -0.035   -0.074    0.004    0.90m   0.50m
+[INFO] [1794084380.206577, 152.028000]:   6    8.302   13.394    1.674   -0.035   -0.061    0.001    0.97m   0.43m
+[INFO] [1794084380.209914, 152.032000]:   7    8.309   13.471    1.671   -0.028   -0.052    0.004    1.04m   0.36m
+[INFO] [1794084380.215266, 152.040000]:   轨迹长0.82m | 终点距目标0.36m
+[INFO] [1794084380.217859, 152.040000]: =========================================================================================================
+[INFO] [1794084380.221864, 152.044000]: [GOAL-DIAG] policy-only path closest step to goal: d=0.70m (no trunc, Phase ① honest baseline)
+[33m[WARN] [1794084380.699026470, 152.532000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084380.803420, 152.636000]: [CMD#2200]      traj | pos[8.23,12.99,1.69] vel[-0.04,-0.07,-0.00] yaw=1.37 | 实际[8.11,12.54,1.68] err=0.47m
+[33m[WARN] [1794084380.805937983, 152.640000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084380.862491, 152.696000]: [ML Planner] 并行推理触发 progress=0.72
+[WARN] [1794084381.411981, 153.228000]: [ML Planner] 推理545ms>500ms
+[INFO] [1794084381.414895, 153.228000]: =========================================================================================================
+[INFO] [1794084381.416663, 153.232000]: [DIFFUSION v6.5] 545ms | pos[8.15,12.69,1.65] goal[8.32,13.83,1.68] dist=1.31m
+[INFO] [1794084381.418223, 153.232000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084381.419717, 153.232000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084381.424137, 153.236000]:   0   0.0619   0.2033  -0.0108  -0.0483  -0.0627  -0.0031  0.2128
+[INFO] [1794084381.425942, 153.240000]:   1   0.0471   0.1754  -0.0097  -0.0284  -0.0427   0.0008  0.1819
+[INFO] [1794084381.427776, 153.244000]:   2   0.0303   0.1432  -0.0089  -0.0202  -0.0493   0.0015  0.1467
+[INFO] [1794084381.429369, 153.244000]:   3   0.0301   0.1316  -0.0079  -0.0202  -0.0743   0.0086  0.1352
+[INFO] [1794084381.430807, 153.244000]:   4   0.0230   0.1054  -0.0071  -0.0274  -0.0898   0.0059  0.1082
+[INFO] [1794084381.432260, 153.248000]:   ... (8 步)
+[INFO] [1794084381.433703, 153.248000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084381.435075, 153.248000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084381.436637, 153.252000]:   0    8.210   12.890    1.641   -0.048   -0.063   -0.003    0.21m   0.94m
+[INFO] [1794084381.438250, 153.252000]:   1    8.257   13.066    1.631   -0.028   -0.043    0.001    0.39m   0.77m
+[INFO] [1794084381.439856, 153.252000]:   2    8.288   13.209    1.622   -0.020   -0.049    0.002    0.54m   0.62m
+[INFO] [1794084381.441895, 153.256000]:   3    8.318   13.341    1.614   -0.020   -0.074    0.009    0.68m   0.49m
+[INFO] [1794084381.443506, 153.256000]:   4    8.341   13.446    1.607   -0.027   -0.090    0.006    0.78m   0.39m
+[INFO] [1794084381.445371, 153.260000]:   5    8.359   13.540    1.603   -0.030   -0.088    0.008    0.88m   0.30m
+[INFO] [1794084381.447592, 153.260000]:   6    8.369   13.605    1.600   -0.029   -0.075    0.003    0.95m   0.24m
+[INFO] [1794084381.449472, 153.264000]:   7    8.381   13.678    1.599   -0.025   -0.066    0.005    1.02m   0.18m
+[INFO] [1794084381.451384, 153.264000]:   轨迹长0.81m | 终点距目标0.18m
+[INFO] [1794084381.453259, 153.268000]: =========================================================================================================
+[33m[WARN] [1794084381.719898773, 153.536000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084381.821182, 153.636000]: [CMD#2250]      traj | pos[8.26,13.10,1.63] vel[-0.03,-0.04,0.00] yaw=1.39 | 实际[8.18,12.80,1.64] err=0.31m
+[33m[WARN] [1794084381.839979499, 153.656000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084382.100594, 153.916000]: [ML Planner] 并行推理触发 progress=0.72
+[INFO] [1794084382.520622, 154.336000]: [Monitor DEBUG] world=(0.66,10.67,1.59) local=(8.22,12.93,1.60) clearance=3.223m closest=trap_scatter_8 flyover=False n_obs=25
+[WARN] [1794084382.703618, 154.516000]: [ML Planner] 推理598ms>500ms
+[INFO] [1794084382.709449, 154.524000]: =========================================================================================================
+[INFO] [1794084382.711740, 154.524000]: [DIFFUSION v6.5] 598ms | pos[8.23,12.98,1.60] goal[8.32,13.83,1.68] dist=1.04m
+[INFO] [1794084382.714875, 154.528000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084382.718810, 154.532000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084382.725188, 154.540000]:   0   0.0480   0.1976  -0.0066  -0.0601  -0.0974   0.0003  0.2034
+[INFO] [1794084382.729447, 154.544000]:   1   0.0299   0.1585  -0.0052  -0.0385  -0.0810   0.0024  0.1614
+[INFO] [1794084382.732761, 154.548000]:   2   0.0142   0.1192  -0.0047  -0.0236  -0.0455  -0.0018  0.1201
+[INFO] [1794084382.736970, 154.552000]:   3   0.0134   0.1162  -0.0040  -0.0146  -0.0281   0.0020  0.1170
+[INFO] [1794084382.739735, 154.552000]:   4   0.0086   0.1029  -0.0047  -0.0181  -0.0417  -0.0008  0.1033
+[INFO] [1794084382.742982, 154.556000]:   ... (8 步)
+[INFO] [1794084382.745729, 154.560000]: ---------------------------------------------------------------------------------------------------------
+[33m[WARN] [1794084382.747858109, 154.564000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084382.749071, 154.564000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084382.752226, 154.564000]:   0    8.276   13.178    1.590   -0.060   -0.097    0.000    0.20m   0.66m
+[INFO] [1794084382.759284, 154.572000]:   1    8.305   13.336    1.584   -0.039   -0.081    0.002    0.36m   0.50m
+[INFO] [1794084382.762620, 154.576000]:   2    8.320   13.455    1.580   -0.024   -0.046   -0.002    0.48m   0.39m
+[INFO] [1794084382.765937, 154.580000]:   3    8.333   13.571    1.576   -0.015   -0.028    0.002    0.60m   0.28m
+[INFO] [1794084382.767837, 154.580000]:   4    8.342   13.674    1.571   -0.018   -0.042   -0.001    0.70m   0.19m
+[INFO] [1794084382.769717, 154.584000]:   5    8.350   13.777    1.567   -0.023   -0.055    0.004    0.81m   0.13m
+[INFO] [1794084382.771405, 154.584000]:   6    8.351   13.859    1.563   -0.024   -0.055    0.000    0.89m   0.13m
+[INFO] [1794084382.773195, 154.588000]:   7    8.356   13.946    1.560   -0.021   -0.049    0.004    0.98m   0.18m
+[INFO] [1794084382.774964, 154.588000]:   轨迹长0.77m | 终点距目标0.18m
+[INFO] [1794084382.776839, 154.592000]: =========================================================================================================
+[INFO] [1794084382.822283, 154.636000]: [CMD#2300]      traj | pos[8.28,13.20,1.59] vel[-0.06,-0.10,0.00] yaw=1.41 | 实际[8.23,13.00,1.59] err=0.20m
+[33m[WARN] [1794084382.860456629, 154.676000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084383.128812, 154.944000]: [PC] Received 13337 points
+[INFO] [1794084383.421851, 155.236000]: [ML Planner] 并行推理触发 progress=0.71
+[33m[WARN] [1794084383.844304014, 155.596000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084383.885835, 155.636000]: [CMD#2350] traj_hold | pos[8.33,13.57,1.58] vel[0.00,0.00,0.00] yaw=1.44 | 实际[8.24,13.14,1.56] err=0.44m
+[33m[WARN] [1794084383.944722772, 155.696000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[WARN] [1794084384.023719, 155.772000]: [ML Planner] 推理596ms>500ms
+[INFO] [1794084384.026608, 155.776000]: =========================================================================================================
+[INFO] [1794084384.027796, 155.776000]: [DIFFUSION v6.5] 596ms | pos[8.26,13.21,1.56] goal[8.32,13.83,1.68] dist=0.77m
+[INFO] [1794084384.028961, 155.780000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084384.030009, 155.780000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084384.030938, 155.780000]:   0   0.0525   0.2110  -0.0030  -0.0436  -0.0974  -0.0026  0.2175
+[INFO] [1794084384.031863, 155.780000]:   1   0.0398   0.1897  -0.0022  -0.0323  -0.0857   0.0002  0.1938
+[INFO] [1794084384.033139, 155.784000]:   2   0.0256   0.1444  -0.0023  -0.0399  -0.0797  -0.0032  0.1467
+[INFO] [1794084384.034089, 155.784000]:   3   0.0194   0.1271  -0.0028  -0.0325  -0.0691   0.0006  0.1286
+[INFO] [1794084384.034994, 155.784000]:   4   0.0093   0.1079  -0.0033  -0.0204  -0.0611  -0.0017  0.1083
+[INFO] [1794084384.037265, 155.788000]:   ... (8 步)
+[INFO] [1794084384.038169, 155.788000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084384.039047, 155.788000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084384.039951, 155.788000]:   0    8.311   13.420    1.556   -0.044   -0.097   -0.003    0.22m   0.43m
+[INFO] [1794084384.041218, 155.792000]:   1    8.351   13.609    1.554   -0.032   -0.086    0.000    0.41m   0.26m
+[INFO] [1794084384.042175, 155.792000]:   2    8.376   13.754    1.552   -0.040   -0.080   -0.003    0.56m   0.16m
+[INFO] [1794084384.043129, 155.792000]:   3    8.396   13.881    1.549   -0.033   -0.069    0.001    0.69m   0.16m
+[INFO] [1794084384.044059, 155.792000]:   4    8.405   13.989    1.546   -0.020   -0.061   -0.002    0.79m   0.23m
+[INFO] [1794084384.048277, 155.796000]:   5    8.415   14.099    1.543   -0.014   -0.059    0.003    0.90m   0.32m
+[INFO] [1794084384.051744, 155.800000]:   6    8.420   14.188    1.541   -0.019   -0.062    0.000    0.99m   0.40m
+[INFO] [1794084384.053602, 155.804000]:   7    8.429   14.283    1.539   -0.024   -0.067    0.004    1.09m   0.49m
+[INFO] [1794084384.054853, 155.804000]:   轨迹长0.87m | 终点距目标0.49m
+[INFO] [1794084384.056027, 155.804000]: =========================================================================================================
+[INFO] [1794084384.058310, 155.808000]: [GOAL-DIAG] policy-only path closest step to goal: d=0.16m (no trunc, Phase ① honest baseline)
+[INFO] [1794084384.705447, 156.456000]: [ML Planner] 并行推理触发 progress=0.72
+[33m[WARN] [1794084384.885186016, 156.636000000]: ODOM frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084384.885549, 156.636000]: [CMD#2400]      traj | pos[8.39,13.85,1.55] vel[-0.03,-0.07,-0.00] yaw=1.48 | 实际[8.28,13.32,1.52] err=0.55m
+[33m[WARN] [1794084384.964907303, 156.716000000]: IMU frequency seems lower than 100Hz, which is too low![0m
+[INFO] [1794084385.065499, 156.816000]: [GOAL-REACH] dxy=0.458m, dz=0.167m, v_xy=0.39m/s, after 5 consec frames
+[INFO] [1794084385.065769, 156.816000]: [Monitor] Trial ended: reason=success_deploy, deploy_success=True, fb_success=True, collision=False, timeout=False, lost=False, T=51.1s, min_clear=0.983m, final_dxy=0.468m
+[INFO] [1794084385.071037, 156.820000]: [ML Planner v6.5] 到达目标
+[INFO] [1794084385.073684, 156.820000]: [ML Planner v6.5] 所有航点完成
+[INFO] [1794084385.097516, 156.844000]: [Monitor] State history saved: 1284 frames → /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/P6/50de0441edbe_r1/result_state.csv
+[INFO] [1794084385.118023, 156.864000]: [Monitor] Pos_cmd history saved: 2408 entries → /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/P6/50de0441edbe_r1/result_pos_cmd.csv
+Result saved to /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/P6/50de0441edbe_r1/result.json
+  success_deploy=True, collision=False, timeout=False, final_dxy=0.47m, min_clearance=0.98m
+[WARN] [1794084385.248255, 156.996000]: [ML Planner] 推理538ms>500ms
+[INFO] [1794084385.250084, 157.000000]: =========================================================================================================
+[INFO] [1794084385.251179, 157.000000]: [DIFFUSION v6.5] 538ms | pos[8.29,13.42,1.52] goal[8.32,13.83,1.68] dist=0.58m
+[INFO] [1794084385.252059, 157.000000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084385.253130, 157.004000]:   t     dx_w     dy_w     dz_w     vx_w     vy_w     vz_w    |Δw|
+[INFO] [1794084385.254112, 157.004000]:   0   0.0550   0.2110   0.0025  -0.0327  -0.0974  -0.0032  0.2181
+[INFO] [1794084385.254952, 157.004000]:   1   0.0478   0.2110   0.0031  -0.0349  -0.0974  -0.0004  0.2164
+[INFO] [1794084385.255794, 157.004000]:   2   0.0357   0.1903   0.0022  -0.0535  -0.0974  -0.0050  0.1936
+[INFO] [1794084385.257070, 157.004000]:   3   0.0259   0.1522   0.0011  -0.0484  -0.0974  -0.0020  0.1544
+[INFO] [1794084385.258059, 157.008000]:   4   0.0115   0.1141   0.0005  -0.0369  -0.0974  -0.0042  0.1147
+[INFO] [1794084385.258872, 157.008000]:   ... (8 步)
+[INFO] [1794084385.259665, 157.008000]: ---------------------------------------------------------------------------------------------------------
+[INFO] [1794084385.260440, 157.008000]:   t    pos_x    pos_y    pos_z    vel_x    vel_y    vel_z    d_cur  d_goal
+[INFO] [1794084385.261605, 157.012000]:   0    8.348   13.631    1.520   -0.033   -0.097   -0.003    0.22m   0.26m
+[INFO] [1794084385.262553, 157.012000]:   1    8.395   13.842    1.523   -0.035   -0.097   -0.000    0.43m   0.18m
+[INFO] [1794084385.263446, 157.012000]:   2    8.431   14.032    1.525   -0.053   -0.097   -0.005    0.63m   0.28m
+[INFO] [1794084385.265697, 157.016000]:   3    8.457   14.184    1.526   -0.048   -0.097   -0.002    0.78m   0.41m
+[INFO] [1794084385.266586, 157.016000]:   4    8.468   14.298    1.527   -0.037   -0.097   -0.004    0.90m   0.52m
+[INFO] [1794084385.267414, 157.016000]:   5    8.474   14.405    1.527   -0.030   -0.089    0.001    1.00m   0.62m
+[INFO] [1794084385.268259, 157.016000]:   6    8.468   14.486    1.528   -0.038   -0.084    0.001    1.08m   0.69m
+[INFO] [1794084385.269425, 157.020000]:   7    8.464   14.570    1.530   -0.040   -0.087    0.004    1.16m   0.77m
+[INFO] [1794084385.270450, 157.020000]:   轨迹长0.95m | 终点距目标0.77m
+[INFO] [1794084385.271330, 157.020000]: =========================================================================================================
+[run_task_flight] monitor 退出 (rc=0, 以 JSON 为准)
+[run_task_flight] 清理所有进程...
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 925878 Killed                  roslaunch ego_planner "$PLANNER_LAUNCH" ckpt:="$CKPT" waypoint0_x:="$GX" waypoint0_y:="$GY" waypoint0_z:="$GZ" policy_type:="$POLICY_TYPE" lora_enabled:="$LORA_ENABLED" lora_ckpt:="$LORA_CKPT"
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 925486 Killed                  roslaunch px4ctrl run_node.launch
+/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh: line 86: 924262 Killed                  mavproxy.py --master=udpout:127.0.0.1:18570 --daemon --state-basedir="$LOG_DIR/mavproxy" > "$LOG_DIR/mavproxy.log" 2>&1 < /dev/null
+[run_task_flight] 结果:
+  success_deploy = True
+  success_fb     = True
+  collision      = False
+  timeout        = False
+  final_dxy      = 0.47 m
+  min_clearance  = 0.98 m
+  time_to_goal   = 51.1 s
+[run_task_flight] TRIAL 完成: /root/autodl-tmp/AUV/program/results/gazebo_3method_288_run01/P6/50de0441edbe_r1/result.json

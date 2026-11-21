@@ -15,6 +15,24 @@ INK = "#1f2328"; DARK = "#2E4A73"; NOTE = "#5A6270"; AR = "#4A5A75"
 i = lambda s: f"<i>{s}</i>"
 
 
+def use_tol():
+    """Paul Tol light scheme (Tol 2021) tints."""
+    global FRZ, LORA, COND, CONDT, OUT, PANEL, DARK, AR
+    FRZ = ("#E3EEF8", "#5590C8"); LORA = ("#F7C9B6", "#EE8866"); COND = ("#F6ECC0", "#B59A2E"); CONDT = "#6B5A12"
+    OUT = ("#E6F6FF", "#2B4A6E"); PANEL = ("#F2F7FC", "#A0C4E8"); DARK = "#2B4A6E"; AR = "#4A5A75"
+
+
+def use_enhancing():
+    """Low-saturation palette sampled from Liu et al. 2026 (Enhancing), Fig. 1."""
+    global FRZ, LORA, COND, CONDT, OUT, PANEL, SUBP, DARK, AR, LORABG, LORAT
+    FRZ = ("#DBE3EF", "#899DBE"); LORA = ("#F7E3A8", "#817153"); COND = ("#FBE3D2", "#D9925E"); CONDT = "#8A4B22"
+    OUT = ("#EEF2F8", "#2F3E5C"); PANEL = ("#F5F5F5", "#A9AEB5"); SUBP = ("#FFFFFF", "#C5C9CF"); DARK = "#2F3E5C"
+    AR = "#5C6B85"; LORABG = "#FFFBED"; LORAT = "#5E5236"
+
+
+LORABG = "#FDF2EE"; LORAT = "#8F3F22"
+
+
 def build(slide, oy=10):
     f = Fig(slide, 0, oy)
     seg = lambda x1, y1, x2, y2, color=AR, sw=0.9, head=True, dash=None: f.line(x1, y1, x2, y2, color, sw, head, dash)
@@ -145,12 +163,12 @@ def build(slide, oy=10):
     # ================= (c) one denoising call =================
     f.rect(308, 136, 404, 128, *PANEL, radius=6)
     title(314, 138, "(c) One denoising call: conditional 1D U-Net")
-    box(318, 158, 40, 16, "step " + i("k"), COND, color=CONDT)
-    seg(359, 166, 369, 166, color=CONDT)
-    box(368, 158, 76, 16, "time embedding", COND, color=CONDT)
-    lora(437, 160)
+    box(316, 158, 36, 16, "step " + i("k"), COND, color=CONDT)
+    seg(353, 166, 363, 166, color=CONDT)
+    box(364, 158, 82, 16, "time embedding 128", COND, color=CONDT)
+    lora(439, 160)
     box(318, 182, 40, 16, i("c<sub>t</sub>") + " 576", COND, color=CONDT)
-    seg(445, 166, 452, 166, color=CONDT, head=False); seg(452, 166, 452, 177, color=CONDT)
+    seg(447, 166, 452, 166, color=CONDT, head=False); seg(452, 166, 452, 177, color=CONDT)
     seg(359, 190, 452, 190, color=CONDT, head=False); seg(452, 190, 452, 189, color=CONDT, head=False)
     f.concat_c(452, 183)
     seg(458, 183, 470, 183, color=CONDT)
@@ -227,8 +245,8 @@ def build(slide, oy=10):
     seg(fx, 311, fx, RY - 9, color=CONDT)
     note(fx + 3, 312, 30, i("γ") + ", " + i("β"), color=CONDT)
     # LoRA mechanism
-    f.rect(566, 290, 140, 80, "#FFF7EF", LORA[1], radius=4, dashed=True, lw=0.8)
-    f.label(570, 292, 130, "<b>Low-rank adaptation (LoRA)</b>", fs=S, align="left", color="#7A4A22")
+    f.rect(566, 290, 140, 80, LORABG, LORA[1], radius=4, dashed=True, lw=0.8)
+    f.label(570, 292, 130, "<b>Low-rank adaptation (LoRA)</b>", fs=S, align="left", color=LORAT)
     LY = 324
     f.label(570, LY - 6, 8, i("x"), fs=S)
     seg(578, LY, 584, LY, head=False)
@@ -237,9 +255,9 @@ def build(slide, oy=10):
     box(596, 305, 40, 14, i("W") + "<sub>0</sub>", FRZ, color=DARK)
     f.lock(625, 307)
     seg(584, 336, 595, 336)
-    box(596, 329, 16, 14, i("A"), LORA, color="#7A4A22")
+    box(596, 329, 16, 14, i("A"), LORA, color=LORAT)
     seg(613, 336, 619, 336)
-    box(620, 329, 16, 14, i("B"), LORA, color="#7A4A22")
+    box(620, 329, 16, 14, i("B"), LORA, color=LORAT)
     seg(637, 312, 648, 312, head=False); seg(648, 312, 648, 318)
     seg(637, 336, 648, 336, head=False); seg(648, 336, 648, 330)
     f.plus(648, LY)
