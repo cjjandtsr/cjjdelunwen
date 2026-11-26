@@ -1,0 +1,59 @@
+{
+  "created_at": "2026-11-08T20:40:37",
+  "tasks_json": "/root/autodl-tmp/AUV/program/results/routea_gazebo_a1_tasks_run01/tasks.json",
+  "tasks_json_sha256": "dcd637c3e21f766d91487ce6de7dd8bf9f63f6741c3f912b95abd75dd313a673",
+  "schema": "routea_gazebo_A1_v1",
+  "order_seed": 2026110301,
+  "selection_seed": 2026110501,
+  "schedule_entries": 288,
+  "mission_timeout_s": 240,
+  "hard_kill_after_s": 660,
+  "runner": "/root/autodl-tmp/AUV/catkin_ws0/scripts/run_task_flight.sh",
+  "runner_sha256": "c6fd877615f913999cf6a45c8d0c7e5a759235b15d40a17b15bae5b9937e14d3",
+  "checkpoints": {
+    "P0_backbone_and_P6_backbone": {
+      "path": "/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/2026.08.16/08.53.26_e5_lambda0p5/checkpoints/latest.ckpt",
+      "sha256": "c1fca4ac2735928b18fa7a9c069f90ad181eb84092acee379b073dc6a61bfc9a"
+    },
+    "P6_lora_carrier": {
+      "path": "/root/autodl-tmp/AUV/Improved-3D-Diffusion-Policy-main/Improved-3D-Diffusion-Policy/data/outputs/dppo_uav_rebuild/routea_a2_selective_keep_run01/T/checkpoint_update_000256",
+      "header": {
+        "lora_identity_hash": "4f91a995cff7da0e7bc9a35d9654f3307f373ecea874f04afb9faad7af9b504f",
+        "runtime_identity": {
+          "action_contract_hash": "451db6eb5c055902d66dc72bbacb7242b1342b9e5714827ba26755a684ec32af",
+          "bc_identity_hash": "040a337820f10745d158192c4b80737dd028adbf2dd559c037f3112c2bc8b151",
+          "caveats": [
+            "historical Gazebo deployment log is unavailable; two repository code paths use state_dicts['model']"
+          ],
+          "config_hash": "4a38def059444c69bd42a9e83865f3da1e7eeda79005e6fd3555153a0365fc09",
+          "observation_contract_hash": "a9d400240cb7405bf64baa8dc45858c69b49f8f859671c3d1eef7eef3bc67169",
+          "reward_identity_hash": "b28413afed9187eec4304f647616444bf15a08fe1cda8cf99f348bab0651d0f9",
+          "source_set_hash": "f5ee3aacff4041688017db8bf7541b0f328867febf65a1e37de649e81c4828a6",
+          "task_manifest_hash": "25dbfb9fcab1f5e6c25f76e98373e1d1f67233e9d999b121f3ff462b3e2d2cd4",
+          "vendor_commit": "cc7234ad7ff39a8f32de3af903606723a16f0648",
+          "vendor_manifest_hash": "5594f7d9a68d27d5b8e1bbeb4317faf8334cbe0d6202e3c8a51b103db16fee91"
+        },
+        "runtime_identity_hash": "d987235a0cbb5ad395bbd6e7979bdb8d7e0cff1303b0611cb462c7d554bbd61f",
+        "schema_version": 2,
+        "update_index": 256
+      },
+      "state_sha256": "a91c9f428c5749b8ca507168ea83f17eeb88cce4b4a03c6aeaea197b214bdd43"
+    }
+  },
+  "method_env": {
+    "P0": {
+      "ENGINE": "bc",
+      "POLICY_TYPE": "p6_lora",
+      "LORA_ENABLED": "false"
+    },
+    "P6": {
+      "ENGINE": "bc",
+      "POLICY_TYPE": "p6_lora",
+      "LORA_ENABLED": "true"
+    },
+    "EGO": {
+      "ENGINE": "ego"
+    }
+  },
+  "note": "P0 与 P6 共用同一 backbone（state_dicts['model']，由 load_native_e5 构造，identity=040a3378…）；P0 = LoRA gate off（base 分支），P6 = gate on。EGO 不加载任何扩散权重，goal 经 single_run_in_gazebo_task.launch 的 point0_x/y/z 传入（原 launch 写死 16/0/2，命令行无法覆盖）。"
+}

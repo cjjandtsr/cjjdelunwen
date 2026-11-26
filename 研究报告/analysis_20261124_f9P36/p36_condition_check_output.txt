@@ -1,0 +1,25 @@
+1 配置片段： {"teacher_task_sampler": ["teacher_task_sampler: blocked"], "coefficient_override": ["coefficient_override: 0.2484614509805812"], "d_safe": ["d_safe: 0.45", "ground_safe: 1.0", "d_safe: 0.6"], "eta": ["eta: 0.4"], "updates_per_step": [], "seed:": ["keep_seed: 2026102301", "seed: 202611081", "new_seed: 202619081"], "attempt": ["max_reset_attempts: 50", "attempt: 2"], "trial_id": ["trial_id: P36"]}
+  calibration 文件存在： False
+  fork_lineage： {"changed_sources": ["diffusion_policy_3d/env/kinematic_uav_env.py", "diffusion_policy_3d/env/reward_v2_support/environment.py", "diffusion_policy_3d/env/reward_v3.py", "diffusion_policy_3d/env/reward_v4.py", "diffusion_policy_3d/env/reward_v5.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/audit/training_audit.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/checkpointing/a2_fork.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/checkpointing/restore.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/deployment/loader.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/engine/drift_monitor.py", "diffusion_policy
+2 预填 P36 对 P35： {'accepted': (74, 74), 'buffer': (64, 64), 'effective': (217, 217), 'heldout': (10, 10), 'prefill': (True, True), 'prefill_overflow': (0, 0), 'seconds': (820.7667818150003, 855.9165912059834), 'teacher_task_sampler': ('blocked', 'blocked'), 'transitions': (1362, 1362), 'triggered': (243, 243)}
+  预填字段逐项相同（不含耗时）： True []
+  u257 教师采集 P36/P35： {'transitions': (1052, 1052), 'accepted': (101, 101), 'heldout': (30, 30), 'buffer': (145, 145)}
+3 逐轮：实际系数（唯一值）| 梯度比中位 P36 / P35 | 教师层训练损失首/末 P36 | 裁剪
+  257 | [0.248461450981] | 1.387 / 0.493（×2.82）| 0.0897 / 0.0699 | 0/20
+  258 | [0.248461450981] | 1.382 / 0.549（×2.52）| 0.1311 / 0.0808 | 0/20
+  259 | [0.248461450981] | 1.583 / 0.564（×2.81）| 0.0782 / 0.1106 | 0/20
+  260 | [0.248461450981] | 1.605 / 0.495（×3.24）| 0.0631 / 0.0758 | 0/20
+  261 | [0.248461450981] | 1.544 / 0.497（×3.11）| 0.0775 / 0.0828 | 0/20
+  262 | [0.248461450981] | 1.196 / 0.544（×2.20）| 0.0762 / 0.1025 | 0/20
+  263 | [0.248461450981] | 1.417 / 0.576（×2.46）| 0.0591 / 0.0837 | 0/20
+  264 | [0.248461450981] | 1.402 / 0.574（×2.45）| 0.0875 / 0.0684 | 0/20
+4 隔离： random_isolation_P36.json {'control': 'P29', 'passed': True, 'transitions': 1024, 'treatment': 'P36'}
+5 eval_refs： {"C": {"current_source_files": 216, "differing_sources": ["diffusion_policy_3d/rl/dppo_uav_rebuild/checkpointing/a2_fork.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/entrypoints/f9_blocked_sampler.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/entrypoints/f9_support.py", "scripts/run_routea_f9.py"], "path": "/home/cjj/AUV/program/results/routea_f9_run01/evaluations/P29/u000264/train_shadow/result.json", "record_source_files": 215, "sha256": "42c77dfac1d080f2bbfd2d9d344b71984853a6744672ed7d208f7feb1d0e3036", "source_identity": "stageA_215"}, "P6": {"current_source_files": 216, "differing_sources": ["diffusion_policy_3d/rl/dppo_uav_rebuild/checkpointing/a2_fork.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/entrypoints/f9_blocked_sampler.py", "diffusion_policy_3d/rl/dppo_uav_rebuild/entrypoints/f9_support.py", "scripts/run_routea_f9.py"], "path": "/home/cjj/AUV/program/results/routea_f9_run01/evaluations/P6/u000256/train_shadow/result.json", "record_source_files": 215, "sha256": "a8d87bfb5dc75ca1ca785ab913474816b49b1ab8cdcb716ea3be5a2dc2fe3203", "source_identity": "stageA_215"}, "T": {"current_source_files": 216, "differing_sources": [], "path": "/home/cjj/AUV/program/results/routea_f
+6 gate： {"C_arrivals": 256, "D_C": 0.19515079834417504, "D_P6": 0.21066353800026072, "D_T": 0.15637149028077754, "T_arrivals": 250, "T_state_sha256": "9f0ee63e63b621205c9ff23411a9dd61c04d87a3aee6efc7f695f97ce325c39e", "control_D_zero": false, "control_policy": "P29", "control_state_sha256": "bee8de960058a3bf4a5b0d10c96447e8a8b7f760866623e3014bc8e4244d6fa9", "decision": "stop_after_restart", "offline_behavior_disagreement": false, "policy": "P36", "r": 0.8521110616148391, "r_by_intervention": {"after_intervention": 0.8493394073596421, "all": 0.8521110616148391, "first_intervention": 0.8625357313928897}, "stage": "A"}
+7 P36 条件数 425 ；P29 测量与 P35 包中逐字段相同： True
+  P36: 到达 250 碰撞 165 超时 10 D 1448/9260 = 0.156371
+  P29: 到达 256 碰撞 161 超时 8 D 1650/8455 = 0.195151
+  P6: 到达 253 碰撞 170 超时 2 D 1616/7671 = 0.210664
+  复算判定（重开后）：stop_after_restart；D 比 0.8013
+  T 对 C：新增 41 流失 47
+  供给累计： 489
